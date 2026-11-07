@@ -1,0 +1,21 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="First-party rights reserved; third-party licenses separate"
+[[mods]]
+modId="muxi_console"
+version="0.1.0-dev.1"
+displayName="木犀游戏机 · Muxi Console"
+authors="Muxigame"
+description="Independently implemented console emulation, original hardware, transferable cartridges and multiplayer."
+[[dependencies.muxi_console]]
+modId="neoforge"
+type="required"
+versionRange="[21.1.250,)"
+ordering="NONE"
+side="BOTH"
+[[dependencies.muxi_console]]
+modId="minecraft"
+type="required"
+versionRange="[1.21.1]"
+ordering="NONE"
+side="BOTH"

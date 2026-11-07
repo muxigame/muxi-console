@@ -1,0 +1,7 @@
+{
+  "parent": "muxi_console:item/template_handheld",
+  "textures": {
+    "accent": "muxi_console:block/common/platform_gbc",
+    "label": "muxi_console:item/label_gbc"
+  }
+}

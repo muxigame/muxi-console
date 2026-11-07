@@ -1,0 +1,555 @@
+{
+  "schema": 1,
+  "cores": {
+    "fceumm": {
+      "systems": [
+        "nes"
+      ],
+      "purpose": "software-emulation",
+      "renderer": "software",
+      "source": "https://github.com/libretro/libretro-fceumm",
+      "sourceRepositoryEvidence": "https://raw.githubusercontent.com/libretro/libretro-super/master/rules.d/core-rules.sh",
+      "sourceRevision": null,
+      "sourceRevisionVerified": false,
+      "releaseReady": false,
+      "sourceRevisionNote": "Official rolling binary has no verified corresponding source revision; current source HEAD is not substituted. Requires exact corresponding source and license delivery before release.",
+      "license": "GPLv2",
+      "licenseUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/fceumm_libretro.info",
+      "documentation": "https://docs.libretro.com/library/fceumm/",
+      "officialMetadataUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/fceumm_libretro.info",
+      "officialMetadataSha256": "eda6fbfdc1fda5ea80c2caed205345b0cbbfa9427acf3626e0cffd6ee5a96721",
+      "platforms": {
+        "windows-x86_64": {
+          "archive": "test-environment/cache/muxi-console/libretro/fceumm_libretro.dll.zip",
+          "libraryName": "fceumm_libretro.dll",
+          "url": "https://buildbot.libretro.com/nightly/windows/x86_64/latest/fceumm_libretro.dll.zip",
+          "archiveBytes": 655480,
+          "archiveSha256": "c4069b7dbe46862d55b2cdae0a66bb0cd416f9b96a196e14df3f85c626a5cbcb",
+          "libraryBytes": 4174336,
+          "librarySha256": "921af51bf09d1c4ca8342cce10de95cfbce2b280360c8aa00204dab7d1f30a8f",
+          "upstreamLastModified": null
+        }
+      },
+      "binaryVersion": "(SVN) e0f3086",
+      "exportProbe": {
+        "apiVersion": 1,
+        "normalExit": true,
+        "gameCompatibilityTested": true
+      },
+      "binaryReportedRevision": "e0f3086",
+      "binaryReportedRevisionResolved": "e0f3086a8104f8fbbe49a2615b10401504a9533f",
+      "revisionResolutionEvidence": "https://api.github.com/repos/libretro/libretro-fceumm/commits/e0f3086"
+    },
+    "2048": {
+      "systems": [],
+      "purpose": "diagnostic-only",
+      "renderer": "software",
+      "source": "https://github.com/libretro/libretro-2048",
+      "sourceRepositoryEvidence": "https://raw.githubusercontent.com/libretro/libretro-super/master/rules.d/core-rules.sh",
+      "sourceRevision": null,
+      "sourceRevisionVerified": false,
+      "releaseReady": false,
+      "sourceRevisionNote": "Official rolling binary has no verified corresponding source revision; current source HEAD is not substituted. Requires exact corresponding source and license delivery before release.",
+      "license": "Public Domain",
+      "licenseUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/2048_libretro.info",
+      "documentation": "https://docs.libretro.com/library/2048/",
+      "officialMetadataUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/2048_libretro.info",
+      "officialMetadataSha256": "ef884f20a92289f262a5be747f1468637f9168efc65154843836c23effd51a79",
+      "platforms": {
+        "windows-x86_64": {
+          "archive": "test-environment/cache/muxi-console/libretro/2048_libretro.dll.zip",
+          "libraryName": "2048_libretro.dll",
+          "url": "https://buildbot.libretro.com/nightly/windows/x86_64/latest/2048_libretro.dll.zip",
+          "archiveBytes": 61023,
+          "archiveSha256": "443586853a029bf0aa368b9ec876f746f0c55f40f0b51faac87f00af9ebfdbb5",
+          "libraryBytes": 121856,
+          "librarySha256": "3db71d20d114a9876bdc810a47277817ffa0f9f3da13d0dcbbd55d2a637ba6b8",
+          "upstreamLastModified": null
+        }
+      },
+      "binaryVersion": "v1.0 39333f7",
+      "exportProbe": {
+        "apiVersion": 1,
+        "normalExit": true,
+        "gameCompatibilityTested": true
+      },
+      "binaryReportedRevision": "39333f7",
+      "binaryReportedRevisionResolved": "39333f7b13dc4daea7c151d9c38d22b961246343",
+      "revisionResolutionEvidence": "https://api.github.com/repos/libretro/libretro-2048/commits/39333f7"
+    },
+    "sameboy": {
+      "systems": [
+        "gb",
+        "gbc"
+      ],
+      "purpose": "software-emulation",
+      "renderer": "software",
+      "source": "https://github.com/libretro/SameBoy",
+      "sourceRepositoryEvidence": "https://raw.githubusercontent.com/libretro/libretro-super/master/rules.d/core-rules.sh",
+      "sourceRevision": null,
+      "sourceRevisionVerified": false,
+      "releaseReady": false,
+      "sourceRevisionNote": "Official rolling binary has no verified corresponding source revision; current source HEAD is not substituted. Requires exact corresponding source and license delivery before release.",
+      "license": "MIT",
+      "licenseUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/sameboy_libretro.info",
+      "documentation": "https://docs.libretro.com/library/sameboy/",
+      "officialMetadataUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/sameboy_libretro.info",
+      "officialMetadataSha256": "41aa5359b594f26a08254f944b3244c801338c85ddfc14797f5e67ae68ad2ca6",
+      "platforms": {
+        "windows-x86_64": {
+          "archive": "test-environment/cache/muxi-console/libretro/sameboy_libretro.dll.zip",
+          "libraryName": "sameboy_libretro.dll",
+          "url": "https://buildbot.libretro.com/nightly/windows/x86_64/latest/sameboy_libretro.dll.zip",
+          "archiveBytes": 134139,
+          "archiveSha256": "67035be4328fd4d01ad68cd31986d91914309c18322d0997d7e9ae5ec95e99c8",
+          "libraryBytes": 357888,
+          "librarySha256": "491aaf9074ef2f1cf641d87b3b17f44d488e648d111cd48825072d95916d7d7b",
+          "upstreamLastModified": null
+        }
+      },
+      "binaryVersion": "1.0.5 90e2899",
+      "exportProbe": {
+        "apiVersion": 1,
+        "normalExit": true,
+        "gameCompatibilityTested": false
+      },
+      "binaryReportedRevision": "90e2899",
+      "binaryReportedRevisionResolved": "90e2899574b7b63c59dce8a7276783426d52a068",
+      "revisionResolutionEvidence": "https://api.github.com/repos/libretro/SameBoy/commits/90e2899"
+    },
+    "mgba": {
+      "systems": [
+        "gba"
+      ],
+      "purpose": "software-emulation",
+      "renderer": "software",
+      "source": "https://github.com/libretro/mgba",
+      "sourceRepositoryEvidence": "https://raw.githubusercontent.com/libretro/libretro-super/master/rules.d/core-rules.sh",
+      "sourceRevision": null,
+      "sourceRevisionVerified": false,
+      "releaseReady": false,
+      "sourceRevisionNote": "Official rolling binary has no verified corresponding source revision; current source HEAD is not substituted. Requires exact corresponding source and license delivery before release.",
+      "license": "MPLv2.0",
+      "licenseUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/mgba_libretro.info",
+      "documentation": "https://docs.libretro.com/library/mgba/",
+      "officialMetadataUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/mgba_libretro.info",
+      "officialMetadataSha256": "64444beb8268d3a57d53a45564c55049f39ff621315401fef86e82f3849042d6",
+      "platforms": {
+        "windows-x86_64": {
+          "archive": "test-environment/cache/muxi-console/libretro/mgba_libretro.dll.zip",
+          "libraryName": "mgba_libretro.dll",
+          "url": "https://buildbot.libretro.com/nightly/windows/x86_64/latest/mgba_libretro.dll.zip",
+          "archiveBytes": 569965,
+          "archiveSha256": "e66b21d88161ebcc1c953a8c96f5b297d67eca11e7dcef4c78f7531b0c0a8fbc",
+          "libraryBytes": 3045973,
+          "librarySha256": "4c289017c3ceaf737d0c303cc46ba428a95678027b3a3a61c78b2d3ae0f1756c",
+          "upstreamLastModified": null
+        }
+      },
+      "binaryVersion": "0.11-212-7a12d6d",
+      "exportProbe": {
+        "apiVersion": 1,
+        "normalExit": true,
+        "gameCompatibilityTested": false
+      },
+      "binaryReportedRevision": "7a12d6d",
+      "binaryReportedRevisionResolved": "7a12d6d4b9acb14c0ae62c9166b6a2f3d08007f6",
+      "revisionResolutionEvidence": "https://api.github.com/repos/libretro/mgba/commits/7a12d6d"
+    },
+    "bsnes2014_performance": {
+      "systems": [
+        "snes"
+      ],
+      "purpose": "software-emulation",
+      "renderer": "software",
+      "source": "https://github.com/libretro/bsnes2014",
+      "sourceRepositoryEvidence": "https://raw.githubusercontent.com/libretro/libretro-super/master/rules.d/core-rules.sh",
+      "sourceRevision": null,
+      "sourceRevisionVerified": false,
+      "releaseReady": false,
+      "sourceRevisionNote": "Official rolling binary has no verified corresponding source revision; current source HEAD is not substituted. Requires exact corresponding source and license delivery before release.",
+      "license": "GPLv3",
+      "licenseUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/bsnes2014_performance_libretro.info",
+      "documentation": "https://docs.libretro.com/library/bsnes2014_performance/",
+      "officialMetadataUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/bsnes2014_performance_libretro.info",
+      "officialMetadataSha256": "92cadc8f8312f8fe883403dc072fbaf45a72f0a34d7626ebe5985333423a7fef",
+      "platforms": {
+        "windows-x86_64": {
+          "archive": "test-environment/cache/muxi-console/libretro/bsnes2014_performance_libretro.dll.zip",
+          "libraryName": "bsnes2014_performance_libretro.dll",
+          "url": "https://buildbot.libretro.com/nightly/windows/x86_64/latest/bsnes2014_performance_libretro.dll.zip",
+          "archiveBytes": 925728,
+          "archiveSha256": "6ce354dbd4b22dc34249be3f008a17d4d32743fc4b368dfcbd3d4009c3b4dbf1",
+          "libraryBytes": 2693470,
+          "librarySha256": "46f8c6419bd472563a41d4dbf1a4193389ce95e586bccddd881a3a3d721aa0d9",
+          "upstreamLastModified": null
+        }
+      },
+      "binaryVersion": "v094 (Performance) 3c1394e",
+      "exportProbe": {
+        "apiVersion": 1,
+        "normalExit": true,
+        "gameCompatibilityTested": false
+      },
+      "binaryReportedRevision": "3c1394e",
+      "binaryReportedRevisionResolved": "3c1394e042ee444c8248e1b9210e14ea55e836e9",
+      "revisionResolutionEvidence": "https://api.github.com/repos/libretro/bsnes2014/commits/3c1394e"
+    },
+    "blastem": {
+      "systems": [
+        "md"
+      ],
+      "purpose": "software-emulation",
+      "renderer": "software",
+      "source": "https://github.com/libretro/blastem",
+      "sourceRepositoryEvidence": "https://raw.githubusercontent.com/libretro/libretro-super/master/rules.d/core-rules.sh",
+      "sourceRevision": null,
+      "sourceRevisionVerified": false,
+      "releaseReady": false,
+      "sourceRevisionNote": "Official rolling binary has no verified corresponding source revision; current source HEAD is not substituted. Requires exact corresponding source and license delivery before release.",
+      "license": "GPLv3",
+      "licenseUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/blastem_libretro.info",
+      "documentation": "https://docs.libretro.com/library/blastem/",
+      "officialMetadataUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/blastem_libretro.info",
+      "officialMetadataSha256": "294108a8d38005b3ec5fc357cc4b45b7cce943d58dec3ab384faa89e12b0dd56",
+      "platforms": {
+        "windows-x86_64": {
+          "archive": "test-environment/cache/muxi-console/libretro/blastem_libretro.dll.zip",
+          "libraryName": "blastem_libretro.dll",
+          "url": "https://buildbot.libretro.com/nightly/windows/x86_64/latest/blastem_libretro.dll.zip",
+          "archiveBytes": 973876,
+          "archiveSha256": "63c491875412519ca64d37b6d9c952549155a15f2b8016857bab7959eb9ed350",
+          "libraryBytes": 9763205,
+          "librarySha256": "b422238d5446048040fcc9aca1f8ab045a5c24962a72a03263e194a0271e8a88",
+          "upstreamLastModified": null
+        }
+      },
+      "binaryVersion": "1.0.1-pre",
+      "exportProbe": {
+        "apiVersion": 1,
+        "normalExit": true,
+        "gameCompatibilityTested": false
+      },
+      "binaryReportedRevision": null
+    },
+    "gearsystem": {
+      "systems": [
+        "sms",
+        "gg",
+        "sg1000"
+      ],
+      "purpose": "software-emulation",
+      "renderer": "software",
+      "source": "https://github.com/drhelius/Gearsystem",
+      "sourceRepositoryEvidence": "https://raw.githubusercontent.com/libretro/libretro-super/master/rules.d/core-rules.sh",
+      "sourceRevision": null,
+      "sourceRevisionVerified": false,
+      "releaseReady": false,
+      "sourceRevisionNote": "Official rolling binary has no verified corresponding source revision; current source HEAD is not substituted. Requires exact corresponding source and license delivery before release.",
+      "license": "GPLv3",
+      "licenseUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/gearsystem_libretro.info",
+      "documentation": "https://docs.libretro.com/library/gearsystem/",
+      "officialMetadataUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/gearsystem_libretro.info",
+      "officialMetadataSha256": "fcefd381377eee3487a722cc1ed71359a10481ce6bff9a12569efb96680e0a54",
+      "platforms": {
+        "windows-x86_64": {
+          "archive": "test-environment/cache/muxi-console/libretro/gearsystem_libretro.dll.zip",
+          "libraryName": "gearsystem_libretro.dll",
+          "url": "https://buildbot.libretro.com/nightly/windows/x86_64/latest/gearsystem_libretro.dll.zip",
+          "archiveBytes": 517252,
+          "archiveSha256": "fffcb8f4fffc3865df6f37754e02170485dc875b2e372ac001907341cb47067f",
+          "libraryBytes": 1478656,
+          "librarySha256": "6b4b33dc9af28f1402679f73a6e98ef2edf4b4e58e64adf4190101193a94f1c5",
+          "upstreamLastModified": null
+        }
+      },
+      "binaryVersion": "3.9.24-12-g1be9a12",
+      "exportProbe": {
+        "apiVersion": 1,
+        "normalExit": true,
+        "gameCompatibilityTested": false
+      },
+      "binaryReportedRevision": "1be9a12",
+      "binaryReportedRevisionResolved": "1be9a12b82cae84ddd6f9b7006d546abe2d58bd4",
+      "revisionResolutionEvidence": "https://api.github.com/repos/drhelius/Gearsystem/commits/1be9a12"
+    },
+    "mednafen_pce_fast": {
+      "systems": [
+        "pce"
+      ],
+      "purpose": "software-emulation",
+      "renderer": "software",
+      "source": "https://github.com/libretro/beetle-pce-fast-libretro",
+      "sourceRepositoryEvidence": "https://raw.githubusercontent.com/libretro/libretro-super/master/rules.d/core-rules.sh",
+      "sourceRevision": null,
+      "sourceRevisionVerified": false,
+      "releaseReady": false,
+      "sourceRevisionNote": "Official rolling binary has no verified corresponding source revision; current source HEAD is not substituted. Requires exact corresponding source and license delivery before release.",
+      "license": "GPLv2",
+      "licenseUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/mednafen_pce_fast_libretro.info",
+      "documentation": "https://docs.libretro.com/library/beetle_pce_fast/",
+      "officialMetadataUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/mednafen_pce_fast_libretro.info",
+      "officialMetadataSha256": "b75e4f64518d4161bef48068f6d4be24c4ea0f478431b749b490251430d8ec35",
+      "platforms": {
+        "windows-x86_64": {
+          "archive": "test-environment/cache/muxi-console/libretro/mednafen_pce_fast_libretro.dll.zip",
+          "libraryName": "mednafen_pce_fast_libretro.dll",
+          "url": "https://buildbot.libretro.com/nightly/windows/x86_64/latest/mednafen_pce_fast_libretro.dll.zip",
+          "archiveBytes": 564605,
+          "archiveSha256": "5b3c970a70862a18c20a00a1dff346e8d01638b3fc49a61dff9e76860223ce7b",
+          "libraryBytes": 4161752,
+          "librarySha256": "c696a91468c519daa55e51df23095529af01eab9d0d00e5ca2c1bdab29b53557",
+          "upstreamLastModified": null
+        }
+      },
+      "binaryVersion": "v1.31.0.0",
+      "exportProbe": {
+        "apiVersion": 1,
+        "normalExit": true,
+        "gameCompatibilityTested": false
+      },
+      "binaryReportedRevision": null
+    },
+    "stella2014": {
+      "systems": [
+        "a2600"
+      ],
+      "purpose": "software-emulation",
+      "renderer": "software",
+      "source": "https://github.com/libretro/stella2014-libretro",
+      "sourceRepositoryEvidence": "https://raw.githubusercontent.com/libretro/libretro-super/master/rules.d/core-rules.sh",
+      "sourceRevision": null,
+      "sourceRevisionVerified": false,
+      "releaseReady": false,
+      "sourceRevisionNote": "Official rolling binary has no verified corresponding source revision; current source HEAD is not substituted. Requires exact corresponding source and license delivery before release.",
+      "license": "GPLv2",
+      "licenseUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/stella2014_libretro.info",
+      "documentation": "https://docs.libretro.com/library/stella2014/",
+      "officialMetadataUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/stella2014_libretro.info",
+      "officialMetadataSha256": "d3e08071f6c19ec9ae72d83fe377b35d5da824c4a5f7819a8ee31e1379bdc17d",
+      "platforms": {
+        "windows-x86_64": {
+          "archive": "test-environment/cache/muxi-console/libretro/stella2014_libretro.dll.zip",
+          "libraryName": "stella2014_libretro.dll",
+          "url": "https://buildbot.libretro.com/nightly/windows/x86_64/latest/stella2014_libretro.dll.zip",
+          "archiveBytes": 738563,
+          "archiveSha256": "f8faa376a96c5c607d29c99230e18f4d8b78e00839154e0bc1f83a92a1763966",
+          "libraryBytes": 2565698,
+          "librarySha256": "2b9bdcc6c9b8c15b80997e20dc2e2dff99e73b1ecf0ecb16e6a1dbc51145fffb",
+          "upstreamLastModified": null
+        }
+      },
+      "binaryVersion": "3.9.3 7d1361e",
+      "exportProbe": {
+        "apiVersion": 1,
+        "normalExit": true,
+        "gameCompatibilityTested": false
+      },
+      "binaryReportedRevision": "7d1361e",
+      "binaryReportedRevisionResolved": "7d1361e407e63f29e52892655069e5fb4096e691",
+      "revisionResolutionEvidence": "https://api.github.com/repos/libretro/stella2014-libretro/commits/7d1361e"
+    },
+    "prosystem": {
+      "systems": [
+        "a7800"
+      ],
+      "purpose": "software-emulation",
+      "renderer": "software",
+      "source": "https://github.com/libretro/prosystem-libretro",
+      "sourceRepositoryEvidence": "https://raw.githubusercontent.com/libretro/libretro-super/master/rules.d/core-rules.sh",
+      "sourceRevision": null,
+      "sourceRevisionVerified": false,
+      "releaseReady": false,
+      "sourceRevisionNote": "Official rolling binary has no verified corresponding source revision; current source HEAD is not substituted. Requires exact corresponding source and license delivery before release.",
+      "license": "GPLv2",
+      "licenseUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/prosystem_libretro.info",
+      "documentation": "https://docs.libretro.com/library/prosystem/",
+      "officialMetadataUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/prosystem_libretro.info",
+      "officialMetadataSha256": "22e9bc148612082f41147b4de167bb7ade705ec5f4642b8b70c0eb9ad1971681",
+      "platforms": {
+        "windows-x86_64": {
+          "archive": "test-environment/cache/muxi-console/libretro/prosystem_libretro.dll.zip",
+          "libraryName": "prosystem_libretro.dll",
+          "url": "https://buildbot.libretro.com/nightly/windows/x86_64/latest/prosystem_libretro.dll.zip",
+          "archiveBytes": 94185,
+          "archiveSha256": "bee8ad2519b9abd571c73d1cf4fe282c626c72b18d76353c46f19043d81c5c70",
+          "libraryBytes": 264694,
+          "librarySha256": "9127b2fc7c6b339a16b46a734ceee0e21b948580575ea3fbed41e33e27a13406",
+          "upstreamLastModified": null
+        }
+      },
+      "binaryVersion": "1.3e 8a88014",
+      "exportProbe": {
+        "apiVersion": 1,
+        "normalExit": true,
+        "gameCompatibilityTested": false
+      },
+      "binaryReportedRevision": "8a88014",
+      "binaryReportedRevisionResolved": "8a88014287c7a01cd568067e5a557d0a2b2a051f",
+      "revisionResolutionEvidence": "https://api.github.com/repos/libretro/prosystem-libretro/commits/8a88014"
+    },
+    "mednafen_lynx": {
+      "systems": [
+        "lynx"
+      ],
+      "purpose": "software-emulation",
+      "renderer": "software",
+      "source": "https://github.com/libretro/beetle-lynx-libretro",
+      "sourceRepositoryEvidence": "https://raw.githubusercontent.com/libretro/libretro-super/master/rules.d/core-rules.sh",
+      "sourceRevision": null,
+      "sourceRevisionVerified": false,
+      "releaseReady": false,
+      "sourceRevisionNote": "Official rolling binary has no verified corresponding source revision; current source HEAD is not substituted. Requires exact corresponding source and license delivery before release.",
+      "license": "Zlib|GPLv2",
+      "licenseUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/mednafen_lynx_libretro.info",
+      "documentation": "https://docs.libretro.com/library/beetle_lynx/",
+      "officialMetadataUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/mednafen_lynx_libretro.info",
+      "officialMetadataSha256": "b81537311f91546383465273faf6c31c835a87b60a7466c8e1953e8c1d51e89e",
+      "platforms": {
+        "windows-x86_64": {
+          "archive": "test-environment/cache/muxi-console/libretro/mednafen_lynx_libretro.dll.zip",
+          "libraryName": "mednafen_lynx_libretro.dll",
+          "url": "https://buildbot.libretro.com/nightly/windows/x86_64/latest/mednafen_lynx_libretro.dll.zip",
+          "archiveBytes": 188563,
+          "archiveSha256": "44113a635dd51eb13d197e7705b4e40c5451bd7be3f653ea2e92c9e2d97b7c94",
+          "libraryBytes": 426345,
+          "librarySha256": "93258f72309f0f9626a1816f6fc9fae23e235ac1910b9155ecf31857d17a806e",
+          "upstreamLastModified": null
+        }
+      },
+      "binaryVersion": "v1.24.0 fcdefcf",
+      "exportProbe": {
+        "apiVersion": 1,
+        "normalExit": true,
+        "gameCompatibilityTested": false
+      },
+      "binaryReportedRevision": "fcdefcf",
+      "binaryReportedRevisionResolved": "fcdefcfb3c11d6d2e71be076a5d3df2e88ab73ed",
+      "revisionResolutionEvidence": "https://api.github.com/repos/libretro/beetle-lynx-libretro/commits/fcdefcf"
+    },
+    "mednafen_ngp": {
+      "systems": [
+        "ngp",
+        "ngpc"
+      ],
+      "purpose": "software-emulation",
+      "renderer": "software",
+      "source": "https://github.com/libretro/beetle-ngp-libretro",
+      "sourceRepositoryEvidence": "https://raw.githubusercontent.com/libretro/libretro-super/master/rules.d/core-rules.sh",
+      "sourceRevision": null,
+      "sourceRevisionVerified": false,
+      "releaseReady": false,
+      "sourceRevisionNote": "Official rolling binary has no verified corresponding source revision; current source HEAD is not substituted. Requires exact corresponding source and license delivery before release.",
+      "license": "GPLv2",
+      "licenseUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/mednafen_ngp_libretro.info",
+      "documentation": "https://docs.libretro.com/library/beetle_ngp/",
+      "officialMetadataUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/mednafen_ngp_libretro.info",
+      "officialMetadataSha256": "1e7485277cffaf01ae4c4c5406a7dfc6f85f4d2a6949273feae5634781ec396b",
+      "platforms": {
+        "windows-x86_64": {
+          "archive": "test-environment/cache/muxi-console/libretro/mednafen_ngp_libretro.dll.zip",
+          "libraryName": "mednafen_ngp_libretro.dll",
+          "url": "https://buildbot.libretro.com/nightly/windows/x86_64/latest/mednafen_ngp_libretro.dll.zip",
+          "archiveBytes": 200646,
+          "archiveSha256": "aa3e2a985564e45b84b1637cf2efda59cc7a27b2e57be9c36a4be01d6656250c",
+          "libraryBytes": 502638,
+          "librarySha256": "48ee72698b2966959a6564fe425e392017543ca47b3256ccad62068cf551a44a",
+          "upstreamLastModified": null
+        }
+      },
+      "binaryVersion": "v1.29.0.0 a50d5ac",
+      "exportProbe": {
+        "apiVersion": 1,
+        "normalExit": true,
+        "gameCompatibilityTested": false
+      },
+      "binaryReportedRevision": "a50d5ac",
+      "binaryReportedRevisionResolved": "a50d5ac288a81f2104ddf43195a4efdd15c72227",
+      "revisionResolutionEvidence": "https://api.github.com/repos/libretro/beetle-ngp-libretro/commits/a50d5ac"
+    },
+    "mednafen_wswan": {
+      "systems": [
+        "ws",
+        "wsc"
+      ],
+      "purpose": "software-emulation",
+      "renderer": "software",
+      "source": "https://github.com/libretro/beetle-wswan-libretro",
+      "sourceRepositoryEvidence": "https://raw.githubusercontent.com/libretro/libretro-super/master/rules.d/core-rules.sh",
+      "sourceRevision": null,
+      "sourceRevisionVerified": false,
+      "releaseReady": false,
+      "sourceRevisionNote": "Official rolling binary has no verified corresponding source revision; current source HEAD is not substituted. Requires exact corresponding source and license delivery before release.",
+      "license": "GPLv2",
+      "licenseUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/mednafen_wswan_libretro.info",
+      "documentation": "https://docs.libretro.com/library/beetle_wswan/",
+      "officialMetadataUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/mednafen_wswan_libretro.info",
+      "officialMetadataSha256": "07f595bdc27cf7ee145091ae226b2dc37eeefa499ef9720b64d5384e54ac5ac1",
+      "platforms": {
+        "windows-x86_64": {
+          "archive": "test-environment/cache/muxi-console/libretro/mednafen_wswan_libretro.dll.zip",
+          "libraryName": "mednafen_wswan_libretro.dll",
+          "url": "https://buildbot.libretro.com/nightly/windows/x86_64/latest/mednafen_wswan_libretro.dll.zip",
+          "archiveBytes": 121647,
+          "archiveSha256": "2532c35da9c92eab6ab93060008c1dc5234f63cbc54bf5d6689ec195f53fc31a",
+          "libraryBytes": 1073507,
+          "librarySha256": "8f5d3314e3dfa2b030ed3b2967febb3f6e216bc8bcf463e0eb0227d4dd2c3f74",
+          "upstreamLastModified": null
+        }
+      },
+      "binaryVersion": "v0.9.35.1 4b01295",
+      "exportProbe": {
+        "apiVersion": 1,
+        "normalExit": true,
+        "gameCompatibilityTested": false
+      },
+      "binaryReportedRevision": "4b01295",
+      "binaryReportedRevisionResolved": "4b01295838ea89e3f1355bbe4cb5cf98aa6108cd",
+      "revisionResolutionEvidence": "https://api.github.com/repos/libretro/beetle-wswan-libretro/commits/4b01295"
+    },
+    "mednafen_vb": {
+      "systems": [
+        "vb"
+      ],
+      "purpose": "software-emulation",
+      "renderer": "software",
+      "source": "https://github.com/libretro/beetle-vb-libretro",
+      "sourceRepositoryEvidence": "https://raw.githubusercontent.com/libretro/libretro-super/master/rules.d/core-rules.sh",
+      "sourceRevision": null,
+      "sourceRevisionVerified": false,
+      "releaseReady": false,
+      "sourceRevisionNote": "Official rolling binary has no verified corresponding source revision; current source HEAD is not substituted. Requires exact corresponding source and license delivery before release.",
+      "license": "GPLv2",
+      "licenseUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/mednafen_vb_libretro.info",
+      "documentation": "https://docs.libretro.com/library/beetle_vb/",
+      "officialMetadataUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/mednafen_vb_libretro.info",
+      "officialMetadataSha256": "425e0ef983f72b7e938af8cc170d2ddc1cb6b0a19a98aa4fce49bb2957567236",
+      "platforms": {
+        "windows-x86_64": {
+          "archive": "test-environment/cache/muxi-console/libretro/mednafen_vb_libretro.dll.zip",
+          "libraryName": "mednafen_vb_libretro.dll",
+          "url": "https://buildbot.libretro.com/nightly/windows/x86_64/latest/mednafen_vb_libretro.dll.zip",
+          "archiveBytes": 172825,
+          "archiveSha256": "8d01451903fe9ecdd053ebe408ca9c18223f93e3e1e37c8547e99029d4ac05ff",
+          "libraryBytes": 434194,
+          "librarySha256": "274888f687948c8a77f878f63d2a858b9d010af2ec8fe876626b5e5077d6c014",
+          "upstreamLastModified": null
+        }
+      },
+      "binaryVersion": "v1.31.0 d5ae54c",
+      "exportProbe": {
+        "apiVersion": 1,
+        "normalExit": true,
+        "gameCompatibilityTested": false
+      },
+      "binaryReportedRevision": "d5ae54c",
+      "binaryReportedRevisionResolved": "d5ae54c8e23b573a3b34e888b2d48a588027e92c",
+      "revisionResolutionEvidence": "https://api.github.com/repos/libretro/beetle-vb-libretro/commits/d5ae54c"
+    }
+  },
+  "pinnedAtUtc": "2026-11-07T13:13:50.873834+00:00",
+  "scope": "Windows x86_64 development candidate; exact source correspondence not yet verified; no proprietary BIOS or game ROMs",
+  "unsupportedSystems": {
+    "n64": "Worker has no OpenGL/Vulkan hardware interface; no unverified N64 binary is bundled."
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "muxi_console:block/cartridge_writer",
+      "y": 0
+    },
+    "facing=east": {
+      "model": "muxi_console:block/cartridge_writer",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "muxi_console:block/cartridge_writer",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "muxi_console:block/cartridge_writer",
+      "y": 270
+    }
+  }
+}

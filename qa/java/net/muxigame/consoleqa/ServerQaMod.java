@@ -1,0 +1,139 @@
+package net.muxigame.consoleqa;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.Difficulty;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Blocks;
+import net.muxigame.console.mc.CardData;
+import net.muxigame.console.mc.ConsoleContent;
+import net.muxigame.console.mc.ConsoleServer;
+import net.muxigame.console.mc.DeviceEntity;
+import net.muxigame.console.mc.DeviceBlock;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+
+/** Scene/inventory setup only. It never creates a cartridge or invokes an upload on behalf of a client. */
+@Mod(ServerQaMod.ID)
+public final class ServerQaMod {
+    public static final String ID = "muxi_console_qa_server";
+    private final QaOwner owner = new QaOwner(ID, "server");
+    private final Set<UUID> prepared = new HashSet<>();
+    private boolean built;
+
+    public ServerQaMod() { NeoForge.EVENT_BUS.addListener(this::tick); }
+    private void tick(ServerTickEvent.Post event) { owner.poll(command -> dispatch(event.getServer(), command)); }
+
+    private JsonObject dispatch(MinecraftServer server, JsonObject command) {
+        return switch (command.get("action").getAsString()) {
+            case "prepare" -> prepare(server);
+            case "observe" -> observe(server);
+            case "position" -> position(server, command);
+            default -> throw new IllegalArgumentException("Unsupported server QA action");
+        };
+    }
+
+    private JsonObject prepare(MinecraftServer server) {
+        var level = server.overworld();
+        if (!built) {
+            if (level.getGameTime() > 12000 || server.getPlayerList().getPlayerCount() != 2)
+                throw new IllegalStateException("Scene setup requires a fresh two-real-player world");
+            if (level.getBlockEntity(new BlockPos(8, 90, 8)) != null || level.getBlockEntity(new BlockPos(10, 90, 8)) != null)
+                throw new IllegalStateException("Refusing to replace an existing device");
+            for (int x = 3; x <= 17; x++) for (int z = 4; z <= 15; z++) {
+                level.setBlock(new BlockPos(x, 89, z), x == 3 || x == 17 || z == 4 || z == 15 ? Blocks.DEEPSLATE_TILES.defaultBlockState() : Blocks.SMOOTH_STONE.defaultBlockState(), 3);
+                for (int y = 90; y <= 94; y++) level.setBlock(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), 3);
+            }
+            level.setBlock(new BlockPos(8,90,8), ConsoleContent.WRITER.get().defaultBlockState().setValue(DeviceBlock.FACING, Direction.SOUTH), 3);
+            level.setBlock(new BlockPos(10,90,8), ConsoleContent.DESK.get().defaultBlockState().setValue(DeviceBlock.FACING, Direction.SOUTH), 3);
+            level.setBlock(new BlockPos(12,90,8), ConsoleContent.SCREEN.get().defaultBlockState().setValue(DeviceBlock.FACING, Direction.SOUTH), 3);
+            level.setDefaultSpawnPos(new BlockPos(10,90,12), 180);
+            level.setDayTime(6000); server.setDifficulty(Difficulty.PEACEFUL, true);
+            built = true;
+        }
+        for (String role : new String[]{"host", "guest"}) {
+            ServerPlayer player;
+            try { player = server.getPlayerList().getPlayerByName(owner.playerName(role)); }
+            catch (java.io.IOException error) { throw new IllegalStateException(error); }
+            if (player == null) throw new IllegalStateException("The real runner player is missing: " + role);
+            if (!prepared.add(player.getUUID())) continue;
+            player.setGameMode(GameType.CREATIVE);
+            player.getInventory().clearContent();
+            player.getInventory().setItem(0, new ItemStack(ConsoleContent.BLANK.get(), 4));
+            player.getInventory().setItem(1, new ItemStack(ConsoleContent.CONTROLLER.get(), 2));
+            player.getInventory().setItem(2, new ItemStack(ConsoleContent.HANDHELD.get()));
+            player.getInventory().selected = 8;
+            player.connection.teleport(role.equals("host") ? 8.5 : 10.5, 90, 11.5, 180, 18);
+            player.inventoryMenu.broadcastChanges();
+        }
+        JsonObject result = observe(server); result.addProperty("scenePrepared", true);
+        result.addProperty("syntheticServerPlayers", false); result.addProperty("cartridgesMintedByQa", 0);
+        return result;
+    }
+
+    private JsonObject position(MinecraftServer server, JsonObject command) {
+        if (!built) throw new IllegalStateException("Prepare the isolated platform first");
+        ServerPlayer player = server.getPlayerList().getPlayerByName(command.get("player").getAsString());
+        double x = command.get("x").getAsDouble(), z = command.get("z").getAsDouble();
+        if (player == null || !prepared.contains(player.getUUID()) || x < 3.5 || x > 16.5 || z < 4.5 || z > 14.5)
+            throw new IllegalArgumentException("Fixture positioning is limited to its two real players and platform");
+        player.connection.teleport(x, 90, z, 180, 18);
+        return observe(server);
+    }
+
+    private JsonObject observe(MinecraftServer server) {
+        JsonObject result = new JsonObject(); result.addProperty("serverTick", server.getTickCount());
+        JsonArray players = new JsonArray();
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            JsonObject row = new JsonObject(); row.addProperty("uuid", player.getUUID().toString()); row.addProperty("name", player.getGameProfile().getName());
+            row.addProperty("x", player.getX()); row.addProperty("y", player.getY()); row.addProperty("z", player.getZ());
+            JsonArray inventory = new JsonArray();
+            for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
+                ItemStack item = player.getInventory().getItem(slot); if (item.isEmpty()) continue;
+                JsonObject entry = new JsonObject(); entry.addProperty("slot", slot); entry.addProperty("item", BuiltInRegistries.ITEM.getKey(item.getItem()).toString()); entry.addProperty("count", item.getCount());
+                CardData.read(item).ifPresent(card -> { entry.addProperty("instance", card.instanceId().toString()); entry.addProperty("hash", card.sha256()); entry.addProperty("platform", card.platform().id()); });
+                inventory.add(entry);
+            }
+            row.add("inventory", inventory); players.add(row);
+        }
+        result.add("players", players);
+        JsonArray devices = new JsonArray();
+        for (int x : new int[]{8,10,12}) if (server.overworld().getBlockEntity(new BlockPos(x,90,8)) instanceof DeviceEntity device)
+            devices.add(ConsoleServer.view(device));
+        result.add("devices", devices);
+        try {
+            var state = ConsoleServer.state(server); result.addProperty("contentBytes", state.content.usedBytes()); result.addProperty("pendingUploads", state.uploads.activeCount());
+            JsonArray rooms = new JsonArray();
+            for (var room : state.rooms.values()) {
+                JsonObject row = new JsonObject(); row.addProperty("key", room.key); row.addProperty("epoch", room.session.epoch()); row.addProperty("frame", room.frame);
+                row.addProperty("ready", room.ready.size()); row.addProperty("controllers", room.session.controllers().size()); row.addProperty("fingerprint", room.fingerprint);
+                rooms.add(row);
+            }
+            result.add("rooms", rooms);
+            JsonArray snapshots = new JsonArray(); Set<UUID> currentCards = new HashSet<>();
+            for (int x : new int[]{8,10,12}) if (server.overworld().getBlockEntity(new BlockPos(x,90,8)) instanceof DeviceEntity device)
+                CardData.read(device.card).ifPresent(card -> currentCards.add(card.instanceId()));
+            for (var room : state.rooms.values()) currentCards.add(room.card.instanceId());
+            for (ServerPlayer player : server.getPlayerList().getPlayers())
+                for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++)
+                    CardData.read(player.getInventory().getItem(slot)).ifPresent(card -> currentCards.add(card.instanceId()));
+            for (UUID cardId : currentCards) state.states.latest(cardId).ifPresent(snapshot -> {
+                JsonObject row = new JsonObject(); row.addProperty("card", snapshot.cardUUID().toString()); row.addProperty("hash", snapshot.hash());
+                row.addProperty("fingerprint", snapshot.fingerprint()); row.addProperty("frame", snapshot.frame()); row.addProperty("size", snapshot.size());
+                row.addProperty("generation", snapshot.generationID().toString()); snapshots.add(row);
+            });
+            result.add("states", snapshots);
+        } catch (Exception error) { throw new IllegalStateException(error); }
+        return result;
+    }
+}

@@ -1,0 +1,119 @@
+{
+  "parent": "muxi_console:item/template_cartridge",
+  "overrides": [
+    {
+      "predicate": {
+        "custom_model_data": 1
+      },
+      "model": "muxi_console:item/cartridge_nes"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 2
+      },
+      "model": "muxi_console:item/cartridge_snes"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 3
+      },
+      "model": "muxi_console:item/cartridge_gb"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 4
+      },
+      "model": "muxi_console:item/cartridge_gbc"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 5
+      },
+      "model": "muxi_console:item/cartridge_gba"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 6
+      },
+      "model": "muxi_console:item/cartridge_md"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 7
+      },
+      "model": "muxi_console:item/cartridge_n64"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 8
+      },
+      "model": "muxi_console:item/cartridge_sms"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 9
+      },
+      "model": "muxi_console:item/cartridge_gg"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 10
+      },
+      "model": "muxi_console:item/cartridge_sg1000"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 11
+      },
+      "model": "muxi_console:item/cartridge_pce"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 12
+      },
+      "model": "muxi_console:item/cartridge_a2600"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 13
+      },
+      "model": "muxi_console:item/cartridge_a7800"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 14
+      },
+      "model": "muxi_console:item/cartridge_lynx"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 15
+      },
+      "model": "muxi_console:item/cartridge_ngp"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 16
+      },
+      "model": "muxi_console:item/cartridge_ngpc"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 17
+      },
+      "model": "muxi_console:item/cartridge_ws"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 18
+      },
+      "model": "muxi_console:item/cartridge_wsc"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 19
+      },
+      "model": "muxi_console:item/cartridge_vb"
+    }
+  ]
+}
