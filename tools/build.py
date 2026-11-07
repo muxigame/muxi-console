@@ -42,7 +42,7 @@ def build(name, tests):
     compile_set(sources,classes,classpath,'compile')
     test_results=[]
     if tests:
-        files=sorted((ROOT/'tests/domain').rglob('*.java'))+sorted((ROOT/'tests/runtime').rglob('*.java'))+sorted((ROOT/'tests/input').rglob('*.java'))+sorted((ROOT/'tests/save').rglob('*.java'))
+        files=[p for folder in ['domain','runtime','input','save','compat','hardware','audio','stream'] for p in sorted((ROOT/'tests'/folder).rglob('*.java'))]
         if files:
             tc=out/'test-classes';tc.mkdir(); compile_set(files,tc,str(classes)+os.pathsep+classpath,'tests')
             import re
@@ -51,7 +51,7 @@ def build(name, tests):
                 # Runtime probes require an explicit official core/ROM, exercised by runtime_smoke.py.
                 if 'static void main(' not in body or p.is_relative_to(ROOT/'tests/runtime'): continue
                 package=re.search(r'package\s+([\w.]+);',body).group(1)
-                r=subprocess.run([str(jdk/'java.exe'),'-Xmx128m','-XX:ActiveProcessorCount=1','-ea','-cp',str(tc)+os.pathsep+str(classes)+os.pathsep+classpath,package+'.'+p.stem,str(out/'test-data')],capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=60,cwd=ROOT)
+                r=subprocess.run([str(jdk/'java.exe'),'-Xmx128m','-XX:ActiveProcessorCount=1','-ea','-cp',os.pathsep.join([str(tc),str(classes),str(ROOT/'common/src/main/resources'),classpath]),package+'.'+p.stem,str(out/'test-data')],capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=60,cwd=ROOT)
                 (out/(p.stem+'.log')).write_text(r.stdout+r.stderr,encoding='utf-8');print(r.stdout.strip())
                 if r.returncode: raise RuntimeError(p.stem+' failed: '+r.stderr[-2000:])
                 test_results.append(p.stem)
@@ -62,6 +62,13 @@ def build(name, tests):
     resources['META-INF/muxi/OWNERSHIP.md']=(ROOT/'OWNERSHIP.md').read_bytes()
     jna=game/'libraries/net/java/dev/jna/jna/5.14.0/jna-5.14.0.jar'
     resources['worker/jna-5.14.0.jar']=jna.read_bytes()
+    worker_deps=json.loads((ROOT/'third-party/worker-dependencies.json').read_text(encoding='utf-8'))
+    for dependency in worker_deps['dependencies']:
+        matches=list((game/'libraries/org/lwjgl').rglob(dependency['file']))
+        if len(matches)!=1 or matches[0].stat().st_size!=dependency['bytes'] or sha(matches[0])!=dependency['sha256']:
+            raise ValueError('Worker dependency differs from official pin: '+dependency['file'])
+        resources['worker/'+dependency['file']]=matches[0].read_bytes()
+    resources['META-INF/muxi/worker-dependencies.json']=json.dumps(worker_deps,indent=2).encode()
     # The child process has only our runtime classes and official JNA, never a Minecraft installation.
     worker=io.BytesIO()
     with zipfile.ZipFile(worker,'w',zipfile.ZIP_DEFLATED) as bundle:
@@ -71,7 +78,7 @@ def build(name, tests):
     core_manifest=json.loads((ROOT/'third-party/cores.json').read_text(encoding='utf-8'))
     resources['META-INF/muxi/cores.json']=json.dumps(core_manifest,indent=2).encode()
     for name,core in core_manifest['cores'].items():
-        if core.get('purpose')!='software-emulation':continue
+        if core.get('purpose') not in ('software-emulation','emulation'):continue
         for platform,pin in core['platforms'].items():
             archive=WORKSPACE/pin['archive']
             if sha(archive)!=pin['archiveSha256']:raise ValueError('Official core archive changed: '+name)
@@ -80,6 +87,7 @@ def build(name, tests):
             if hashlib.sha256(body).hexdigest()!=pin['librarySha256']:raise ValueError('Official core library changed: '+name)
             resources['cores/'+platform+'/'+name+('.dll' if platform.startswith('windows') else '.so')]=body
     resources['META-INF/muxi/extract-hashes.json']=json.dumps({k:hashlib.sha256(v).hexdigest() for k,v in resources.items() if k.startswith(('worker/','cores/'))},sort_keys=True).encode()
+    resources['META-INF/muxi/extract-sizes.json']=json.dumps({k:len(v) for k,v in resources.items() if k.startswith(('worker/','cores/'))},sort_keys=True).encode()
     with zipfile.ZipFile(artifact,'w',zipfile.ZIP_DEFLATED) as jar:
         for p in classes.rglob('*.class'):resources[p.relative_to(classes).as_posix()]=p.read_bytes()
         for path,body in sorted(resources.items()):

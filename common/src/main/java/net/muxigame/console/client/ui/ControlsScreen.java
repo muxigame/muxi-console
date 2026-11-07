@@ -58,6 +58,8 @@ public final class ControlsScreen extends ConsoleScreen {
             button(left + 14, top + panelHeight - 52, 44, "上页", ignored -> { pending = -1; page = (page + pages - 1) % pages; rebuildWidgets(); });
             button(left + 64, top + panelHeight - 52, 44, "下页", ignored -> { pending = -1; page = (page + 1) % pages; rebuildWidgets(); });
         }
+        button(left+122,top+panelHeight-52,90,"摇杆键盘键",b->minecraft.setScreen(new AnalogControlsScreen(this,platform,profiles)));
+        button(left+220,top+panelHeight-52,90,"手柄按键",b->minecraft.setScreen(new GamepadBindingsScreen(this,platform,profiles)));
         button(left + 14, top + panelHeight - 28, 86, "恢复默认", ignored -> {
             profiles.reset(platform); pending = -1; message = "已恢复当前平台默认值，点击保存写入配置"; rebuildWidgets();
         });
@@ -91,10 +93,10 @@ public final class ControlsScreen extends ConsoleScreen {
             gamepadButton.setMessage(Component.literal("手柄：" + deviceName));
         }
         for (int bit = 0; bit < keyButtons.length; bit++) if (keyButtons[bit] != null)
-            keyButtons[bit].setMessage(Component.literal(InputProfiles.BUTTON_NAMES[bit] + " · "
+            keyButtons[bit].setMessage(Component.literal(InputProfiles.buttonName(platform,bit) + " · "
                     + (pending == bit ? "按下按键…" : keyName(profiles.profile(platform).keyBinding(bit)))));
     }
-    private static String keyName(int key) {
+    static String keyName(int key) {
         String result = GLFW.glfwGetKeyName(key, 0);
         if (result != null) return result.toUpperCase(java.util.Locale.ROOT);
         return switch (key) {

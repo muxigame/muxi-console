@@ -12,8 +12,9 @@ public enum Platform {
     MD(16, 4, "md", "gen", "bin"), N64(64, 4, "z64", "n64", "v64"),
     SMS(4, 2, "sms"), GG(4, 1, "gg"), SG1000(1, 2, "sg"),
     PCE(8, 4, "pce"), A2600(1, 2, "a26"), A7800(4, 2, "a78"),
-    LYNX(2, 1, "lnx"), NGP(8, 1, "ngp"), NGPC(8, 1, "ngc", "ngpc"),
-    WS(16, 1, "ws"), WSC(16, 1, "wsc"), VB(16, 1, "vb");
+    LYNX(2, 1, "lnx", "o"), NGP(8, 1, "ngp"), NGPC(8, 1, "ngc", "ngpc"),
+    WS(16, 1, "ws"), WSC(16, 1, "wsc"), VB(16, 1, "vb"),
+    FDS(8, 2, "fds"), ARCADE(512, 4, "mxarc");
 
     private final long maxBytes;
     private final int controllerPorts;
@@ -38,11 +39,15 @@ public enum Platform {
             case SG1000 -> 1024;
             case A2600 -> 2048;
             case A7800 -> 4096 + 128;
-            case LYNX -> 1024 + 64;
+            case LYNX -> 11;
             case VB -> 16384;
+            case FDS -> 65500;
+            case ARCADE -> 22;
         };
     }
     public int controllerPorts() { return controllerPorts; }
+    /** Hardware renderers and arcade netlists use one authoritative core for every control seat. */
+    public boolean sharedRuntime(){return this==N64||this==ARCADE;}
     public int customModelData() { return ordinal() + 1; }
     public Set<String> extensions() { return extensions; }
     public boolean acceptsExtension(String extension) { return extensions.contains(extension.toLowerCase(Locale.ROOT)); }

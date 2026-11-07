@@ -114,6 +114,18 @@
         "custom_model_data": 19
       },
       "model": "muxi_console:item/cartridge_vb"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 20
+      },
+      "model": "muxi_console:item/cartridge_fds"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 21
+      },
+      "model": "muxi_console:item/cartridge_arcade"
     }
   ]
 }

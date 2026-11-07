@@ -18,13 +18,24 @@ import net.minecraft.server.level.ServerPlayer;
 public final class DeviceBlock extends BaseEntityBlock {
     public enum Kind {DESK,WRITER,SCREEN}
     public static final DirectionProperty FACING=BlockStateProperties.HORIZONTAL_FACING;
+    public static final IntegerProperty MODEL=IntegerProperty.create("model",0,22);
     public final Kind kind;
-    public DeviceBlock(Kind kind,Properties properties){super(properties);this.kind=kind;registerDefaultState(stateDefinition.any().setValue(FACING,Direction.NORTH));}
+    public DeviceBlock(Kind kind,Properties properties){super(properties);this.kind=kind;registerDefaultState(stateDefinition.any().setValue(FACING,Direction.NORTH).setValue(MODEL,0));}
     protected MapCodec<? extends BaseEntityBlock> codec(){return simpleCodec(p->new DeviceBlock(kind,p));}
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block,BlockState> builder){builder.add(FACING);}
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block,BlockState> builder){builder.add(FACING,MODEL);}
     public BlockState getStateForPlacement(BlockPlaceContext c){return defaultBlockState().setValue(FACING,c.getHorizontalDirection().getOpposite());}
     public BlockEntity newBlockEntity(BlockPos p,BlockState s){return new DeviceEntity(p,s);}
     protected RenderShape getRenderShape(BlockState s){return RenderShape.MODEL;}
+    @Override protected net.minecraft.world.phys.shapes.VoxelShape getShape(BlockState s,BlockGetter level,BlockPos pos,net.minecraft.world.phys.shapes.CollisionContext context){
+        HardwareCatalog.Body body=kind==Kind.DESK?HardwareCatalog.body(s.getValue(MODEL)):null;
+        if(body==null)return kind==Kind.DESK?Block.box(1,0,2,15,6,14):super.getShape(s,level,pos,context);
+        float[] b=body.bounds();double x0=b[0],z0=b[2],x1=b[3],z1=b[5];
+        switch(s.getValue(FACING)){case EAST->{x0=16-b[5];z0=b[0];x1=16-b[2];z1=b[3];}case SOUTH->{x0=16-b[3];z0=16-b[5];x1=16-b[0];z1=16-b[2];}case WEST->{x0=b[2];z0=16-b[3];x1=b[5];z1=16-b[0];}default->{}}
+        return Block.box(x0,b[1],z0,x1,b[4],z1);
+    }
+    @Override protected java.util.List<ItemStack> getDrops(BlockState state,net.minecraft.world.level.storage.loot.LootParams.Builder params){
+        java.util.List<ItemStack> drops=super.getDrops(state,params);if(kind==Kind.DESK)for(ItemStack item:drops)if(item.is(ConsoleContent.DESK_ITEM.get()))HardwareCatalog.variant(item,state.getValue(MODEL));return drops;
+    }
     protected ItemInteractionResult useItemOn(ItemStack stack,BlockState state,Level level,BlockPos pos,Player player,InteractionHand hand,BlockHitResult hit){
         if(level.isClientSide)return ItemInteractionResult.SUCCESS;
         ConsoleServer.interact((ServerPlayer)player,pos,hand);return ItemInteractionResult.CONSUME;

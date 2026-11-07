@@ -12,5 +12,8 @@ public interface ConsoleRuntime extends AutoCloseable {
     void loadState(byte[] state) throws IOException;
     byte[] readSram() throws IOException;
     void writeSram(byte[] sram) throws IOException;
+    default DiskState diskState() throws IOException { return new DiskState(0, 0, true); }
+    default void selectDisk(int index) throws IOException { throw new IOException("Core does not support disk selection"); }
+    default void setDiskEjected(boolean ejected) throws IOException { throw new IOException("Core does not support disk eject"); }
     @Override void close() throws IOException;
 }

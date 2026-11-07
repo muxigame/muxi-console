@@ -28,19 +28,40 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 public final class ServerQaMod {
     public static final String ID = "muxi_console_qa_server";
     private final QaOwner owner = new QaOwner(ID, "server");
+    private final ReviewScene review = new ReviewScene(owner);
     private final Set<UUID> prepared = new HashSet<>();
     private boolean built;
+    private final java.util.ArrayDeque<JsonObject> roomHistory=new java.util.ArrayDeque<>();
+    private String lastRooms="";
 
     public ServerQaMod() { NeoForge.EVENT_BUS.addListener(this::tick); }
-    private void tick(ServerTickEvent.Post event) { owner.poll(command -> dispatch(event.getServer(), command)); }
+    private void tick(ServerTickEvent.Post event) { owner.poll(command -> dispatch(event.getServer(), command)); sampleRooms(event.getServer()); }
+
+    private JsonArray rooms(MinecraftServer server)throws java.io.IOException {
+        JsonArray rows=new JsonArray();for(var room:ConsoleServer.state(server).rooms.values()){
+            JsonObject row=new JsonObject();row.addProperty("key",room.key);row.addProperty("epoch",room.session.epoch());row.addProperty("frame",room.frame);row.addProperty("card",room.card.instanceId().toString());row.addProperty("host",room.session.host().toString());row.addProperty("ready",room.ready.size());row.addProperty("controllers",room.session.controllers().size());row.addProperty("fingerprint",room.fingerprint);row.addProperty("pendingJoin",room.pendingJoin==null?"":room.pendingJoin.toString());row.addProperty("pendingLeave",room.pendingLeave==null?"":room.pendingLeave.toString());JsonArray leaves=new JsonArray();room.requestedLeaves.forEach(id->leaves.add(id.toString()));row.add("requestedLeaves",leaves);rows.add(row);
+        }return rows;
+    }
+    private void sampleRooms(MinecraftServer server){try{JsonArray current=rooms(server);String key=current.toString();if(!key.equals(lastRooms)){lastRooms=key;JsonObject sample=new JsonObject();sample.addProperty("serverTick",server.getTickCount());sample.add("rooms",current);roomHistory.add(sample);while(roomHistory.size()>128)roomHistory.removeFirst();}}catch(java.io.IOException error){throw new IllegalStateException(error);}}
 
     private JsonObject dispatch(MinecraftServer server, JsonObject command) {
         return switch (command.get("action").getAsString()) {
             case "prepare" -> prepare(server);
             case "observe" -> observe(server);
             case "position" -> position(server, command);
-            default -> throw new IllegalArgumentException("Unsupported server QA action");
+            case "adopt_scene" -> adopt(server);
+            case "supply_controllers" -> supplyControllers(server);
+            default -> review.command(server, command);
         };
+    }
+    private JsonObject supplyControllers(MinecraftServer server){try{if(!built||!ConsoleServer.state(server).rooms.isEmpty())throw new IllegalStateException("Only an idle adopted fixture may receive ordinary controllers");for(String role:new String[]{"host","guest"}){ServerPlayer p=server.getPlayerList().getPlayerByName(owner.playerName(role));if(p==null||!p.getInventory().add(new ItemStack(ConsoleContent.CONTROLLER.get(),2)))throw new IllegalStateException("No room for ordinary fixture controllers");p.inventoryMenu.broadcastChanges();}return observe(server);}catch(java.io.IOException error){throw new IllegalStateException(error);}}
+    private JsonObject adopt(MinecraftServer server){
+        if(built||server.getPlayerList().getPlayerCount()!=2)throw new IllegalStateException("Only a newly launched two-real-client copied fixture may be adopted");
+        try{JsonObject marker=com.google.gson.JsonParser.parseString(java.nio.file.Files.readString(owner.validatedRoot().resolve("local-mc-owner.json"))).getAsJsonObject();if(!marker.getAsJsonObject("releaseProfile").getAsJsonArray("fixtureOverrides").toString().contains("copied fixture world"))throw new IllegalStateException("Unified runner must declare a copied fixture world");
+            for(int x:new int[]{8,10,12})if(!(server.overworld().getBlockEntity(new BlockPos(x,90,8)) instanceof DeviceEntity))throw new IllegalStateException("Existing physical console scene missing");
+            for(String role:new String[]{"host","guest"}){ServerPlayer player=server.getPlayerList().getPlayerByName(owner.playerName(role));if(player==null)throw new IllegalStateException("Real copied-fixture player missing");prepared.add(player.getUUID());}
+            JsonObject result=review.adopt(server);built=true;return result;
+        }catch(java.io.IOException error){throw new IllegalStateException(error);}
     }
 
     private JsonObject prepare(MinecraftServer server) {
@@ -93,6 +114,9 @@ public final class ServerQaMod {
 
     private JsonObject observe(MinecraftServer server) {
         JsonObject result = new JsonObject(); result.addProperty("serverTick", server.getTickCount());
+        result.add("browser",review.browserObserve(server));
+        result.add("hardware",review.hardwareObserve(server));
+        result.add("shared",review.sharedObserve(server));
         JsonArray players = new JsonArray();
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             JsonObject row = new JsonObject(); row.addProperty("uuid", player.getUUID().toString()); row.addProperty("name", player.getGameProfile().getName());
@@ -113,16 +137,11 @@ public final class ServerQaMod {
         result.add("devices", devices);
         try {
             var state = ConsoleServer.state(server); result.addProperty("contentBytes", state.content.usedBytes()); result.addProperty("pendingUploads", state.uploads.activeCount());
-            JsonArray rooms = new JsonArray();
-            for (var room : state.rooms.values()) {
-                JsonObject row = new JsonObject(); row.addProperty("key", room.key); row.addProperty("epoch", room.session.epoch()); row.addProperty("frame", room.frame);
-                row.addProperty("ready", room.ready.size()); row.addProperty("controllers", room.session.controllers().size()); row.addProperty("fingerprint", room.fingerprint);
-                rooms.add(row);
-            }
-            result.add("rooms", rooms);
+            result.add("rooms", rooms(server));JsonArray history=new JsonArray();roomHistory.forEach(history::add);result.add("roomHistory",history);
             JsonArray snapshots = new JsonArray(); Set<UUID> currentCards = new HashSet<>();
             for (int x : new int[]{8,10,12}) if (server.overworld().getBlockEntity(new BlockPos(x,90,8)) instanceof DeviceEntity device)
                 CardData.read(device.card).ifPresent(card -> currentCards.add(card.instanceId()));
+            for(int x:new int[]{8,14})if(server.overworld().getBlockEntity(new BlockPos(x,90,20)) instanceof DeviceEntity device)CardData.read(device.card).ifPresent(card->currentCards.add(card.instanceId()));
             for (var room : state.rooms.values()) currentCards.add(room.card.instanceId());
             for (ServerPlayer player : server.getPlayerList().getPlayers())
                 for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++)

@@ -47,6 +47,9 @@ public final class WorkerMain {
                                 case Wire.LOAD -> { core.loadState(packet.body()); yield new byte[0]; }
                                 case Wire.SRAM_READ -> { Wire.end(body); yield core.readSram(); }
                                 case Wire.SRAM_WRITE -> { core.writeSram(packet.body()); yield new byte[0]; }
+                                case Wire.DISK_STATE -> { Wire.end(body); DiskState state = core.diskState(); yield Wire.body(reply -> { reply.writeInt(state.count()); reply.writeInt(state.index()); reply.writeBoolean(state.ejected()); }); }
+                                case Wire.DISK_SELECT -> { int index = body.readInt(); Wire.end(body); core.selectDisk(index); yield new byte[0]; }
+                                case Wire.DISK_EJECT -> { int ejected = body.readUnsignedByte(); Wire.end(body); if (ejected > 1) throw new IOException("Invalid eject state"); core.setDiskEjected(ejected != 0); yield new byte[0]; }
                                 case Wire.QUIT -> { Wire.end(body); if (core != null) { core.close(); core = null; } quit = true; yield new byte[0]; }
                                 default -> throw new IOException("Unknown worker operation");
                             };

@@ -3,9 +3,10 @@
   "cores": {
     "fceumm": {
       "systems": [
-        "nes"
+        "nes",
+        "fds"
       ],
-      "purpose": "software-emulation",
+      "purpose": "emulation",
       "renderer": "software",
       "source": "https://github.com/libretro/libretro-fceumm",
       "sourceRepositoryEvidence": "https://raw.githubusercontent.com/libretro/libretro-super/master/rules.d/core-rules.sh",
@@ -38,7 +39,58 @@
       },
       "binaryReportedRevision": "e0f3086",
       "binaryReportedRevisionResolved": "e0f3086a8104f8fbbe49a2615b10401504a9533f",
-      "revisionResolutionEvidence": "https://api.github.com/repos/libretro/libretro-fceumm/commits/e0f3086"
+      "revisionResolutionEvidence": "https://api.github.com/repos/libretro/libretro-fceumm/commits/e0f3086",
+      "runtimeVerification": {
+        "platform": "fds",
+        "content": "original 6502 transfer firmware + original two-sided FDS disk",
+        "normalExit": true,
+        "gameCompatibilityTested": false,
+        "diagnosticExecutionTested": true,
+        "checkpointAcrossProcesses": true,
+        "contentSha256": "33b5b3e67d2e033d34c992f2bf864fbfcb860806e293859910f54bde0660a2af",
+        "result": "build/platform-smoke/fds-result.json"
+      },
+      "platformDiagnostics": {
+        "nes": {
+          "platform": "nes",
+          "checks": 23,
+          "content": "build/platform-smoke/regression.nes",
+          "contentBytes": 24592,
+          "contentSha256": "f4741848970514bf23db90b0f87a791acabac4e72f9c90a3c36fac9b966b9a30",
+          "coreSha256": "921af51bf09d1c4ca8342cce10de95cfbce2b280360c8aa00204dab7d1f30a8f",
+          "result": "build/platform-smoke/nes-result.json",
+          "resultSha256": "1a2c98155df1c223af209743d26eaff8eb639d401148f4595e59a02612b412c4",
+          "nativeExecution": true,
+          "normalExitAndNativeCleanup": true,
+          "inputBehaviorExercised": true,
+          "checkpointAcrossProcesses": false,
+          "commercialGameCompatibilityClaimed": false
+        },
+        "fds": {
+          "platform": "fds",
+          "checks": 18,
+          "content": "build/platform-smoke/original-transfer.fds",
+          "contentBytes": 131016,
+          "contentSha256": "33b5b3e67d2e033d34c992f2bf864fbfcb860806e293859910f54bde0660a2af",
+          "coreSha256": "921af51bf09d1c4ca8342cce10de95cfbce2b280360c8aa00204dab7d1f30a8f",
+          "result": "build/platform-smoke/fds-result.json",
+          "resultSha256": "dc6f9518276bed176c41049d37647a45c7d731fafde5ee7af574f9e96d281ac6",
+          "nativeExecution": true,
+          "normalExitAndNativeCleanup": true,
+          "inputBehaviorExercised": true,
+          "checkpointAcrossProcesses": true,
+          "commercialGameCompatibilityClaimed": false,
+          "frame": "build/platform-smoke/fds-frame.png",
+          "frameSha256": "f01120b85b3b795c841db64ab6d2265ab88a71aa661e0de37d1c33a18529bbf2",
+          "diagnosticFirmware": {
+            "file": "build/platform-smoke/original-fds-firmware/disksys.rom",
+            "bytes": 8192,
+            "sha256": "2688cbe4d26f10747a99ea209786e80e9af70d5c2062765a440d6ae3ef1151be",
+            "originalManufacturerFirmware": false,
+            "generalGameFirmwareReplacement": false
+          }
+        }
+      }
     },
     "2048": {
       "systems": [],
@@ -115,7 +167,43 @@
       },
       "binaryReportedRevision": "90e2899",
       "binaryReportedRevisionResolved": "90e2899574b7b63c59dce8a7276783426d52a068",
-      "revisionResolutionEvidence": "https://api.github.com/repos/libretro/SameBoy/commits/90e2899"
+      "revisionResolutionEvidence": "https://api.github.com/repos/libretro/SameBoy/commits/90e2899",
+      "platformDiagnostics": {
+        "gb": {
+          "platform": "gb",
+          "checks": 17,
+          "content": "build/platform-smoke/original.gb",
+          "contentBytes": 32768,
+          "contentSha256": "18babbc1c1836a6c9221984059b66d4b199e4c288173d5ecde4871a3ab20901a",
+          "coreSha256": "491aaf9074ef2f1cf641d87b3b17f44d488e648d111cd48825072d95916d7d7b",
+          "result": "build/platform-smoke/gb-result.json",
+          "resultSha256": "e2cdbe3245085addcde5b7d002db2d5add5cfef19c3d53a3a28f394c4c5212c3",
+          "nativeExecution": true,
+          "normalExitAndNativeCleanup": true,
+          "inputBehaviorExercised": true,
+          "checkpointAcrossProcesses": true,
+          "commercialGameCompatibilityClaimed": false,
+          "frame": "build/platform-smoke/gb-frame.png",
+          "frameSha256": "fc4ab0e37181914d0e6098d180eab9cebced9395b5f59dd7e2117822f8a1aa9c"
+        },
+        "gbc": {
+          "platform": "gbc",
+          "checks": 18,
+          "content": "build/platform-smoke/original.gbc",
+          "contentBytes": 32768,
+          "contentSha256": "a9ce1fa22947ef20b43bc8cd030c9409222ec0f3105bea79cb0ca39834944cbf",
+          "coreSha256": "491aaf9074ef2f1cf641d87b3b17f44d488e648d111cd48825072d95916d7d7b",
+          "result": "build/platform-smoke/gbc-result.json",
+          "resultSha256": "a993a3dc2c26b5abd0899a9bb8c936e65d8dc9a576bcf47a0d038ebfbb51c22e",
+          "nativeExecution": true,
+          "normalExitAndNativeCleanup": true,
+          "inputBehaviorExercised": true,
+          "checkpointAcrossProcesses": true,
+          "commercialGameCompatibilityClaimed": false,
+          "frame": "build/platform-smoke/gbc-frame.png",
+          "frameSha256": "118e59d63cd4b3f9c6cd1f3cd39c9c60f9aaf1ebbc83a9592a2aa217db2e2a71"
+        }
+      }
     },
     "mgba": {
       "systems": [
@@ -154,7 +242,24 @@
       },
       "binaryReportedRevision": "7a12d6d",
       "binaryReportedRevisionResolved": "7a12d6d4b9acb14c0ae62c9166b6a2f3d08007f6",
-      "revisionResolutionEvidence": "https://api.github.com/repos/libretro/mgba/commits/7a12d6d"
+      "revisionResolutionEvidence": "https://api.github.com/repos/libretro/mgba/commits/7a12d6d",
+      "platformDiagnostics": {
+        "gba": {
+          "platform": "gba",
+          "checks": 3188,
+          "content": "build/platform-smoke/regression.gba",
+          "contentBytes": 65536,
+          "contentSha256": "15cbff9dc172d2f94c60c0a3bf91b1e5f00a33e8d1ff77b85f9fbb32d70ee514",
+          "coreSha256": "4c289017c3ceaf737d0c303cc46ba428a95678027b3a3a61c78b2d3ae0f1756c",
+          "result": "build/platform-smoke/gba-result.json",
+          "resultSha256": "cfcfa4fb3d92c0f5f17d02833cc2cf9bee3397b70d7d70482b7fa7d2ad78eb34",
+          "nativeExecution": true,
+          "normalExitAndNativeCleanup": true,
+          "inputBehaviorExercised": true,
+          "checkpointAcrossProcesses": true,
+          "commercialGameCompatibilityClaimed": false
+        }
+      }
     },
     "bsnes2014_performance": {
       "systems": [
@@ -193,7 +298,26 @@
       },
       "binaryReportedRevision": "3c1394e",
       "binaryReportedRevisionResolved": "3c1394e042ee444c8248e1b9210e14ea55e836e9",
-      "revisionResolutionEvidence": "https://api.github.com/repos/libretro/bsnes2014/commits/3c1394e"
+      "revisionResolutionEvidence": "https://api.github.com/repos/libretro/bsnes2014/commits/3c1394e",
+      "platformDiagnostics": {
+        "snes": {
+          "platform": "snes",
+          "checks": 18,
+          "content": "build/platform-smoke/original.sfc",
+          "contentBytes": 32768,
+          "contentSha256": "ce9e368c11deb016291ebe56a38ade94979d73983c5e298c09bb96c4bec194f0",
+          "coreSha256": "46f8c6419bd472563a41d4dbf1a4193389ce95e586bccddd881a3a3d721aa0d9",
+          "result": "build/platform-smoke/snes-result.json",
+          "resultSha256": "02b7c925ef418e7c6cc92806111ebd0475420666fcca6d4733a90c494db81011",
+          "nativeExecution": true,
+          "normalExitAndNativeCleanup": true,
+          "inputBehaviorExercised": true,
+          "checkpointAcrossProcesses": true,
+          "commercialGameCompatibilityClaimed": false,
+          "frame": "build/platform-smoke/snes-frame.png",
+          "frameSha256": "f2a6bf817d95c11fa5302c5486addb7e6edee8faf62fed41385861cbbe81008f"
+        }
+      }
     },
     "blastem": {
       "systems": [
@@ -230,7 +354,26 @@
         "normalExit": true,
         "gameCompatibilityTested": false
       },
-      "binaryReportedRevision": null
+      "binaryReportedRevision": null,
+      "platformDiagnostics": {
+        "md": {
+          "platform": "md",
+          "checks": 18,
+          "content": "build/platform-smoke/original.md",
+          "contentBytes": 65536,
+          "contentSha256": "1ebefd7dd962c75838162002d26bd5a56da77278b17f88f0d266a75358f622dc",
+          "coreSha256": "b422238d5446048040fcc9aca1f8ab045a5c24962a72a03263e194a0271e8a88",
+          "result": "build/platform-smoke/md-result.json",
+          "resultSha256": "6a368c50d4f43cb7bbea7b08810d8aecf57b5d375e10cd341f7036a35fdd714c",
+          "nativeExecution": true,
+          "normalExitAndNativeCleanup": true,
+          "inputBehaviorExercised": true,
+          "checkpointAcrossProcesses": true,
+          "commercialGameCompatibilityClaimed": false,
+          "frame": "build/platform-smoke/md-frame.png",
+          "frameSha256": "c05c7e44f93df33d4b4ecbdac1224b2c15254f533074698a77e3011aec4e4d6c"
+        }
+      }
     },
     "gearsystem": {
       "systems": [
@@ -271,7 +414,60 @@
       },
       "binaryReportedRevision": "1be9a12",
       "binaryReportedRevisionResolved": "1be9a12b82cae84ddd6f9b7006d546abe2d58bd4",
-      "revisionResolutionEvidence": "https://api.github.com/repos/drhelius/Gearsystem/commits/1be9a12"
+      "revisionResolutionEvidence": "https://api.github.com/repos/drhelius/Gearsystem/commits/1be9a12",
+      "platformDiagnostics": {
+        "sms": {
+          "platform": "sms",
+          "checks": 18,
+          "content": "build/platform-smoke/original.sms",
+          "contentBytes": 32768,
+          "contentSha256": "3d1fefe749706aa7bad2dea6f04e8700033f5c7fa6ba4cfef5326a602d6e5dd2",
+          "coreSha256": "6b4b33dc9af28f1402679f73a6e98ef2edf4b4e58e64adf4190101193a94f1c5",
+          "result": "build/platform-smoke/sms-result.json",
+          "resultSha256": "32e89610773a033c0235492ecbcc9c29d8485c9d4a80be7e3316e66985601de5",
+          "nativeExecution": true,
+          "normalExitAndNativeCleanup": true,
+          "inputBehaviorExercised": true,
+          "checkpointAcrossProcesses": true,
+          "commercialGameCompatibilityClaimed": false,
+          "frame": "build/platform-smoke/sms-frame.png",
+          "frameSha256": "b0d9d69dedf01e73378fec13a0d698ac78de73433202f9f1b54d7bf4d7f1e1eb"
+        },
+        "gg": {
+          "platform": "gg",
+          "checks": 18,
+          "content": "build/platform-smoke/original.gg",
+          "contentBytes": 32768,
+          "contentSha256": "f1f34c4bf45d8d8420c62ecaae2f43db6b061c50e0545e4899632c25ea462f53",
+          "coreSha256": "6b4b33dc9af28f1402679f73a6e98ef2edf4b4e58e64adf4190101193a94f1c5",
+          "result": "build/platform-smoke/gg-result.json",
+          "resultSha256": "608240fe60c3b647eb924ab60fddb6913176c920a0ca9dc1cce5e8a275144d22",
+          "nativeExecution": true,
+          "normalExitAndNativeCleanup": true,
+          "inputBehaviorExercised": true,
+          "checkpointAcrossProcesses": true,
+          "commercialGameCompatibilityClaimed": false,
+          "frame": "build/platform-smoke/gg-frame.png",
+          "frameSha256": "118e59d63cd4b3f9c6cd1f3cd39c9c60f9aaf1ebbc83a9592a2aa217db2e2a71"
+        },
+        "sg1000": {
+          "platform": "sg1000",
+          "checks": 18,
+          "content": "build/platform-smoke/original.sg",
+          "contentBytes": 32768,
+          "contentSha256": "38a1f4543b991937253d0f58138131c8a622ee27668a6345e4dd311134bb649e",
+          "coreSha256": "6b4b33dc9af28f1402679f73a6e98ef2edf4b4e58e64adf4190101193a94f1c5",
+          "result": "build/platform-smoke/sg1000-result.json",
+          "resultSha256": "5a5519f264e6b1000327d59f552d711d172b2f473c157914600457eb77b1ea25",
+          "nativeExecution": true,
+          "normalExitAndNativeCleanup": true,
+          "inputBehaviorExercised": true,
+          "checkpointAcrossProcesses": true,
+          "commercialGameCompatibilityClaimed": false,
+          "frame": "build/platform-smoke/sg1000-frame.png",
+          "frameSha256": "0b07518ce4829b6a3a8f83f4617dc58eabddef6fa3494fb9d9dffb8867c2554d"
+        }
+      }
     },
     "mednafen_pce_fast": {
       "systems": [
@@ -308,7 +504,26 @@
         "normalExit": true,
         "gameCompatibilityTested": false
       },
-      "binaryReportedRevision": null
+      "binaryReportedRevision": null,
+      "platformDiagnostics": {
+        "pce": {
+          "platform": "pce",
+          "checks": 18,
+          "content": "build/platform-smoke/original.pce",
+          "contentBytes": 32768,
+          "contentSha256": "523d25514828f71eae422d5af9a3b866d6e9a8cde6a28b6cd17bddf4aeaac5f5",
+          "coreSha256": "c696a91468c519daa55e51df23095529af01eab9d0d00e5ca2c1bdab29b53557",
+          "result": "build/platform-smoke/pce-result.json",
+          "resultSha256": "f5503c9072f67d8d9a29ad59b15be9a71ecc1a7df4d405af3d86f7fd20255daf",
+          "nativeExecution": true,
+          "normalExitAndNativeCleanup": true,
+          "inputBehaviorExercised": true,
+          "checkpointAcrossProcesses": true,
+          "commercialGameCompatibilityClaimed": false,
+          "frame": "build/platform-smoke/pce-frame.png",
+          "frameSha256": "200f82d789572167adabdad7f9162fb8abec2deafc58f87edf65fe3b14880a29"
+        }
+      }
     },
     "stella2014": {
       "systems": [
@@ -347,7 +562,26 @@
       },
       "binaryReportedRevision": "7d1361e",
       "binaryReportedRevisionResolved": "7d1361e407e63f29e52892655069e5fb4096e691",
-      "revisionResolutionEvidence": "https://api.github.com/repos/libretro/stella2014-libretro/commits/7d1361e"
+      "revisionResolutionEvidence": "https://api.github.com/repos/libretro/stella2014-libretro/commits/7d1361e",
+      "platformDiagnostics": {
+        "a2600": {
+          "platform": "a2600",
+          "checks": 18,
+          "content": "build/platform-smoke/original.a26",
+          "contentBytes": 4096,
+          "contentSha256": "55d695766556771f51b70769f0560429e3b186bb02c4be897061d3cb9a24676c",
+          "coreSha256": "2b9bdcc6c9b8c15b80997e20dc2e2dff99e73b1ecf0ecb16e6a1dbc51145fffb",
+          "result": "build/platform-smoke/a2600-result.json",
+          "resultSha256": "a0b66464df4d2f6d6e7a25a772bd936da6baf34d33f8ee6597b6fd48284cac7b",
+          "nativeExecution": true,
+          "normalExitAndNativeCleanup": true,
+          "inputBehaviorExercised": true,
+          "checkpointAcrossProcesses": true,
+          "commercialGameCompatibilityClaimed": false,
+          "frame": "build/platform-smoke/a2600-frame.png",
+          "frameSha256": "d1211e8d9cd90f27295df611621305b308bd77c0f46b0cfe138ee8d126f1032e"
+        }
+      }
     },
     "prosystem": {
       "systems": [
@@ -386,7 +620,26 @@
       },
       "binaryReportedRevision": "8a88014",
       "binaryReportedRevisionResolved": "8a88014287c7a01cd568067e5a557d0a2b2a051f",
-      "revisionResolutionEvidence": "https://api.github.com/repos/libretro/prosystem-libretro/commits/8a88014"
+      "revisionResolutionEvidence": "https://api.github.com/repos/libretro/prosystem-libretro/commits/8a88014",
+      "platformDiagnostics": {
+        "a7800": {
+          "platform": "a7800",
+          "checks": 16,
+          "content": "build/platform-smoke/original.a78",
+          "contentBytes": 32896,
+          "contentSha256": "776b6914c35aafce73667a429f3c936de21839918250de7e504cbc98ae41a594",
+          "coreSha256": "9127b2fc7c6b339a16b46a734ceee0e21b948580575ea3fbed41e33e27a13406",
+          "result": "build/platform-smoke/a7800-result.json",
+          "resultSha256": "51451d1ee65d6fd8f711eaf5eed57e5e823c19a2edf7d63a2311a56fad596f35",
+          "nativeExecution": true,
+          "normalExitAndNativeCleanup": true,
+          "inputBehaviorExercised": false,
+          "checkpointAcrossProcesses": true,
+          "commercialGameCompatibilityClaimed": false,
+          "frame": "build/platform-smoke/a7800-frame.png",
+          "frameSha256": "bdb11a682f1323ce251f71d542031059cc39949e3dcc4558906f5d3f367b9b80"
+        }
+      }
     },
     "mednafen_lynx": {
       "systems": [
@@ -425,7 +678,33 @@
       },
       "binaryReportedRevision": "fcdefcf",
       "binaryReportedRevisionResolved": "fcdefcfb3c11d6d2e71be076a5d3df2e88ab73ed",
-      "revisionResolutionEvidence": "https://api.github.com/repos/libretro/beetle-lynx-libretro/commits/fcdefcf"
+      "revisionResolutionEvidence": "https://api.github.com/repos/libretro/beetle-lynx-libretro/commits/fcdefcf",
+      "platformDiagnostics": {
+        "lynx": {
+          "platform": "lynx",
+          "checks": 16,
+          "content": "build/platform-smoke/original.o",
+          "contentBytes": 19936,
+          "contentSha256": "6bc7064927bec79232cd811f13dcd7f755ff1f9db5f3a0aa9bae0656c43ae288",
+          "coreSha256": "93258f72309f0f9626a1816f6fc9fae23e235ac1910b9155ecf31857d17a806e",
+          "result": "build/platform-smoke/lynx-result.json",
+          "resultSha256": "2eaa99e7a34ff6cde3188d6f4d2bb3289f29c65fe5806fe9616ba8410b72bf49",
+          "nativeExecution": true,
+          "normalExitAndNativeCleanup": true,
+          "inputBehaviorExercised": false,
+          "checkpointAcrossProcesses": true,
+          "commercialGameCompatibilityClaimed": false,
+          "frame": "build/platform-smoke/lynx-frame.png",
+          "frameSha256": "aa1efb51dbedbc28e1b0f6773ddedd942fc86df984327d9a0a4bb2e3aa7b9663",
+          "diagnosticFirmware": {
+            "file": "build/platform-smoke/original-lynx-firmware/lynxboot.img",
+            "bytes": 512,
+            "sha256": "afa2071cd3573063ed8036f671530ba73010c5fda20a5e8e87aa05a20b5863e8",
+            "originalManufacturerFirmware": false,
+            "generalGameFirmwareReplacement": false
+          }
+        }
+      }
     },
     "mednafen_ngp": {
       "systems": [
@@ -465,7 +744,43 @@
       },
       "binaryReportedRevision": "a50d5ac",
       "binaryReportedRevisionResolved": "a50d5ac288a81f2104ddf43195a4efdd15c72227",
-      "revisionResolutionEvidence": "https://api.github.com/repos/libretro/beetle-ngp-libretro/commits/a50d5ac"
+      "revisionResolutionEvidence": "https://api.github.com/repos/libretro/beetle-ngp-libretro/commits/a50d5ac",
+      "platformDiagnostics": {
+        "ngp": {
+          "platform": "ngp",
+          "checks": 15,
+          "content": "build/platform-smoke/original.ngp",
+          "contentBytes": 32768,
+          "contentSha256": "3c6979461a995322a2e8637c0bc5529986296d7ae5b8856bb2d8a12b68b31035",
+          "coreSha256": "48ee72698b2966959a6564fe425e392017543ca47b3256ccad62068cf551a44a",
+          "result": "build/platform-smoke/ngp-result.json",
+          "resultSha256": "7a14236e672332053b32fbbcfd5e4d5c0870cc6120efebbe978c7d3ae107a490",
+          "nativeExecution": true,
+          "normalExitAndNativeCleanup": true,
+          "inputBehaviorExercised": false,
+          "checkpointAcrossProcesses": true,
+          "commercialGameCompatibilityClaimed": false,
+          "frame": "build/platform-smoke/ngp-frame.png",
+          "frameSha256": "e9da0ddabf6cc7f8271f4a61edc8a2d6ba587d2370019dcb1a299ff25b171e07"
+        },
+        "ngpc": {
+          "platform": "ngpc",
+          "checks": 16,
+          "content": "build/platform-smoke/original.ngpc",
+          "contentBytes": 32768,
+          "contentSha256": "5c3de64a93c20634d233f2f31cf9e01f4572a8a25cfcbc3da5e87d6dbf5e0ec3",
+          "coreSha256": "48ee72698b2966959a6564fe425e392017543ca47b3256ccad62068cf551a44a",
+          "result": "build/platform-smoke/ngpc-result.json",
+          "resultSha256": "f0a65a906e663122266991a6cadea791b28d6a87d2c6be46d561fa0c29056b0e",
+          "nativeExecution": true,
+          "normalExitAndNativeCleanup": true,
+          "inputBehaviorExercised": false,
+          "checkpointAcrossProcesses": true,
+          "commercialGameCompatibilityClaimed": false,
+          "frame": "build/platform-smoke/ngpc-frame.png",
+          "frameSha256": "8acaee9547563627651b64e6d5d9f5ce569d060de3ba4b89a7dae2d2b4cbcaa4"
+        }
+      }
     },
     "mednafen_wswan": {
       "systems": [
@@ -505,7 +820,43 @@
       },
       "binaryReportedRevision": "4b01295",
       "binaryReportedRevisionResolved": "4b01295838ea89e3f1355bbe4cb5cf98aa6108cd",
-      "revisionResolutionEvidence": "https://api.github.com/repos/libretro/beetle-wswan-libretro/commits/4b01295"
+      "revisionResolutionEvidence": "https://api.github.com/repos/libretro/beetle-wswan-libretro/commits/4b01295",
+      "platformDiagnostics": {
+        "ws": {
+          "platform": "ws",
+          "checks": 17,
+          "content": "build/platform-smoke/original.ws",
+          "contentBytes": 131072,
+          "contentSha256": "2bf94232f4458808c271c09d39d2b16b9e29867262aeda285836c11f5026aacd",
+          "coreSha256": "8f5d3314e3dfa2b030ed3b2967febb3f6e216bc8bcf463e0eb0227d4dd2c3f74",
+          "result": "build/platform-smoke/ws-result.json",
+          "resultSha256": "b5bc65e7c6ff8bf8f8ff708a7d301725a8b0ca0e528fb49e2525af14fe2c23bc",
+          "nativeExecution": true,
+          "normalExitAndNativeCleanup": true,
+          "inputBehaviorExercised": true,
+          "checkpointAcrossProcesses": true,
+          "commercialGameCompatibilityClaimed": false,
+          "frame": "build/platform-smoke/ws-frame.png",
+          "frameSha256": "7e8c6af7f9e53b00faf06fb70052107d5a7e6b450d14d2cf9214cc68e7a5128e"
+        },
+        "wsc": {
+          "platform": "wsc",
+          "checks": 18,
+          "content": "build/platform-smoke/original.wsc",
+          "contentBytes": 131072,
+          "contentSha256": "4c209005984fe75c840dff0a18fa0abaf9aa710e01e892fd6fd796f52b7ea4d1",
+          "coreSha256": "8f5d3314e3dfa2b030ed3b2967febb3f6e216bc8bcf463e0eb0227d4dd2c3f74",
+          "result": "build/platform-smoke/wsc-result.json",
+          "resultSha256": "d5fef68ec33b7b4122aa8cf99bbe6d5c3bc6eb757438eaaec6695c28dcc576ff",
+          "nativeExecution": true,
+          "normalExitAndNativeCleanup": true,
+          "inputBehaviorExercised": true,
+          "checkpointAcrossProcesses": true,
+          "commercialGameCompatibilityClaimed": false,
+          "frame": "build/platform-smoke/wsc-frame.png",
+          "frameSha256": "9e093da197909f9ad8f6a4d6acd15c0db053bed75cbdaa7dfec87f4b2ddb754a"
+        }
+      }
     },
     "mednafen_vb": {
       "systems": [
@@ -544,12 +895,151 @@
       },
       "binaryReportedRevision": "d5ae54c",
       "binaryReportedRevisionResolved": "d5ae54c8e23b573a3b34e888b2d48a588027e92c",
-      "revisionResolutionEvidence": "https://api.github.com/repos/libretro/beetle-vb-libretro/commits/d5ae54c"
+      "revisionResolutionEvidence": "https://api.github.com/repos/libretro/beetle-vb-libretro/commits/d5ae54c",
+      "platformDiagnostics": {
+        "vb": {
+          "platform": "vb",
+          "checks": 16,
+          "content": "build/platform-smoke/original.vb",
+          "contentBytes": 131072,
+          "contentSha256": "43f3f3e7d32850d3b7e27ece91c8b1966250a952d5bac0ee28eaa6ad0c82fb84",
+          "coreSha256": "274888f687948c8a77f878f63d2a858b9d010af2ec8fe876626b5e5077d6c014",
+          "result": "build/platform-smoke/vb-result.json",
+          "resultSha256": "ffa0343e46821e4d92252e65d0a24f84efcc0923e3c278f7d0d2f6354bad5504",
+          "nativeExecution": true,
+          "normalExitAndNativeCleanup": true,
+          "inputBehaviorExercised": false,
+          "checkpointAcrossProcesses": true,
+          "commercialGameCompatibilityClaimed": false,
+          "frame": "build/platform-smoke/vb-frame.png",
+          "frameSha256": "0993194f946363b83c42e0738a30bd4eb5825fba4e5582910496bb8c61f3c9b4"
+        }
+      }
+    },
+    "mupen64plus_next": {
+      "systems": [
+        "n64"
+      ],
+      "purpose": "emulation",
+      "renderer": "opengl",
+      "source": "https://github.com/libretro/mupen64plus-libretro-nx",
+      "sourceRepositoryEvidence": "https://raw.githubusercontent.com/libretro/libretro-super/master/rules.d/core-rules.sh",
+      "sourceRevision": null,
+      "sourceRevisionVerified": false,
+      "releaseReady": false,
+      "sourceRevisionNote": "Official rolling binary has no verified corresponding source revision; current source HEAD is not substituted. Requires exact corresponding source and license delivery before release.",
+      "license": "GPLv2",
+      "licenseUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/mupen64plus_next_libretro.info",
+      "documentation": "https://docs.libretro.com/library/mupen64plus/",
+      "officialMetadataUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/mupen64plus_next_libretro.info",
+      "officialMetadataSha256": "8d1fcd13a17310e233be4ff247bf1032f8f786fe685e24cef5ed4ea474ccdfb6",
+      "platforms": {
+        "windows-x86_64": {
+          "archive": "test-environment/cache/muxi-console/libretro/mupen64plus_next_libretro.dll.zip",
+          "libraryName": "mupen64plus_next_libretro.dll",
+          "url": "https://buildbot.libretro.com/nightly/windows/x86_64/latest/mupen64plus_next_libretro.dll.zip",
+          "archiveBytes": 3057855,
+          "archiveSha256": "3d34f18abfb73df88064d9d946cd1070fb0b521d201b55d67d0b9157bad22990",
+          "libraryBytes": 8383093,
+          "librarySha256": "3f5ec83e22c391002dea7a026758d5e5a661b9390ef67e80a244a34e05c3c63e",
+          "upstreamLastModified": "Fri, 06 Nov 2026 08:54:06 GMT"
+        }
+      },
+      "binaryVersion": "3.0-Vulkan 15bada8",
+      "binaryReportedRevision": "15bada8",
+      "runtimeVerification": {
+        "platform": "n64",
+        "content": "original MIPS boot + VI + SI/PIF diagnostic",
+        "normalExit": true,
+        "gameCompatibilityTested": false,
+        "diagnosticExecutionTested": true,
+        "checkpointAcrossProcesses": true,
+        "contentSha256": "6aa5d0f2b16f1cff5c5b652e32aae0ef8479147894671c8b35dece37c545b757",
+        "result": "build/platform-smoke/n64-result.json"
+      },
+      "platformDiagnostics": {
+        "n64": {
+          "platform": "n64",
+          "checks": 18,
+          "content": "build/platform-smoke/original-vi.z64",
+          "contentBytes": 1052672,
+          "contentSha256": "6aa5d0f2b16f1cff5c5b652e32aae0ef8479147894671c8b35dece37c545b757",
+          "coreSha256": "3f5ec83e22c391002dea7a026758d5e5a661b9390ef67e80a244a34e05c3c63e",
+          "result": "build/platform-smoke/n64-result.json",
+          "resultSha256": "968f1996a0208810d72b92ba0e68e0df240de8b83be940afed1c1d0666421f7a",
+          "nativeExecution": true,
+          "normalExitAndNativeCleanup": true,
+          "inputBehaviorExercised": true,
+          "checkpointAcrossProcesses": true,
+          "commercialGameCompatibilityClaimed": false,
+          "frame": "build/platform-smoke/n64-frame.png",
+          "frameSha256": "778d2ce5acceccba10ced9c2a9a3294ef28084910bbdca9dad9f2233ef89670a"
+        }
+      }
+    },
+    "mame": {
+      "systems": [
+        "arcade"
+      ],
+      "purpose": "emulation",
+      "renderer": "software",
+      "source": "https://github.com/libretro/mame",
+      "sourceRepositoryEvidence": "https://raw.githubusercontent.com/libretro/libretro-super/master/rules.d/core-rules.sh",
+      "sourceRevision": null,
+      "sourceRevisionVerified": false,
+      "releaseReady": false,
+      "sourceRevisionNote": "Official rolling binary has no verified corresponding source revision; current source HEAD is not substituted. Requires exact corresponding source and license delivery before release.",
+      "license": "GPLv2+",
+      "licenseUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/mame_libretro.info",
+      "documentation": "https://docs.libretro.com/library/mame/",
+      "officialMetadataUrl": "https://raw.githubusercontent.com/libretro/libretro-core-info/master/mame_libretro.info",
+      "officialMetadataSha256": "c3a2f1e0d816debfd06e76d427c46fccbce6a7d5fd9b0199754f046348e55509",
+      "platforms": {
+        "windows-x86_64": {
+          "archive": "test-environment/cache/muxi-console/libretro/mame_libretro.dll.zip",
+          "libraryName": "mame_libretro.dll",
+          "url": "https://buildbot.libretro.com/nightly/windows/x86_64/latest/mame_libretro.dll.zip",
+          "archiveBytes": 107978473,
+          "archiveSha256": "0d4c086a92fa93222c1c7bd7092db203fa1931638d329c5d540d9d2cf2a1c635",
+          "libraryBytes": 372431360,
+          "librarySha256": "0f5608fcadc4e59c88d4ae3caf0e52ed98cd890a99d9e569b71639082f1aa109",
+          "upstreamLastModified": "Fri, 16 Oct 2026 07:58:50 GMT"
+        }
+      },
+      "binaryVersion": "0.289 (5f5a0774)",
+      "binaryReportedRevision": "5f5a0774",
+      "runtimeVerification": {
+        "platform": "arcade",
+        "content": "MAME built-in Pong discrete circuit; no game ROM",
+        "normalExit": true,
+        "gameCompatibilityTested": false,
+        "diagnosticExecutionTested": true,
+        "checkpointAcrossProcesses": true,
+        "contentSha256": "3f0e060aa6778293e48aa284e64cdf85abc396c9841d7b252aba9ea922f1d3df",
+        "result": "build/platform-smoke/arcade-result.json"
+      },
+      "platformDiagnostics": {
+        "arcade": {
+          "platform": "arcade",
+          "checks": 12,
+          "content": "build/platform-smoke/pong.cmd",
+          "contentBytes": 43,
+          "contentSha256": "3f0e060aa6778293e48aa284e64cdf85abc396c9841d7b252aba9ea922f1d3df",
+          "coreSha256": "0f5608fcadc4e59c88d4ae3caf0e52ed98cd890a99d9e569b71639082f1aa109",
+          "result": "build/platform-smoke/arcade-result.json",
+          "resultSha256": "668aefc25f190e871e99fc01fb46e39c3b1785b8dff29549cf6dadb7df100ab3",
+          "nativeExecution": true,
+          "normalExitAndNativeCleanup": true,
+          "inputBehaviorExercised": false,
+          "checkpointAcrossProcesses": true,
+          "commercialGameCompatibilityClaimed": false,
+          "frame": "build/platform-smoke/arcade-frame.png",
+          "frameSha256": "34bd7e58638f20b0ed77413a16e52dc73e770788d2e239721efc09ab9f94e923"
+        }
+      }
     }
   },
-  "pinnedAtUtc": "2026-11-07T13:13:50.873834+00:00",
+  "pinnedAtUtc": "2026-11-07T17:08:42.254829+00:00",
   "scope": "Windows x86_64 development candidate; exact source correspondence not yet verified; no proprietary BIOS or game ROMs",
-  "unsupportedSystems": {
-    "n64": "Worker has no OpenGL/Vulkan hardware interface; no unverified N64 binary is bundled."
-  }
+  "unsupportedSystems": {}
 }

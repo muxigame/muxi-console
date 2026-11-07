@@ -45,6 +45,7 @@ class Driver:
             raise ValueError("QA build report must come from this independent repository")
         self.build = read_json(self.build_path)
         self.counter = time.time_ns() // 1000
+        self.observation_timeouts=[]
         self.marker = self.verify()
         self.channel = self.root / "console-qa"
 
@@ -67,8 +68,9 @@ class Driver:
                 if not path.is_file() or sha(path) != artifact["sha256"]:
                     raise ValueError("Actual role product/QA bytes differ: " + str(path))
                 rows = [row for row in marker["inputArtifacts"] if row.get("file") == path.name and row.get("sha256") == artifact["sha256"]]
-                scope = "both" if artifact is product else "server" if role == "server" else "client"
-                if not any(row.get("scope") == scope for row in rows):
+                scope = "server" if role == "server" else "client"
+                accepted_scopes = {"both", scope} if artifact is product else {scope}
+                if not any(row.get("scope") in accepted_scopes for row in rows):
                     raise ValueError("Runner did not pin this exact artifact/scope")
             opposite = self.build["artifacts"]["client" if role == "server" else "server"]
             if (self.root / role / "mods" / Path(opposite["path"]).name).exists():
@@ -77,7 +79,7 @@ class Driver:
             raise ValueError("Run identity changed")
         return marker
 
-    def command(self, role, action, body=None, timeout=30):
+    def command(self, role, action, body=None, timeout=60):
         if role not in ("server", "host", "guest") or not 1 <= timeout <= 60:
             raise ValueError("Invalid QA command role/timeout")
         marker = self.verify()
@@ -89,14 +91,33 @@ class Driver:
         self.channel.mkdir(exist_ok=True)
         temporary = self.channel / ("command-" + role + ".tmp")
         temporary.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
-        os.replace(temporary, self.channel / ("command-" + role + ".json"))
         deadline = time.monotonic() + timeout
+        while True:
+            try:
+                os.replace(temporary, self.channel / ("command-" + role + ".json"))
+                break
+            except PermissionError:
+                # A Java read handle can briefly deny DELETE sharing on NTFS.
+                # Retry the exact same CREATE_NEW payload/id, never permissions
+                # or another channel, inside this command's original budget.
+                if time.monotonic()>=deadline:
+                    raise
+                if (self.root/"stop-request.json").exists():
+                    raise RuntimeError("Unified runner requested normal stop")
+                time.sleep(.1)
         result_path = self.channel / ("reply-" + role + ".json")
         while time.monotonic() < deadline:
             if (self.root / "stop-request.json").exists():
                 raise RuntimeError("Unified runner requested normal stop")
             if result_path.exists():
-                result = read_json(result_path)
+                try:
+                    result = read_json(result_path)
+                except (PermissionError, FileNotFoundError):
+                    # Windows may deny a read while the same reply is atomically
+                    # replaced. Only this already-owned reply is retried, within
+                    # the original deadline; identity checks still run below.
+                    time.sleep(0.1)
+                    continue
                 if result.get("id") == self.counter:
                     if result.get("runId") != marker["runId"] or result.get("pid") != payload["pid"] or result.get("role") != role or result.get("productSha256") != payload["productSha256"] or result.get("qaSha256") != payload["qaSha256"]:
                         raise ValueError("QA response identity/hash differs")
@@ -119,19 +140,383 @@ class Driver:
         deadline = time.monotonic() + timeout
         last = None
         while time.monotonic() < deadline:
-            last = self.command(role, "observe")
+            try:
+                last = self.command(role, "observe")
+            except TimeoutError as error:
+                self.observation_timeouts.append({"role":role,"label":label,"error":str(error)})
+                if time.monotonic()>=deadline:
+                    raise
+                continue
             if predicate(last):
                 return last
             time.sleep(0.2)
         raise TimeoutError(label + ": " + json.dumps(last, ensure_ascii=False))
 
     def capture(self, role, name):
+        image = self.root / role / "screenshots" / (name + ".png")
+        if image.exists():
+            raise ValueError("A native screenshot with this name already exists; preserve the original and use a fresh run")
         self.command(role, "screenshot", {"name": name})
         self.wait_for(role, lambda value: value.get("screenshot") == name + ".png", "native screenshot completion")
-        image = self.root / role / "screenshots" / (name + ".png")
         if not image.is_file() or image.stat().st_size < 1000:
             raise ValueError("Native screenshot missing/empty")
-        return {"path": str(image), "sha256": sha(image), "visuallyReviewed": False}
+        header = image.read_bytes()[:24]
+        if header[:8] != b"\x89PNG\r\n\x1a\n":
+            raise ValueError("Minecraft did not return an original PNG")
+        width, height = int.from_bytes(header[16:20], "big"), int.from_bytes(header[20:24], "big")
+        if width < 640 or height < 360:
+            raise ValueError("Native screenshot is below the model review resolution")
+        return {"path": str(image), "sha256": sha(image), "width": width, "height": height,
+                "nativeMinecraftFramebuffer": True, "visuallyReviewed": False}
+
+    def settle(self, role, ticks=12):
+        before = self.command(role, "observe")["clientTicks"]
+        return self.wait_for(role, lambda value: value["clientTicks"] >= before + ticks, "actual client ticks after camera/interaction")
+
+    def model_review(self, held_only=False):
+        output = self.channel / ("held-review-result.json" if held_only else "model-review-result.json")
+        if output.exists():
+            raise ValueError("Model review results already exist; preserve failures and use a fresh run")
+        plan = self.build["modelReviewPlan"]
+        if sha(plan["path"]) != plan["sha256"]:
+            raise ValueError("Build-pinned model review plan changed")
+        stations = read_json(plan["path"])["stations"]
+        evidence = {"runId": self.marker["runId"], "productSha256": self.build["product"]["sha256"],
+                    "planSha256": plan["sha256"], "screenshots": [], "physicalOSInput": False,
+                    "visualAcceptance": False, "nativeCaptureComplete": False, "scenarioComplete": False}
+        try:
+            self.prepare()
+            evidence["fixture"] = self.command("server", "model_prepare")
+            for station in ([] if held_only else [{"cmd": 0, "native_screenshot": "00-gallery-overview.png"}, *stations]):
+                camera = self.command("server", "model_camera", {"cmd": station["cmd"]})
+                self.command("host", "slot", {"slot": 8})
+                self.command("host", "review_view", {"held": False})
+                self.settle("host", 16)
+                row = self.capture("host", Path(station["native_screenshot"]).stem)
+                row.update(cmd=station["cmd"], camera=camera)
+                evidence["screenshots"].append(row)
+            for station in stations:
+                if station["form_factor"] not in ("handheld", "viewer"):
+                    continue
+                for hand in ("main", "off"):
+                    camera = self.command("server", "model_camera", {"cmd": station["cmd"], "held": True, "hand": hand})
+                    self.command("host", "slot", {"slot": 7 if hand == "main" else 8})
+                    self.command("host", "review_view", {"held": True})
+                    key = "heldModel" if hand == "main" else "offhandModel"
+                    self.wait_for("host", lambda v: v[key] == station["cmd"], "actual handheld CMD synchronized")
+                    self.settle("host", 16)
+                    name = "23-handhelds-first-person" if station["cmd"] == 3 and hand == "main" else Path(station["native_screenshot"]).stem + ("-offhand-first-person" if hand == "off" else "-first-person")
+                    row = self.capture("host", name)
+                    row.update(cmd=station["cmd"], held=True, hand=hand, camera=camera)
+                    evidence["screenshots"].append(row)
+            evidence["nativeCaptureComplete"] = len(evidence["screenshots"]) == (20 if held_only else 43)
+            evidence["scenarioComplete"] = evidence["nativeCaptureComplete"]
+        except Exception as error:
+            evidence["failure"] = str(error)
+            raise
+        finally:
+            output.write_text(json.dumps(evidence, ensure_ascii=False, indent=2), encoding="utf-8")
+        return evidence
+
+    def browser_dependencies(self):
+        expected = {
+            "[内置网页浏览器]WebDisplays-REMASTER-2.1.0.jar": "2c61926eb8049a098679c5d3710714d49e831152d8b017b822e99eb00849c85e",
+            "[嵌入式框架]mcef-neoforge-2.1.6-1.21.1.jar": "c8d7c1edd4f3b1085d65240d50b03a768f9efb763b44caa358a17b29979dbe02",
+        }
+        for role in ("server", "host", "guest"):
+            for filename, digest in expected.items():
+                path = self.root / role / "mods" / filename
+                if not path.is_file() or sha(path) != digest:
+                    raise ValueError("Actual browser dependency differs: " + str(path))
+                if not any(row.get("file") == filename and row.get("sha256") == digest for row in self.marker["inputArtifacts"]):
+                    raise ValueError("Unified runner did not pin the browser dependency")
+        return expected
+
+    def hardware_scenario(self):
+        output = self.channel / "hardware-scenario-result.json"
+        if output.exists():
+            raise ValueError("Preserve existing hardware results and use a fresh run")
+        evidence = {"runId": self.marker["runId"], "productSha256": self.build["product"]["sha256"],
+                    "physicalOSInput": False, "visualAcceptance": False, "scenarioComplete": False, "screenshots": []}
+        host = lambda action, body=None: self.command("host", action, body)
+        try:
+            prepared = self.prepare()
+            name = prepared["clients"]["host"]["playerName"]
+            move = lambda x, z: self.command("server", "position", {"player": name, "x": x, "z": z})
+            self.command("server", "hardware_prepare")
+            self.command("server", "hardware_mode", {"mode": "survival"})
+            self.wait_for("host", lambda v: v["gameMode"] == "survival", "real survival placement/drop mode")
+            move(5.5, 8.5);host("slot", {"slot": 4});host("place_model")
+            placed = self.wait_for("server", lambda v: v["hardware"]["block"] == "muxi_console:desk_console" and v["hardware"]["model"] == 2, "real CMD item placement preserves SNES model")
+            self.wait_for("host", lambda v: not any(i["slot"] == 4 for i in v["inventory"]), "survival placement consumes its item")
+            evidence["placedModel"] = placed["hardware"]
+            for platform in ("nes", "gb"):
+                move(8.5, 11.5);host("slot", {"slot": 8});host("use_block", {"x": 8})
+                self.wait_for("host", lambda v: v["screen"].endswith("WriterScreen"), "real writer for " + platform)
+                host("writer_drop", {"rom": platform});host("writer_confirm");host("button", {"text": "上传并刻录"})
+                self.wait_for("host", lambda v: any(c["platform"] == platform and c["slot"] != 2 for c in v.get("cards", [])), "real " + platform + " cartridge burn")
+                host("close_screen")
+            cards = host("observe")["cards"]
+            nes = next(c for c in cards if c["platform"] == "nes")
+            gb = next(c for c in cards if c["platform"] == "gb")
+            if gb["hash"] != self.build["gbDiagnosticRom"]["sha256"]:
+                raise ValueError("GB fixture differs from the build-pinned original")
+            move(5.5, 8.5);host("slot", {"slot": nes["slot"]});host("use_block", {"x": 5, "z": 6})
+            wrong = self.wait_for("host", lambda v: v["lastCode"] == "hardware", "wrong machine rejects genuine NES cartridge")
+            if not any(c["instance"] == nes["instance"] for c in wrong["cards"]) or "card" in self.command("server", "observe")["hardware"]["device"]:
+                raise ValueError("Wrong-machine rejection consumed or installed the cartridge")
+            evidence["wrongMachineRejectedWithoutConsumption"] = True
+            host("handheld_load")
+            loaded = self.wait_for("host", lambda v: any(c["instance"] == gb["instance"] and c["slot"] == 2 for c in v["cards"]), "GBA shell accepts the genuine GB cartridge")
+            shell = next(i for i in loaded["inventory"] if i["slot"] == 2)
+            if shell["model"] != 5 or shell["qaPreserve"] != "original-gba-shell":
+                raise ValueError("Loading overwrote the GBA shell or its other custom data")
+            evidence["loadedGbaShell"] = shell
+            host("handheld_use")
+            self.wait_for("host", lambda v: v["ready"] and v["workerRunning"] and v["room"] == "handheld/" + gb["instance"] and v["frames"] >= 420, "actual GBA-shaped handheld runs its GB cartridge beyond its native boot animation")
+            evidence["screenshots"].append(self.capture("host", "26-gba-shell-gb-game"))
+            native_before = host("observe")
+            host("input_source", {"buttons": 256})
+            changed = self.wait_for("host", lambda v: v["room"] == "handheld/" + gb["instance"] and v["crc"] != native_before["crc"] and v["frames"] > native_before["frames"], "real GB input changes the handheld picture")
+            evidence["liveHandheldInput"] = {"beforeCrc": native_before["crc"], "afterCrc": changed["crc"]}
+            host("review_view", {"held": True});self.settle("host")
+            evidence["screenshots"].append(self.capture("host", "27-gba-shell-gb-live-main"))
+            host("swap_hands")
+            self.wait_for("host", lambda v: any(c["slot"] == 40 and c["instance"] == gb["instance"] for c in v["cards"]) and v["offhandModel"] == 5 and v["workerRunning"], "vanilla hand swap preserves active GB cartridge and GBA shell")
+            self.settle("host")
+            evidence["screenshots"].append(self.capture("host", "28-gba-shell-gb-live-offhand"))
+            host("swap_hands")
+            self.wait_for("host", lambda v: any(c["slot"] == 2 and c["instance"] == gb["instance"] for c in v["cards"]) and v["heldModel"] == 5, "normal hand swap returns the same loaded handheld")
+            host("input_source", {"buttons": 0})
+            before = host("observe");host("leave")
+            closed = self.wait_for("host", lambda v: not v["workers"] and not v["workerRunning"], "handheld native normal saved exit")
+            if closed["normalWorkerExits"] <= before["normalWorkerExits"] or closed["forcedWorkerExits"] or closed["failedWorkerExits"]:
+                raise ValueError("GBA shell / GB worker did not exit normally")
+            host("handheld_load")
+            ejected = self.wait_for("host", lambda v: any(c["instance"] == gb["instance"] and c["slot"] != 2 for c in v["cards"]) and all(c["slot"] != 2 for c in v["cards"]), "actual sneak-use ejects the same GB cartridge")
+            shell = next(i for i in ejected["inventory"] if i["slot"] == 2)
+            if shell["model"] != 5 or shell["qaPreserve"] != "original-gba-shell":
+                raise ValueError("Ejecting overwrote the GBA shell or unrelated custom data")
+            evidence["ejectedGbaShell"] = shell
+            host("close_screen");move(5.5, 8.5);host("slot", {"slot": 6});host("destroy_model")
+            self.wait_for("server", lambda v: v["hardware"]["block"] == "minecraft:air", "real survival break completes")
+            move(5.5, 6.5)
+            dropped = self.wait_for("host", lambda v: any(i["item"] == "muxi_console:desk_console" and i["model"] == 2 for i in v["inventory"]), "real world drop and vanilla pickup preserve placed CMD")
+            evidence["droppedModel"] = next(i for i in dropped["inventory"] if i["item"] == "muxi_console:desk_console" and i["model"] == 2)
+            evidence["scenarioComplete"] = True
+        except Exception as error:
+            evidence["failure"] = str(error)
+            raise
+        finally:
+            try:
+                if host("observe")["workerRunning"]:
+                    host("leave");self.wait_for("host", lambda v: not v["workers"], "normal hardware failure cleanup")
+                self.command("server", "hardware_mode", {"mode": "creative"})
+            except Exception as error:
+                evidence["cleanupFailure"] = str(error);evidence["scenarioComplete"] = False
+            output.write_text(json.dumps(evidence, ensure_ascii=False, indent=2), encoding="utf-8")
+        return evidence
+
+    def browser_scenario(self, resume=False, source_resume=False):
+        output = self.channel / ("browser-source-resumed-result.json" if source_resume else "browser-resumed-result.json" if resume else "browser-scenario-result.json")
+        if output.exists():
+            raise ValueError("Browser scenario results already exist; preserve failures and use a fresh run")
+        evidence = {"runId": self.marker["runId"], "productSha256": self.build["product"]["sha256"],
+                    "physicalOSInput": False, "visualAcceptance": False, "syntheticServerPlayers": False,
+                    "screenshots": [], "gpuSamples": [], "scenarioComplete": False}
+        host = lambda action, body=None: self.command("host", action, body)
+        guest = lambda action, body=None: self.command("guest", action, body)
+        try:
+            evidence["dependencies"] = self.browser_dependencies()
+            if source_resume:
+                original_path = self.channel / "browser-resumed-result.json"
+                original = read_json(original_path)
+                prepared = {"clients": {role: self.command(role, "observe") for role in ("host", "guest")}}
+                source = prepared["clients"]["host"]
+                server = self.command("server", "observe")
+                fixture = server["browser"]
+                source_card = original.get("genuineCartridge", {})
+                device = next((row for row in server["devices"] if row.get("position") == (10 << 38 | 8 << 12 | 90)), {})
+                if original.get("runId") != self.marker["runId"] or original.get("scenarioComplete") or "Permission denied" not in original.get("failure", ""):
+                    raise ValueError("Source resume only the recorded NTFS reply-read failure from this same run")
+                if source["room"] or source["workers"] or server["rooms"] or server["pendingUploads"] or len(source.get("cards", [])) != 2 or source["forcedWorkerExits"] or source["failedWorkerExits"]:
+                    raise ValueError("Source resume requires normal previous cleanup with no upload, extra cartridge or active session")
+                if source_card.get("hash") != self.build["diagnosticRom"]["sha256"] or device.get("card", {}).get("instance") != source_card.get("instance") or device.get("card", {}).get("hash") != source_card.get("hash") or not device.get("powered") or device.get("ports") != 1:
+                    raise ValueError("The physically installed powered source differs from the real cartridge minted before the failure")
+                if not fixture.get("prepared") or fixture.get("bindings") or fixture.get("url") != original["fixture"]["url"]:
+                    raise ValueError("Source resume browser fixture changed")
+                self.assert_observer(prepared["clients"]["guest"])
+                evidence.update(originalScenarioFailed=True, sourceResumeWithoutAnotherBurn=True, originalFailure={"path": str(original_path), "sha256": sha(original_path), "failure": original["failure"]})
+                evidence["genuineCartridge"] = source_card
+            elif resume:
+                original_path = self.channel / "browser-scenario-result.json"
+                original = read_json(original_path)
+                prepared = {"clients": {role: self.command(role, "observe") for role in ("host", "guest")}}
+                source = prepared["clients"]["host"]
+                server = self.command("server", "observe")
+                fixture = server["browser"]
+                expected_hashes = {self.build["diagnosticRom"]["sha256"], self.build["gbDiagnosticRom"]["sha256"]}
+                if original.get("runId") != self.marker["runId"] or original.get("scenarioComplete") or not original.get("failure", "").startswith("QA command timed out: host/"):
+                    raise ValueError("Resume only the recorded initial browser command timeout in this same run")
+                if not source["screen"].endswith("WriterScreen") or source.get("fileSelected") or len(source.get("cards", [])) != 2 or {card["hash"] for card in source["cards"]} != expected_hashes or source["room"] or source["workers"] or server["pendingUploads"] or server["rooms"]:
+                    raise ValueError("Resume requires the original untouched WriterScreen, exactly the two earlier cartridges and no third burn/upload/session")
+                expected_bytes = sum(Path(self.build[key]["path"]).stat().st_size for key in ("diagnosticRom", "gbDiagnosticRom"))
+                if server["contentBytes"] != expected_bytes or not fixture.get("prepared") or fixture.get("bindings") != 0 or fixture.get("url") != original["fixture"]["url"]:
+                    raise ValueError("Resume server fixture/content differs from the original pre-burn failure")
+                for role in ("host", "guest"):
+                    surface = self.command(role, "browser_native", {"position": fixture["position"], "side": fixture["side"]})["browserNative"]
+                    if not surface.get("surfaceExists"):
+                        raise ValueError("Real WebDisplays surface must first recover through its normal chunk lifecycle")
+                self.assert_observer(prepared["clients"]["guest"])
+                evidence.update(originalScenarioFailed=True, originalFailure={"path": str(original_path), "sha256": sha(original_path), "failure": original["failure"]}, normalChunkLifecycleRecovery=True)
+            else:
+                prepared = self.prepare()
+                fixture = self.command("server", "browser_prepare_blocks")
+                target = {"position": fixture["position"], "side": fixture["side"]}
+                for role in ("host", "guest"):
+                    self.command(role, "browser_native", target)
+                    self.wait_for(role, lambda v: v["browser"].get("block") == "webdisplays:screen" and v["browser"].get("fixtureBlocks") == 6, "all six actual client display blocks arrive before WebDisplays addScreen")
+                fixture = self.command("server", "browser_create_face")
+                for role in ("host", "guest"):
+                    self.wait_for(role, lambda v: v["browser"].get("surfaceExists") and v["browser"].get("browserPresent"), "normal WebDisplays face/browser creation")
+            evidence["fixture"] = fixture
+            target = {"position": fixture["position"], "side": fixture["side"]}
+            host_name = prepared["clients"]["host"]["playerName"]
+            guest_name = prepared["clients"]["guest"]["playerName"]
+            if not source_resume:
+                prior_cards = {card["instance"] for card in prepared["clients"]["host"].get("cards", [])}
+                self.command("server", "position", {"player": host_name, "x": 8.5, "z": 11.5})
+                host("slot", {"slot": 8}); host("use_block", {"x": 8})
+                self.wait_for("host", lambda v: v["screen"].endswith("WriterScreen"), "real writer for browser diagnostic")
+                host("writer_drop"); host("writer_confirm"); host("button", {"text": "上传并刻录"})
+                burned = self.wait_for("host", lambda v: len(v.get("cards", [])) == len(prior_cards) + 1, "browser source genuine cartridge burn")
+                new_cards = [card for card in burned["cards"] if card["instance"] not in prior_cards]
+                if len(new_cards) != 1 or new_cards[0]["hash"] != self.build["diagnosticRom"]["sha256"]:
+                    raise ValueError("Browser flow did not mint exactly one additional real diagnostic cartridge")
+                source_card = new_cards[0]
+                evidence["genuineCartridge"] = source_card
+                host("close_screen")
+            self.command("server", "position", {"player": host_name, "x": 10.5, "z": 11.5})
+            if not source_resume:
+                host("slot", {"slot": source_card["slot"]}); host("use_block", {"x": 10})
+                host("slot", {"slot": 1}); host("use_block", {"x": 10})
+            host("slot", {"slot": 8}); host("use_block", {"x": 10})
+            self.wait_for("host", lambda v: v["screen"].endswith("DeviceScreen"), "real source device panel")
+            if not source_resume:
+                host("button", {"text": "启动 / 停止"})
+            host("button", {"text": "连接附近屏幕"}); host("button", {"text": "P1 加入"})
+            active = self.wait_for("host", lambda v: v["ready"] and v["workerRunning"] and v["frames"] >= 30, "real source libretro running")
+            self.command("server", "position", {"player": host_name, "x": 13, "z": 11.5})
+            self.command("server", "position", {"player": guest_name, "x": 13.5, "z": 13.5})
+            guest("probe", {"room": active["room"], "epoch": active["epoch"]})
+            denied = self.wait_for("guest", lambda v: v["probe"] == "denied", "pure observer ROM download rejected")
+            self.assert_observer(denied)
+            guest("browser_select", target); self.settle("guest")
+            if self.command("server", "observe")["browser"]["bindings"] != 0:
+                raise ValueError("A pure observer bound a display without a control seat")
+            evidence["observerCannotBindOrDownload"] = True
+            self.command("server", "browser_owner", {"owner": "guest"})
+            host("browser_select", target); self.settle("host")
+            if self.command("server", "observe")["browser"]["bindings"] != 0:
+                raise ValueError("Controller without URL rights bound another player's display")
+            evidence["controllerWithoutUrlRightsRejected"] = True
+            self.command("server", "browser_owner", {"owner": "host"})
+            host("browser_select", target)
+            self.wait_for("server", lambda v: v["browser"]["bindings"] == 1, "real block-use binds display")
+            for role in ("host", "guest"):
+                self.wait_for(role, lambda v: v["browser"]["receivedFrames"] >= 4 and v["browser"]["readyBrowsers"] == 1, "actual browser page and ongoing pixels: " + role)
+                evidence["gpuSamples"].append(self.gpu_sample(role, target))
+            baseline = host("observe")["crc"]
+            host("input_source", {"buttons": 256})
+            self.wait_for("host", lambda v: v["crc"] and v["crc"] != baseline, "real controller changes source picture")
+            host("input_source", {"buttons": 0})
+            for role in ("host", "guest"):
+                first = next(v for v in evidence["gpuSamples"] if v["role"] == role)
+                changed = self.gpu_sample(role, target, first["textureCrc"])
+                evidence["gpuSamples"].append(changed)
+            self.assert_observer(guest("observe"))
+            for role, filename in (("host", "24-desktop-screen-and-browser"), ("guest", "25-observer-screen-and-browser")):
+                other_name, other_x = (guest_name, 16) if role == "host" else (host_name, 9)
+                self.command("server", "position", {"player": other_name, "x": other_x, "z": 14.5})
+                self.command("server", "browser_camera", {"role": role})
+                self.command(role, "review_view", {"held": False}); self.settle(role)
+                evidence["screenshots"].append(self.capture(role, ("source-resumed-" if source_resume else "resumed-" if resume else "") + filename))
+            self.command("server", "position", {"player": host_name, "x": 13, "z": 11.5})
+            self.command("server", "position", {"player": guest_name, "x": 13.5, "z": 13.5})
+            host("browser_select", target)
+            self.wait_for("server", lambda v: v["browser"]["bindings"] == 0, "normal second click unbinds")
+            for role in ("host", "guest"):
+                restored = self.wait_for(role, lambda v: v["browser"]["bindings"] == 0, "client binding removed")
+                self.browser_restored(role, target, fixture["url"])
+            evidence["unbindRestoresOriginalUrl"] = True
+            host("browser_select", target)
+            self.wait_for("server", lambda v: v["browser"]["bindings"] == 1, "second real binding")
+            self.command("server", "browser_owner", {"owner": "guest"})
+            self.wait_for("server", lambda v: v["browser"]["bindings"] == 0, "URL rights revocation invalidates binding")
+            for role in ("host", "guest"):
+                self.browser_restored(role, target, fixture["url"])
+            evidence["rightsRevocationUnbinds"] = True
+            self.command("server", "browser_owner", {"owner": "host"})
+            host("browser_select", target)
+            self.wait_for("server", lambda v: v["browser"]["bindings"] == 1, "third real binding")
+            self.command("server", "browser_url", {"url": "about:blank#muxi-console-navigated"})
+            self.wait_for("server", lambda v: v["browser"]["bindings"] == 0, "normal navigation invalidates old page")
+            self.browser_restored("guest", target, "about:blank#muxi-console-navigated")
+            evidence["newerNavigationPreserved"] = True
+            self.command("server", "browser_url", {"url": fixture["url"]})
+            host("browser_select", target)
+            self.wait_for("server", lambda v: v["browser"]["bindings"] == 1, "final source-close binding")
+            before = host("observe")
+            host("leave")
+            closed = self.wait_for("host", lambda v: not v["workers"] and not v["workerRunning"], "source worker normal close")
+            self.wait_for("server", lambda v: v["browser"]["bindings"] == 0, "source leave cleans browser binding")
+            for role in ("host", "guest"):
+                self.browser_restored(role, target, fixture["url"])
+            if closed["normalWorkerExits"] <= before["normalWorkerExits"] or closed["forcedWorkerExits"] or closed["failedWorkerExits"]:
+                raise ValueError("Source worker did not record a normal native exit")
+            self.assert_observer(guest("observe"))
+            evidence["sourceLeaveUnbinds"] = True
+            evidence["observer"] = guest("observe")
+            evidence["normalSourceWorkerExit"] = True
+            evidence["scenarioComplete"] = True
+        except Exception as error:
+            evidence["failure"] = str(error)
+            raise
+        finally:
+            try:
+                if host("observe")["workerRunning"]:
+                    host("input_source", {"buttons": -1});host("leave")
+                    self.wait_for("host", lambda v: not v["workers"] and not v["workerRunning"], "failure cleanup normal source leave")
+            except Exception as cleanup:
+                evidence["cleanupFailure"] = str(cleanup)
+                evidence["scenarioComplete"] = False
+            output.write_text(json.dumps(evidence, ensure_ascii=False, indent=2), encoding="utf-8")
+        return evidence
+
+    @staticmethod
+    def assert_observer(value):
+        if value["downloadsGranted"] != 0 or value["workers"] or value["workerRunning"] or value["room"] or value.get("cards") or value.get("cachedRomFiles") != 0:
+            raise ValueError("Pure observer acquired a ROM, card, session or native worker")
+
+    def gpu_sample(self, role, target, previous=None):
+        deadline = time.monotonic() + 45
+        last = None
+        while time.monotonic() < deadline:
+            last = self.command(role, "browser_native", target)["browserNative"]
+            if last.get("gpuRead") and last.get("linkedNativeBrowser") and last.get("readyBrowsers") == 1 and last.get("javascriptSubmissions", 0) >= 4 and last.get("browserUrl", "").startswith("data:text/html;base64,") and not last.get("uniform") and last.get("chromaticPixels", 0) > 100 and (previous is None or last["textureCrc"] != previous):
+                return {"role": role, **last}
+            time.sleep(0.25)
+        raise TimeoutError("Actual CEF GPU texture failed to show changed nonempty canvas: " + json.dumps(last))
+
+    def browser_restored(self, role, target, url):
+        deadline = time.monotonic() + 30
+        last = None
+        while time.monotonic() < deadline:
+            last = self.command(role, "browser_native", target)["browserNative"]
+            if last.get("bindings") == 0 and last.get("url") == url and last.get("browserUrl") == url:
+                return last
+            time.sleep(0.2)
+        raise TimeoutError("Actual third-party browser did not restore the expected URL: " + json.dumps(last))
 
     def close_sessions(self):
         closures, errors = {}, []
@@ -335,6 +720,19 @@ def main():
     mode.add_argument("--check", action="store_true")
     mode.add_argument("--prepare", action="store_true")
     mode.add_argument("--scenario", action="store_true")
+    mode.add_argument("--model-review", action="store_true")
+    mode.add_argument("--held-review", action="store_true")
+    mode.add_argument("--shared-scenario", choices=("n64", "arcade"))
+    mode.add_argument("--resume-shared-n64", action="store_true")
+    mode.add_argument("--shared-n64-handover", action="store_true")
+    mode.add_argument("--leave-during-join", action="store_true")
+    mode.add_argument("--nes-regression", action="store_true")
+    mode.add_argument("--quick-review", action="store_true")
+    mode.add_argument("--held-live-review", action="store_true")
+    mode.add_argument("--browser-scenario", action="store_true")
+    mode.add_argument("--resume-browser", action="store_true")
+    mode.add_argument("--resume-browser-source", action="store_true")
+    mode.add_argument("--hardware-scenario", action="store_true")
     mode.add_argument("--continue-after-drop", action="store_true")
     parser.add_argument("--drop-x", type=float)
     mode.add_argument("--action")
@@ -348,6 +746,30 @@ def main():
         result = driver.prepare()
     elif options.scenario:
         result = driver.scenario()
+    elif options.model_review:
+        result = driver.model_review()
+    elif options.held_review:
+        result = driver.model_review(True)
+    elif options.shared_scenario:
+        from shared_drive import run
+        result = run(driver, options.shared_scenario)
+    elif options.resume_shared_n64:
+        from shared_drive import run
+        result=run(driver,"n64",True)
+    elif options.shared_n64_handover:
+        from shared_drive import handover
+        result=handover(driver)
+    elif options.leave_during_join or options.nes_regression or options.quick_review or options.held_live_review:
+        from quick_review import leave_during_join,nes_regression,quick_review,held_live_review
+        result=(leave_during_join if options.leave_during_join else nes_regression if options.nes_regression else held_live_review if options.held_live_review else quick_review)(driver)
+    elif options.browser_scenario:
+        result = driver.browser_scenario()
+    elif options.resume_browser:
+        result = driver.browser_scenario(True)
+    elif options.resume_browser_source:
+        result = driver.browser_scenario(source_resume=True)
+    elif options.hardware_scenario:
+        result = driver.hardware_scenario()
     elif options.continue_after_drop:
         result = driver.scenario(True, options.drop_x)
     else:

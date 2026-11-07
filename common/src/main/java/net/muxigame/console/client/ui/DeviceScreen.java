@@ -20,11 +20,17 @@ public final class DeviceScreen extends ConsoleScreen {
         button(left + 22 + w, top + 58, w, "取出卡带", ignored -> act("eject", 0));
         button(left + 14, top + 86, w, "连接附近屏幕", ignored -> act("link", 0));
         button(left + 22 + w, top + 86, w, "按键与手柄", ignored -> minecraft.setScreen(new ControlsScreen(this, currentPlatform())));
+        if(!context.has("card")&&!context.get("powered").getAsBoolean()){
+            int id=context.has("model")?context.get("model").getAsInt():0;
+            var body=net.muxigame.console.mc.HardwareCatalog.body(id);
+            button(left+14,top+180,panelWidth-28,"机型："+(body==null?"通用主机":body.name())+" · 点击切换",ignored->act("body",(id+1)%23));
+        }
         int seatWidth = (panelWidth - 28 - gap * 3) / 4;
         for (int port = 0; port < 4; port++) {
             int seat = port;
-            button(left + 14 + port * (seatWidth + gap), top + 139, seatWidth,
+            var join=button(left + 14 + port * (seatWidth + gap), top + 139, seatWidth,
                     "P" + (port + 1) + " 加入", ignored -> act("join", seat));
+            join.active=context.has("card")&&context.get("powered").getAsBoolean()&&port<Math.min(context.get("ports").getAsInt(),currentPlatform().controllerPorts());
         }
         button(left + 14, top + panelHeight - 36, 76, "关闭", ignored -> onClose());
     }

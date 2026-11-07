@@ -1,19 +1,371 @@
 {
   "variants": {
-    "facing=north": {
+    "facing=north,model=0": {
       "model": "muxi_console:block/desk_console",
       "y": 0
     },
-    "facing=east": {
+    "facing=north,model=1": {
+      "model": "muxi_console:block/desk_console_nes",
+      "y": 0
+    },
+    "facing=north,model=2": {
+      "model": "muxi_console:block/desk_console_snes",
+      "y": 0
+    },
+    "facing=north,model=3": {
+      "model": "muxi_console:block/desk_console_gb",
+      "y": 0
+    },
+    "facing=north,model=4": {
+      "model": "muxi_console:block/desk_console_gbc",
+      "y": 0
+    },
+    "facing=north,model=5": {
+      "model": "muxi_console:block/desk_console_gba",
+      "y": 0
+    },
+    "facing=north,model=6": {
+      "model": "muxi_console:block/desk_console_md",
+      "y": 0
+    },
+    "facing=north,model=7": {
+      "model": "muxi_console:block/desk_console_n64",
+      "y": 0
+    },
+    "facing=north,model=8": {
+      "model": "muxi_console:block/desk_console_sms",
+      "y": 0
+    },
+    "facing=north,model=9": {
+      "model": "muxi_console:block/desk_console_gg",
+      "y": 0
+    },
+    "facing=north,model=10": {
+      "model": "muxi_console:block/desk_console_sg1000",
+      "y": 0
+    },
+    "facing=north,model=11": {
+      "model": "muxi_console:block/desk_console_pce",
+      "y": 0
+    },
+    "facing=north,model=12": {
+      "model": "muxi_console:block/desk_console_a2600",
+      "y": 0
+    },
+    "facing=north,model=13": {
+      "model": "muxi_console:block/desk_console_a7800",
+      "y": 0
+    },
+    "facing=north,model=14": {
+      "model": "muxi_console:block/desk_console_lynx",
+      "y": 0
+    },
+    "facing=north,model=15": {
+      "model": "muxi_console:block/desk_console_ngp",
+      "y": 0
+    },
+    "facing=north,model=16": {
+      "model": "muxi_console:block/desk_console_ngpc",
+      "y": 0
+    },
+    "facing=north,model=17": {
+      "model": "muxi_console:block/desk_console_ws",
+      "y": 0
+    },
+    "facing=north,model=18": {
+      "model": "muxi_console:block/desk_console_wsc",
+      "y": 0
+    },
+    "facing=north,model=19": {
+      "model": "muxi_console:block/desk_console_vb",
+      "y": 0
+    },
+    "facing=north,model=20": {
+      "model": "muxi_console:block/desk_console_fds",
+      "y": 0
+    },
+    "facing=north,model=21": {
+      "model": "muxi_console:block/desk_console_arcade",
+      "y": 0
+    },
+    "facing=north,model=22": {
+      "model": "muxi_console:block/arcade_cabinet_2p",
+      "y": 0
+    },
+    "facing=east,model=0": {
       "model": "muxi_console:block/desk_console",
       "y": 90
     },
-    "facing=south": {
+    "facing=east,model=1": {
+      "model": "muxi_console:block/desk_console_nes",
+      "y": 90
+    },
+    "facing=east,model=2": {
+      "model": "muxi_console:block/desk_console_snes",
+      "y": 90
+    },
+    "facing=east,model=3": {
+      "model": "muxi_console:block/desk_console_gb",
+      "y": 90
+    },
+    "facing=east,model=4": {
+      "model": "muxi_console:block/desk_console_gbc",
+      "y": 90
+    },
+    "facing=east,model=5": {
+      "model": "muxi_console:block/desk_console_gba",
+      "y": 90
+    },
+    "facing=east,model=6": {
+      "model": "muxi_console:block/desk_console_md",
+      "y": 90
+    },
+    "facing=east,model=7": {
+      "model": "muxi_console:block/desk_console_n64",
+      "y": 90
+    },
+    "facing=east,model=8": {
+      "model": "muxi_console:block/desk_console_sms",
+      "y": 90
+    },
+    "facing=east,model=9": {
+      "model": "muxi_console:block/desk_console_gg",
+      "y": 90
+    },
+    "facing=east,model=10": {
+      "model": "muxi_console:block/desk_console_sg1000",
+      "y": 90
+    },
+    "facing=east,model=11": {
+      "model": "muxi_console:block/desk_console_pce",
+      "y": 90
+    },
+    "facing=east,model=12": {
+      "model": "muxi_console:block/desk_console_a2600",
+      "y": 90
+    },
+    "facing=east,model=13": {
+      "model": "muxi_console:block/desk_console_a7800",
+      "y": 90
+    },
+    "facing=east,model=14": {
+      "model": "muxi_console:block/desk_console_lynx",
+      "y": 90
+    },
+    "facing=east,model=15": {
+      "model": "muxi_console:block/desk_console_ngp",
+      "y": 90
+    },
+    "facing=east,model=16": {
+      "model": "muxi_console:block/desk_console_ngpc",
+      "y": 90
+    },
+    "facing=east,model=17": {
+      "model": "muxi_console:block/desk_console_ws",
+      "y": 90
+    },
+    "facing=east,model=18": {
+      "model": "muxi_console:block/desk_console_wsc",
+      "y": 90
+    },
+    "facing=east,model=19": {
+      "model": "muxi_console:block/desk_console_vb",
+      "y": 90
+    },
+    "facing=east,model=20": {
+      "model": "muxi_console:block/desk_console_fds",
+      "y": 90
+    },
+    "facing=east,model=21": {
+      "model": "muxi_console:block/desk_console_arcade",
+      "y": 90
+    },
+    "facing=east,model=22": {
+      "model": "muxi_console:block/arcade_cabinet_2p",
+      "y": 90
+    },
+    "facing=south,model=0": {
       "model": "muxi_console:block/desk_console",
       "y": 180
     },
-    "facing=west": {
+    "facing=south,model=1": {
+      "model": "muxi_console:block/desk_console_nes",
+      "y": 180
+    },
+    "facing=south,model=2": {
+      "model": "muxi_console:block/desk_console_snes",
+      "y": 180
+    },
+    "facing=south,model=3": {
+      "model": "muxi_console:block/desk_console_gb",
+      "y": 180
+    },
+    "facing=south,model=4": {
+      "model": "muxi_console:block/desk_console_gbc",
+      "y": 180
+    },
+    "facing=south,model=5": {
+      "model": "muxi_console:block/desk_console_gba",
+      "y": 180
+    },
+    "facing=south,model=6": {
+      "model": "muxi_console:block/desk_console_md",
+      "y": 180
+    },
+    "facing=south,model=7": {
+      "model": "muxi_console:block/desk_console_n64",
+      "y": 180
+    },
+    "facing=south,model=8": {
+      "model": "muxi_console:block/desk_console_sms",
+      "y": 180
+    },
+    "facing=south,model=9": {
+      "model": "muxi_console:block/desk_console_gg",
+      "y": 180
+    },
+    "facing=south,model=10": {
+      "model": "muxi_console:block/desk_console_sg1000",
+      "y": 180
+    },
+    "facing=south,model=11": {
+      "model": "muxi_console:block/desk_console_pce",
+      "y": 180
+    },
+    "facing=south,model=12": {
+      "model": "muxi_console:block/desk_console_a2600",
+      "y": 180
+    },
+    "facing=south,model=13": {
+      "model": "muxi_console:block/desk_console_a7800",
+      "y": 180
+    },
+    "facing=south,model=14": {
+      "model": "muxi_console:block/desk_console_lynx",
+      "y": 180
+    },
+    "facing=south,model=15": {
+      "model": "muxi_console:block/desk_console_ngp",
+      "y": 180
+    },
+    "facing=south,model=16": {
+      "model": "muxi_console:block/desk_console_ngpc",
+      "y": 180
+    },
+    "facing=south,model=17": {
+      "model": "muxi_console:block/desk_console_ws",
+      "y": 180
+    },
+    "facing=south,model=18": {
+      "model": "muxi_console:block/desk_console_wsc",
+      "y": 180
+    },
+    "facing=south,model=19": {
+      "model": "muxi_console:block/desk_console_vb",
+      "y": 180
+    },
+    "facing=south,model=20": {
+      "model": "muxi_console:block/desk_console_fds",
+      "y": 180
+    },
+    "facing=south,model=21": {
+      "model": "muxi_console:block/desk_console_arcade",
+      "y": 180
+    },
+    "facing=south,model=22": {
+      "model": "muxi_console:block/arcade_cabinet_2p",
+      "y": 180
+    },
+    "facing=west,model=0": {
       "model": "muxi_console:block/desk_console",
+      "y": 270
+    },
+    "facing=west,model=1": {
+      "model": "muxi_console:block/desk_console_nes",
+      "y": 270
+    },
+    "facing=west,model=2": {
+      "model": "muxi_console:block/desk_console_snes",
+      "y": 270
+    },
+    "facing=west,model=3": {
+      "model": "muxi_console:block/desk_console_gb",
+      "y": 270
+    },
+    "facing=west,model=4": {
+      "model": "muxi_console:block/desk_console_gbc",
+      "y": 270
+    },
+    "facing=west,model=5": {
+      "model": "muxi_console:block/desk_console_gba",
+      "y": 270
+    },
+    "facing=west,model=6": {
+      "model": "muxi_console:block/desk_console_md",
+      "y": 270
+    },
+    "facing=west,model=7": {
+      "model": "muxi_console:block/desk_console_n64",
+      "y": 270
+    },
+    "facing=west,model=8": {
+      "model": "muxi_console:block/desk_console_sms",
+      "y": 270
+    },
+    "facing=west,model=9": {
+      "model": "muxi_console:block/desk_console_gg",
+      "y": 270
+    },
+    "facing=west,model=10": {
+      "model": "muxi_console:block/desk_console_sg1000",
+      "y": 270
+    },
+    "facing=west,model=11": {
+      "model": "muxi_console:block/desk_console_pce",
+      "y": 270
+    },
+    "facing=west,model=12": {
+      "model": "muxi_console:block/desk_console_a2600",
+      "y": 270
+    },
+    "facing=west,model=13": {
+      "model": "muxi_console:block/desk_console_a7800",
+      "y": 270
+    },
+    "facing=west,model=14": {
+      "model": "muxi_console:block/desk_console_lynx",
+      "y": 270
+    },
+    "facing=west,model=15": {
+      "model": "muxi_console:block/desk_console_ngp",
+      "y": 270
+    },
+    "facing=west,model=16": {
+      "model": "muxi_console:block/desk_console_ngpc",
+      "y": 270
+    },
+    "facing=west,model=17": {
+      "model": "muxi_console:block/desk_console_ws",
+      "y": 270
+    },
+    "facing=west,model=18": {
+      "model": "muxi_console:block/desk_console_wsc",
+      "y": 270
+    },
+    "facing=west,model=19": {
+      "model": "muxi_console:block/desk_console_vb",
+      "y": 270
+    },
+    "facing=west,model=20": {
+      "model": "muxi_console:block/desk_console_fds",
+      "y": 270
+    },
+    "facing=west,model=21": {
+      "model": "muxi_console:block/desk_console_arcade",
+      "y": 270
+    },
+    "facing=west,model=22": {
+      "model": "muxi_console:block/arcade_cabinet_2p",
       "y": 270
     }
   }

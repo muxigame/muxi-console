@@ -10,7 +10,7 @@ import java.util.Locale;
 
 /** Independent cartridge admission. Raw formats have extension-based identification only. */
 public final class RomInspector {
-    public static final long MAX_ROM_BYTES = 128L * 1024L * 1024L;
+    public static final long MAX_ROM_BYTES = 512L * 1024L * 1024L;
 
     public RomDescriptor inspect(Path file, Platform selected) throws IOException {
         return inspect(file, file.getFileName().toString(), selected);
@@ -38,7 +38,7 @@ public final class RomInspector {
             }
         }
         if (count != size) throw new DomainException("size", "ROM changed while being inspected");
-        rejectContainer(header);
+        if(platform!=Platform.ARCADE)rejectContainer(header);
         Platform marker = markerPlatform(header);
         if (marker != null && marker != platform) throw new DomainException("format", "Cartridge header belongs to another platform");
         String detection = switch (platform) {
@@ -47,6 +47,9 @@ public final class RomInspector {
             case GBA -> inspectGba(header);
             case N64 -> inspectN64(header, size);
             case MD -> inspectMegaDrive(header, size);
+            case FDS -> inspectFds(file, size);
+            case LYNX -> inspectLynx(header,size,filename);
+            case ARCADE -> { ArcadeBundle.Manifest media=ArcadeBundle.inspect(file);yield "mxarc-1:"+media.driver(); }
             default -> "extension-and-size";
         };
         return new RomDescriptor(platform, HexFormat.of().formatHex(digest.digest()), size, filename, detection);
@@ -58,6 +61,15 @@ public final class RomInspector {
                 || filename.codePoints().anyMatch(Character::isISOControl) || filename.endsWith(".") || filename.endsWith(" "))
             throw new DomainException("filename", "Use a simple ROM filename without path components");
         String lower = filename.toLowerCase(Locale.ROOT);
+    }
+    // Public Lynx file formats: beetle-lynx mednafen/lynx/system.cpp and ram.cpp.
+    // BS93 is an emulated 65C02 homebrew object, not a host object/executable file.
+    private static String inspectLynx(byte[] h,long size,String filename){
+        boolean bs93=h.length>=10&&h[6]=='B'&&h[7]=='S'&&h[8]=='9'&&h[9]=='3';
+        if(bs93){int entry=(u(h[2])<<8)|u(h[3]),length=(u(h[4])<<8)|u(h[5]);require(entry>=10&&size>=11&&size<=65535&&length==size,"BS93 RAM image has invalid entry or byte length");return "lynx-bs93-size-and-entry";}
+        require(!filename.toLowerCase(Locale.ROOT).endsWith(".o"),"Only BS93 Lynx homebrew objects are admitted");
+        if(starts(h,'L','Y','N','X')){require(size>=1088&&h.length>=64,"Truncated LNX cartridge");return "lynx-cartridge-header";}
+        require(size==128*1024||size==256*1024||size==512*1024,"Expected LNX header or a supported raw Lynx cartridge size");return "lynx-raw-cartridge-size";
     }
 
     public static Platform selectPlatform(String filename, Platform selected) {
@@ -83,6 +95,7 @@ public final class RomInspector {
 
     private static Platform markerPlatform(byte[] header) {
         if (starts(header, 0x4e, 0x45, 0x53, 0x1a)) return Platform.NES;
+        if (starts(header, 0x46, 0x44, 0x53, 0x1a)) return Platform.FDS;
         if (starts(header, 0x80, 0x37, 0x12, 0x40) || starts(header, 0x37, 0x80, 0x40, 0x12)
                 || starts(header, 0x40, 0x12, 0x37, 0x80)) return Platform.N64;
         return null;
@@ -151,6 +164,21 @@ public final class RomInspector {
         require(!(header[0x180] == 'O' && header[0x181] == 'S')
                 && !(header[0x180] == 'B' && header[0x181] == 'R'), "Boot ROMs are not cartridge content");
         return "megadrive-header-marker";
+    }
+
+    private static String inspectFds(Path file,long size)throws IOException{
+        try(InputStream in=Files.newInputStream(file,LinkOption.NOFOLLOW_LINKS)){
+            byte[] first=in.readNBytes(16);boolean headered=starts(first,0x46,0x44,0x53,0x1a);long sides;
+            if(headered){sides=u(first[4]);require(sides>0&&size==16+sides*65500,"FDS header side count does not match file size");for(int i=5;i<16;i++)require(first[i]==0,"FDS reserved header bytes must be zero");}
+            else{sides=size/65500;require(sides>0&&size%65500==0,"Headerless FDS must contain complete 65500-byte sides");}
+            byte[] side=new byte[65500];for(int n=0;n<sides;n++){
+                int offset=0;if(!headered&&n==0){System.arraycopy(first,0,side,0,first.length);offset=first.length;}
+                int got=in.readNBytes(side,offset,side.length-offset);require(got==side.length-offset,"Truncated FDS side");
+                require(side[0]==1,"Missing FDS disk information block");byte[] signature="*NINTENDO-HVC*".getBytes(java.nio.charset.StandardCharsets.US_ASCII);for(int i=0;i<signature.length;i++)require(side[1+i]==signature[i],"Invalid FDS disk identification");
+                require(side[56]==2,"Missing FDS file count block");int files=u(side[57]),position=58;for(int index=0;index<files;index++){require(position+17<=side.length&&side[position]==3,"Invalid FDS file header block");int length=u(side[position+13])|(u(side[position+14])<<8);position+=16;require(side[position]==4&&position+1L+length<=side.length,"Invalid FDS file data block");position+=1+length;}
+            }
+            require(in.read()==-1,"Unexpected FDS trailing bytes");return headered?"fds-header-and-disk-blocks":"fds-headerless-disk-blocks";
+        }
     }
 
     private static boolean starts(byte[] bytes, int... signature) {

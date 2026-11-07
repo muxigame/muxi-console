@@ -1,7 +1,3 @@
 {
-  "parent": "muxi_console:block/desk_console",
-  "textures": {
-    "accent": "muxi_console:block/common/platform_gg",
-    "label": "muxi_console:item/label_gg"
-  }
+  "parent": "muxi_console:block/desk_console_gg"
 }

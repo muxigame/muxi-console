@@ -21,7 +21,7 @@ final class StateMessages {
     static boolean receive(ServerPlayer player,ConsoleServer.WorldState world,Wire.Message message)throws IOException{
         String op=message.operation();if(!op.startsWith("state_"))return false;JsonObject body=message.body();ConsoleServer.Room room=ConsoleServer.ownedRoom(player,world,body);
         if(op.equals("state_read")){
-            try{UUID generation=UUID.fromString(body.get("generation").getAsString());long offset=body.get("offset").getAsLong();byte[] bytes=world.states.read(room.card.instanceId(),generation,offset,24576);JsonObject reply=new JsonObject();reply.addProperty("request",body.get("request").getAsString());reply.addProperty("offset",offset);Wire.send(player,"state_chunk",reply,bytes);}
+            try{if(room.card.platform().sharedRuntime()&&!player.getUUID().equals(room.session.host()))throw new DomainException("permission","此机型的远程控制席只接收游戏音画");UUID generation=UUID.fromString(body.get("generation").getAsString());long offset=body.get("offset").getAsLong();byte[] bytes=world.states.read(room.card.instanceId(),generation,offset,24576);JsonObject reply=new JsonObject();reply.addProperty("request",body.get("request").getAsString());reply.addProperty("offset",offset);Wire.send(player,"state_chunk",reply,bytes);}
             catch(IOException|RuntimeException denied){JsonObject reply=new JsonObject();reply.addProperty("request",body.get("request").getAsString());reply.addProperty("reason",denied.getMessage());Wire.send(player,"state_denied",reply);}
             return true;
         }

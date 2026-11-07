@@ -1,7 +1,3 @@
 {
-  "parent": "muxi_console:block/desk_console",
-  "textures": {
-    "accent": "muxi_console:block/common/platform_n64",
-    "label": "muxi_console:item/label_n64"
-  }
+  "parent": "muxi_console:block/desk_console_n64"
 }

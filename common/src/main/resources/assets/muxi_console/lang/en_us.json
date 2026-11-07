@@ -80,5 +80,7 @@
   "platform.muxi_console.ngpc": "NPC",
   "platform.muxi_console.ws": "WS",
   "platform.muxi_console.wsc": "WSC",
-  "platform.muxi_console.vb": "VB"
+  "platform.muxi_console.vb": "VB",
+  "platform.muxi_console.fds": "FDS",
+  "platform.muxi_console.arcade": "ARC"
 }

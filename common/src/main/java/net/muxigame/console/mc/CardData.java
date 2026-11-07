@@ -25,9 +25,9 @@ public final class CardData {
     public static void write(ItemStack stack,Cartridge card){
         CompoundTag root=stack.getOrDefault(DataComponents.CUSTOM_DATA,CustomData.EMPTY).copyTag(),t=new CompoundTag();
         t.putUUID("instance",card.instanceId());t.putString("platform",card.platform().id());t.putString("hash",card.sha256());t.putLong("bytes",card.size());t.putString("title",card.title());root.put("muxi_console",t);
-        stack.set(DataComponents.CUSTOM_DATA,CustomData.of(root));stack.set(DataComponents.CUSTOM_MODEL_DATA,new CustomModelData(card.platform().customModelData()));
-        stack.set(DataComponents.CUSTOM_NAME,Component.literal(card.title()+" · "+card.platform().id().toUpperCase(java.util.Locale.ROOT)));
+        stack.set(DataComponents.CUSTOM_DATA,CustomData.of(root));
+        if(stack.is(ConsoleContent.CARTRIDGE.get())){stack.set(DataComponents.CUSTOM_MODEL_DATA,new CustomModelData(card.platform().customModelData()));stack.set(DataComponents.CUSTOM_NAME,Component.literal(card.title()+" · "+card.platform().id().toUpperCase(java.util.Locale.ROOT)));}
     }
-    public static void clear(ItemStack stack){stack.remove(DataComponents.CUSTOM_DATA);stack.remove(DataComponents.CUSTOM_MODEL_DATA);stack.remove(DataComponents.CUSTOM_NAME);}
+    public static void clear(ItemStack stack){CompoundTag root=stack.getOrDefault(DataComponents.CUSTOM_DATA,CustomData.EMPTY).copyTag();root.remove("muxi_console");if(root.isEmpty())stack.remove(DataComponents.CUSTOM_DATA);else stack.set(DataComponents.CUSTOM_DATA,CustomData.of(root));if(stack.is(ConsoleContent.CARTRIDGE.get())){stack.remove(DataComponents.CUSTOM_MODEL_DATA);stack.remove(DataComponents.CUSTOM_NAME);}}
     private CardData(){}
 }

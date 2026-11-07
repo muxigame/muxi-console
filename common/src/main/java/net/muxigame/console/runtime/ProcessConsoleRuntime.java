@@ -37,10 +37,12 @@ public final class ProcessConsoleRuntime implements ConsoleRuntime {
             server.setSoTimeout(15000);
             String classpath = config.classpath().stream().map(p -> p.toAbsolutePath().toString()).collect(Collectors.joining(File.pathSeparator));
             List<String> command = List.of(config.javaExecutable().toAbsolutePath().toString(), "-Xms32m", "-Xmx256m",
-                    "-XX:ActiveProcessorCount=1", "-Djna.tmpdir=" + temp.path, "-cp", classpath,
+                    "-XX:ActiveProcessorCount=1", "-Djna.tmpdir=" + temp.path,
+                    "-Dorg.lwjgl.system.SharedLibraryExtractPath=" + temp.path, "-cp", classpath,
                     "net.muxigame.console.runtime.WorkerMain", Integer.toString(server.getLocalPort()), token);
-            process = new ProcessBuilder(command).redirectOutput(ProcessBuilder.Redirect.DISCARD)
-                    .redirectError(ProcessBuilder.Redirect.DISCARD).start();
+            ProcessBuilder.Redirect diagnostics = Boolean.getBoolean("muxi.console.workerDiagnostics")
+                    ? ProcessBuilder.Redirect.INHERIT : ProcessBuilder.Redirect.DISCARD;
+            process = new ProcessBuilder(command).redirectOutput(diagnostics).redirectError(diagnostics).start();
             process.getOutputStream().close();
             connection = server.accept(); connection.setSoTimeout(15000); connection.setTcpNoDelay(true);
             var in = new DataInputStream(new BufferedInputStream(connection.getInputStream()));
@@ -79,6 +81,18 @@ public final class ProcessConsoleRuntime implements ConsoleRuntime {
     }
 
     @Override public CoreInfo info() { return info; }
+    @Override public synchronized DiskState diskState() throws IOException {
+        var body = Wire.input(request(Wire.DISK_STATE, new byte[0]));
+        try { DiskState state = new DiskState(body.readInt(), body.readInt(), body.readBoolean()); Wire.end(body); return state; }
+        catch (IllegalArgumentException ex) { throw new IOException("Invalid worker disk state", ex); }
+    }
+    @Override public synchronized void selectDisk(int index) throws IOException {
+        if (index < 0 || index >= 256) throw new IOException("Invalid disk index");
+        request(Wire.DISK_SELECT, Wire.body(out -> out.writeInt(index)));
+    }
+    @Override public synchronized void setDiskEjected(boolean ejected) throws IOException {
+        empty(Wire.DISK_EJECT, Wire.body(out -> out.writeByte(ejected ? 1 : 0)));
+    }
     public long workerPid() { return worker.pid(); }
     public boolean isAlive() { return worker.isAlive(); }
     public OptionalInt exitCode() { return worker.isAlive() ? OptionalInt.empty() : OptionalInt.of(worker.exitValue()); }

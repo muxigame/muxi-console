@@ -32,7 +32,7 @@ public final class GameScreen extends Screen {
                     pictureWidth, pictureHeight);
         }
         graphics.fill(0, height - 24, width, height, 0xd0203b42);
-        graphics.drawString(font, "P" + (port + 1) + "  ·  F 切换" + (worldView ? "全屏" : "电视视角") + "  ·  Esc 离开",
+        graphics.drawString(font, "P" + (port + 1) + "  ·  F 切换" + (worldView ? "全屏" : "电视视角") + "  ·  F8 外接屏幕  ·  Esc 离开",
                 10, height - 16, ConsoleScreen.CREAM, false);
         String status = Objects.requireNonNullElse(actions.status(), "");
         if (!status.isBlank()) graphics.drawString(font, font.plainSubstrByWidth(status, width - 20), 10, 10, ConsoleScreen.AMBER, false);

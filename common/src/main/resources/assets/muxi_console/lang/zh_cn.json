@@ -80,5 +80,7 @@
   "platform.muxi_console.ngpc": "Neo Geo Pocket Color",
   "platform.muxi_console.ws": "WonderSwan",
   "platform.muxi_console.wsc": "WonderSwan Color",
-  "platform.muxi_console.vb": "Virtual Boy"
+  "platform.muxi_console.vb": "Virtual Boy",
+  "platform.muxi_console.fds": "Famicom Disk System",
+  "platform.muxi_console.arcade": "街机"
 }

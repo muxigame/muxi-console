@@ -1,0 +1,1135 @@
+{
+  "schema": 1,
+  "namespace": "muxi_console",
+  "coordinate_units": 16,
+  "front": "north",
+  "screen_plane": {
+    "from": [
+      1.5,
+      3.0,
+      6.9
+    ],
+    "to": [
+      14.5,
+      12.75,
+      6.9
+    ],
+    "aspect": [
+      4,
+      3
+    ]
+  },
+  "entries": [
+    {
+      "platform": "nes",
+      "cmd": 1,
+      "name": "NES",
+      "zh_name": "红白机",
+      "form_factor": "desktop",
+      "geometry": "muxi_console:block/desk_console_nes",
+      "item": "muxi_console:item/desk_console_nes",
+      "media": "muxi_console:item/cartridge_nes",
+      "media_kind": "cartridge",
+      "controller_ports": 4,
+      "silhouette": "wide front-loading deck with two-level rear lid and flap",
+      "bounds": {
+        "min": [
+          1,
+          0,
+          1.8
+        ],
+        "max": [
+          15,
+          6.1,
+          14
+        ]
+      },
+      "screen_plane": null,
+      "review": {
+        "row": 0,
+        "column": 0,
+        "station": [
+          0,
+          64,
+          0
+        ],
+        "camera_offset": [
+          2.8,
+          2.0,
+          -3.9
+        ],
+        "camera_pitch": 20,
+        "image": "01-nes.png"
+      }
+    },
+    {
+      "platform": "snes",
+      "cmd": 2,
+      "name": "SNES",
+      "zh_name": "超级任天堂",
+      "form_factor": "desktop",
+      "geometry": "muxi_console:block/desk_console_snes",
+      "item": "muxi_console:item/desk_console_snes",
+      "media": "muxi_console:item/cartridge_snes",
+      "media_kind": "cartridge",
+      "controller_ports": 4,
+      "silhouette": "stepped shoulder deck with central cartridge arch and paired top keys",
+      "bounds": {
+        "min": [
+          1,
+          0,
+          1.92
+        ],
+        "max": [
+          15,
+          6.3,
+          13.5
+        ]
+      },
+      "screen_plane": null,
+      "review": {
+        "row": 0,
+        "column": 1,
+        "station": [
+          4,
+          64,
+          0
+        ],
+        "camera_offset": [
+          2.8,
+          2.0,
+          -3.9
+        ],
+        "camera_pitch": 20,
+        "image": "02-snes.png"
+      }
+    },
+    {
+      "platform": "gb",
+      "cmd": 3,
+      "name": "GB",
+      "zh_name": "Game Boy",
+      "form_factor": "handheld",
+      "geometry": "muxi_console:block/desk_console_gb",
+      "item": "muxi_console:item/handheld_gb",
+      "media": "muxi_console:item/cartridge_gb",
+      "media_kind": "cartridge",
+      "controller_ports": 1,
+      "silhouette": "tall portrait body, upper square screen, lower cross and offset keys",
+      "bounds": {
+        "min": [
+          3.6,
+          0.8,
+          5.45
+        ],
+        "max": [
+          12.4,
+          15.2,
+          8.8
+        ]
+      },
+      "screen_plane": {
+        "from": [
+          5.0,
+          8.5,
+          5.9
+        ],
+        "to": [
+          11.0,
+          13.9,
+          5.9
+        ],
+        "facing": "north"
+      },
+      "review": {
+        "row": 0,
+        "column": 2,
+        "station": [
+          8,
+          64,
+          0
+        ],
+        "camera_offset": [
+          2.8,
+          2.0,
+          -3.9
+        ],
+        "camera_pitch": 20,
+        "image": "03-gb.png"
+      }
+    },
+    {
+      "platform": "gbc",
+      "cmd": 4,
+      "name": "GBC",
+      "zh_name": "Game Boy Color",
+      "form_factor": "handheld",
+      "geometry": "muxi_console:block/desk_console_gbc",
+      "item": "muxi_console:item/handheld_gbc",
+      "media": "muxi_console:item/cartridge_gbc",
+      "media_kind": "cartridge",
+      "controller_ports": 1,
+      "silhouette": "narrow portrait body with crowned top and terraced right heel",
+      "bounds": {
+        "min": [
+          4.0,
+          0.6,
+          5.3
+        ],
+        "max": [
+          12,
+          15.2,
+          8.5
+        ]
+      },
+      "screen_plane": {
+        "from": [
+          5.15,
+          8.5,
+          5.65
+        ],
+        "to": [
+          10.85,
+          13.63,
+          5.65
+        ],
+        "facing": "north"
+      },
+      "review": {
+        "row": 0,
+        "column": 3,
+        "station": [
+          12,
+          64,
+          0
+        ],
+        "camera_offset": [
+          2.8,
+          2.0,
+          -3.9
+        ],
+        "camera_pitch": 20,
+        "image": "04-gbc.png"
+      }
+    },
+    {
+      "platform": "gba",
+      "cmd": 5,
+      "name": "GBA",
+      "zh_name": "Game Boy Advance",
+      "form_factor": "handheld",
+      "geometry": "muxi_console:block/desk_console_gba",
+      "item": "muxi_console:item/handheld_gba",
+      "media": "muxi_console:item/cartridge_gba",
+      "media_kind": "cartridge",
+      "controller_ports": 1,
+      "silhouette": "wide bridge body, projecting side grips and shoulder paddles",
+      "bounds": {
+        "min": [
+          0.3,
+          3.7,
+          5.25
+        ],
+        "max": [
+          15.7,
+          11.6,
+          8.7
+        ]
+      },
+      "screen_plane": {
+        "from": [
+          4.4,
+          5.0,
+          5.45
+        ],
+        "to": [
+          11.6,
+          9.8,
+          5.45
+        ],
+        "facing": "north"
+      },
+      "review": {
+        "row": 0,
+        "column": 4,
+        "station": [
+          16,
+          64,
+          0
+        ],
+        "camera_offset": [
+          2.8,
+          2.0,
+          -3.9
+        ],
+        "camera_pitch": 20,
+        "image": "05-gba.png"
+      }
+    },
+    {
+      "platform": "md",
+      "cmd": 6,
+      "name": "MD",
+      "zh_name": "Mega Drive",
+      "form_factor": "desktop",
+      "geometry": "muxi_console:block/desk_console_md",
+      "item": "muxi_console:item/desk_console_md",
+      "media": "muxi_console:item/cartridge_md",
+      "media_kind": "cartridge",
+      "controller_ports": 4,
+      "silhouette": "octagonal deck with concentric stepped cartridge ring",
+      "bounds": {
+        "min": [
+          0.8,
+          0,
+          1.92
+        ],
+        "max": [
+          15.2,
+          5.35,
+          14
+        ]
+      },
+      "screen_plane": null,
+      "review": {
+        "row": 1,
+        "column": 0,
+        "station": [
+          0,
+          64,
+          7
+        ],
+        "camera_offset": [
+          2.8,
+          2.0,
+          -3.9
+        ],
+        "camera_pitch": 20,
+        "image": "06-md.png"
+      }
+    },
+    {
+      "platform": "n64",
+      "cmd": 7,
+      "name": "N64",
+      "zh_name": "Nintendo 64",
+      "form_factor": "desktop",
+      "geometry": "muxi_console:block/desk_console_n64",
+      "item": "muxi_console:item/desk_console_n64",
+      "media": "muxi_console:item/cartridge_n64",
+      "media_kind": "cartridge",
+      "controller_ports": 4,
+      "silhouette": "three-lobe deck, raised rear cartridge rail and four front sockets",
+      "bounds": {
+        "min": [
+          0.8,
+          0,
+          1.32
+        ],
+        "max": [
+          15.2,
+          6.1,
+          14
+        ]
+      },
+      "screen_plane": null,
+      "review": {
+        "row": 1,
+        "column": 1,
+        "station": [
+          4,
+          64,
+          7
+        ],
+        "camera_offset": [
+          2.8,
+          2.0,
+          -3.9
+        ],
+        "camera_pitch": 20,
+        "image": "07-n64.png"
+      }
+    },
+    {
+      "platform": "sms",
+      "cmd": 8,
+      "name": "SMS",
+      "zh_name": "Master System",
+      "form_factor": "desktop",
+      "geometry": "muxi_console:block/desk_console_sms",
+      "item": "muxi_console:item/desk_console_sms",
+      "media": "muxi_console:item/cartridge_sms",
+      "media_kind": "cartridge",
+      "controller_ports": 2,
+      "silhouette": "low wedge deck with long red rail and recessed media bay",
+      "bounds": {
+        "min": [
+          1,
+          0,
+          1.92
+        ],
+        "max": [
+          15,
+          5.0,
+          14
+        ]
+      },
+      "screen_plane": null,
+      "review": {
+        "row": 1,
+        "column": 2,
+        "station": [
+          8,
+          64,
+          7
+        ],
+        "camera_offset": [
+          2.8,
+          2.0,
+          -3.9
+        ],
+        "camera_pitch": 20,
+        "image": "08-sms.png"
+      }
+    },
+    {
+      "platform": "gg",
+      "cmd": 9,
+      "name": "GG",
+      "zh_name": "Game Gear",
+      "form_factor": "handheld",
+      "geometry": "muxi_console:block/desk_console_gg",
+      "item": "muxi_console:item/handheld_gg",
+      "media": "muxi_console:item/cartridge_gg",
+      "media_kind": "cartridge",
+      "controller_ports": 1,
+      "silhouette": "thick landscape body, tall screen bezel and stacked right buttons",
+      "bounds": {
+        "min": [
+          0.3,
+          3.3,
+          5.4
+        ],
+        "max": [
+          15.7,
+          12,
+          9.2
+        ]
+      },
+      "screen_plane": {
+        "from": [
+          5.3,
+          5.5,
+          5.65
+        ],
+        "to": [
+          10.7,
+          10.36,
+          5.65
+        ],
+        "facing": "north"
+      },
+      "review": {
+        "row": 1,
+        "column": 3,
+        "station": [
+          12,
+          64,
+          7
+        ],
+        "camera_offset": [
+          2.8,
+          2.0,
+          -3.9
+        ],
+        "camera_pitch": 20,
+        "image": "09-gg.png"
+      }
+    },
+    {
+      "platform": "sg1000",
+      "cmd": 10,
+      "name": "SG1",
+      "zh_name": "SG-1000",
+      "form_factor": "desktop",
+      "geometry": "muxi_console:block/desk_console_sg1000",
+      "item": "muxi_console:item/desk_console_sg1000",
+      "media": "muxi_console:item/cartridge_sg1000",
+      "media_kind": "cartridge",
+      "controller_ports": 2,
+      "silhouette": "ivory typewriter deck with raised back rail and side cartridge tower",
+      "bounds": {
+        "min": [
+          1,
+          0,
+          1.92
+        ],
+        "max": [
+          15,
+          6.4,
+          14
+        ]
+      },
+      "screen_plane": null,
+      "review": {
+        "row": 1,
+        "column": 4,
+        "station": [
+          16,
+          64,
+          7
+        ],
+        "camera_offset": [
+          2.8,
+          2.0,
+          -3.9
+        ],
+        "camera_pitch": 20,
+        "image": "10-sg1000.png"
+      }
+    },
+    {
+      "platform": "pce",
+      "cmd": 11,
+      "name": "PCE",
+      "zh_name": "PC Engine",
+      "form_factor": "desktop",
+      "geometry": "muxi_console:block/desk_console_pce",
+      "item": "muxi_console:item/desk_console_pce",
+      "media": "muxi_console:item/cartridge_pce",
+      "media_kind": "card",
+      "controller_ports": 4,
+      "silhouette": "compact near-square deck with offset card mouth and rear fin",
+      "bounds": {
+        "min": [
+          3,
+          0,
+          2.88
+        ],
+        "max": [
+          13.0,
+          4.7,
+          13.0
+        ]
+      },
+      "screen_plane": null,
+      "review": {
+        "row": 2,
+        "column": 0,
+        "station": [
+          0,
+          64,
+          14
+        ],
+        "camera_offset": [
+          2.8,
+          2.0,
+          -3.9
+        ],
+        "camera_pitch": 20,
+        "image": "11-pce.png"
+      }
+    },
+    {
+      "platform": "a2600",
+      "cmd": 12,
+      "name": "A26",
+      "zh_name": "Atari 2600",
+      "form_factor": "desktop",
+      "geometry": "muxi_console:block/desk_console_a2600",
+      "item": "muxi_console:item/desk_console_a2600",
+      "media": "muxi_console:item/cartridge_a2600",
+      "media_kind": "cartridge",
+      "controller_ports": 2,
+      "silhouette": "broad ribbed wedge with wooden front band and six switch towers",
+      "bounds": {
+        "min": [
+          0.6,
+          0,
+          1.85
+        ],
+        "max": [
+          15.4,
+          5.85,
+          14
+        ]
+      },
+      "screen_plane": null,
+      "review": {
+        "row": 2,
+        "column": 1,
+        "station": [
+          4,
+          64,
+          14
+        ],
+        "camera_offset": [
+          2.8,
+          2.0,
+          -3.9
+        ],
+        "camera_pitch": 20,
+        "image": "12-a2600.png"
+      }
+    },
+    {
+      "platform": "a7800",
+      "cmd": 13,
+      "name": "A78",
+      "zh_name": "Atari 7800",
+      "form_factor": "desktop",
+      "geometry": "muxi_console:block/desk_console_a7800",
+      "item": "muxi_console:item/desk_console_a7800",
+      "media": "muxi_console:item/cartridge_a7800",
+      "media_kind": "cartridge",
+      "controller_ports": 2,
+      "silhouette": "slim terraced deck with trapezoid top and central forward cartridge",
+      "bounds": {
+        "min": [
+          1.3,
+          0,
+          1.92
+        ],
+        "max": [
+          14.7,
+          5.25,
+          14
+        ]
+      },
+      "screen_plane": null,
+      "review": {
+        "row": 2,
+        "column": 2,
+        "station": [
+          8,
+          64,
+          14
+        ],
+        "camera_offset": [
+          2.8,
+          2.0,
+          -3.9
+        ],
+        "camera_pitch": 20,
+        "image": "13-a7800.png"
+      }
+    },
+    {
+      "platform": "lynx",
+      "cmd": 14,
+      "name": "LNX",
+      "zh_name": "Atari Lynx",
+      "form_factor": "handheld",
+      "geometry": "muxi_console:block/desk_console_lynx",
+      "item": "muxi_console:item/handheld_lynx",
+      "media": "muxi_console:item/cartridge_lynx",
+      "media_kind": "card",
+      "controller_ports": 1,
+      "silhouette": "long landscape slab with large end caps and side utility column",
+      "bounds": {
+        "min": [
+          0.1,
+          3.9,
+          5.25
+        ],
+        "max": [
+          15.9,
+          11.8,
+          9.5
+        ]
+      },
+      "screen_plane": {
+        "from": [
+          4.0,
+          5.4,
+          5.4
+        ],
+        "to": [
+          12.0,
+          10.5,
+          5.4
+        ],
+        "facing": "north"
+      },
+      "review": {
+        "row": 2,
+        "column": 3,
+        "station": [
+          12,
+          64,
+          14
+        ],
+        "camera_offset": [
+          2.8,
+          2.0,
+          -3.9
+        ],
+        "camera_pitch": 20,
+        "image": "14-lynx.png"
+      }
+    },
+    {
+      "platform": "ngp",
+      "cmd": 15,
+      "name": "NGP",
+      "zh_name": "Neo Geo Pocket",
+      "form_factor": "handheld",
+      "geometry": "muxi_console:block/desk_console_ngp",
+      "item": "muxi_console:item/handheld_ngp",
+      "media": "muxi_console:item/cartridge_ngp",
+      "media_kind": "cartridge",
+      "controller_ports": 1,
+      "silhouette": "square landscape pocket body with circular stepped thumb disc",
+      "bounds": {
+        "min": [
+          1.1,
+          3.0,
+          5.0
+        ],
+        "max": [
+          14.9,
+          12.95,
+          8.7
+        ]
+      },
+      "screen_plane": {
+        "from": [
+          5.0,
+          5.7,
+          5.8
+        ],
+        "to": [
+          11.0,
+          11.4,
+          5.8
+        ],
+        "facing": "north"
+      },
+      "review": {
+        "row": 2,
+        "column": 4,
+        "station": [
+          16,
+          64,
+          14
+        ],
+        "camera_offset": [
+          2.8,
+          2.0,
+          -3.9
+        ],
+        "camera_pitch": 20,
+        "image": "15-ngp.png"
+      }
+    },
+    {
+      "platform": "ngpc",
+      "cmd": 16,
+      "name": "NPC",
+      "zh_name": "Neo Geo Pocket Color",
+      "form_factor": "handheld",
+      "geometry": "muxi_console:block/desk_console_ngpc",
+      "item": "muxi_console:item/handheld_ngpc",
+      "media": "muxi_console:item/cartridge_ngpc",
+      "media_kind": "cartridge",
+      "controller_ports": 1,
+      "silhouette": "scalloped pocket body with raised screen crown and two-tone heel",
+      "bounds": {
+        "min": [
+          0.8,
+          2.8,
+          5.0
+        ],
+        "max": [
+          14.9,
+          13.3,
+          8.7
+        ]
+      },
+      "screen_plane": {
+        "from": [
+          4.85,
+          5.5,
+          5.6
+        ],
+        "to": [
+          11.15,
+          11.485,
+          5.6
+        ],
+        "facing": "north"
+      },
+      "review": {
+        "row": 3,
+        "column": 0,
+        "station": [
+          0,
+          64,
+          21
+        ],
+        "camera_offset": [
+          2.8,
+          2.0,
+          -3.9
+        ],
+        "camera_pitch": 20,
+        "image": "16-ngpc.png"
+      }
+    },
+    {
+      "platform": "ws",
+      "cmd": 17,
+      "name": "WS",
+      "zh_name": "WonderSwan",
+      "form_factor": "handheld",
+      "geometry": "muxi_console:block/desk_console_ws",
+      "item": "muxi_console:item/handheld_ws",
+      "media": "muxi_console:item/cartridge_ws",
+      "media_kind": "cartridge",
+      "controller_ports": 1,
+      "silhouette": "asymmetric landscape body with two distinct left directional clusters",
+      "bounds": {
+        "min": [
+          0.5,
+          3.7,
+          5.3
+        ],
+        "max": [
+          15.5,
+          11.6,
+          8.35
+        ]
+      },
+      "screen_plane": {
+        "from": [
+          5.4,
+          5.2,
+          5.7
+        ],
+        "to": [
+          12.4,
+          9.7,
+          5.7
+        ],
+        "facing": "north"
+      },
+      "review": {
+        "row": 3,
+        "column": 1,
+        "station": [
+          4,
+          64,
+          21
+        ],
+        "camera_offset": [
+          2.8,
+          2.0,
+          -3.9
+        ],
+        "camera_pitch": 20,
+        "image": "17-ws.png"
+      }
+    },
+    {
+      "platform": "wsc",
+      "cmd": 18,
+      "name": "WSC",
+      "zh_name": "WonderSwan Color",
+      "form_factor": "handheld",
+      "geometry": "muxi_console:block/desk_console_wsc",
+      "item": "muxi_console:item/handheld_wsc",
+      "media": "muxi_console:item/cartridge_wsc",
+      "media_kind": "cartridge",
+      "controller_ports": 1,
+      "silhouette": "slender rounded landscape body with vertical side cluster and lower keys",
+      "bounds": {
+        "min": [
+          0.5,
+          3.1,
+          5.3
+        ],
+        "max": [
+          15.5,
+          12.2,
+          8.35
+        ]
+      },
+      "screen_plane": {
+        "from": [
+          4.9,
+          5.0,
+          5.45
+        ],
+        "to": [
+          12.25,
+          9.725,
+          5.45
+        ],
+        "facing": "north"
+      },
+      "review": {
+        "row": 3,
+        "column": 2,
+        "station": [
+          8,
+          64,
+          21
+        ],
+        "camera_offset": [
+          2.8,
+          2.0,
+          -3.9
+        ],
+        "camera_pitch": 20,
+        "image": "18-wsc.png"
+      }
+    },
+    {
+      "platform": "vb",
+      "cmd": 19,
+      "name": "VB",
+      "zh_name": "Virtual Boy",
+      "form_factor": "viewer",
+      "geometry": "muxi_console:block/desk_console_vb",
+      "item": "muxi_console:item/handheld_vb",
+      "media": "muxi_console:item/cartridge_vb",
+      "media_kind": "cartridge",
+      "controller_ports": 1,
+      "silhouette": "binocular visor with twin dark eyepieces on a splayed tabletop tripod",
+      "bounds": {
+        "min": [
+          1.5,
+          0.5,
+          3.5
+        ],
+        "max": [
+          14.5,
+          13.280000000000001,
+          13.8
+        ]
+      },
+      "screen_plane": null,
+      "review": {
+        "row": 3,
+        "column": 3,
+        "station": [
+          12,
+          64,
+          21
+        ],
+        "camera_offset": [
+          2.8,
+          2.0,
+          -3.9
+        ],
+        "camera_pitch": 20,
+        "image": "19-vb.png"
+      },
+      "screen_planes": [
+        {
+          "from": [
+            3.4,
+            9.4833333333,
+            4.48
+          ],
+          "to": [
+            6.2,
+            11.1166666667,
+            4.48
+          ],
+          "facing": "north",
+          "uv": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "eye": "left"
+        },
+        {
+          "from": [
+            9.8,
+            9.4833333333,
+            4.48
+          ],
+          "to": [
+            12.6,
+            11.1166666667,
+            4.48
+          ],
+          "facing": "north",
+          "uv": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "eye": "right"
+        }
+      ],
+      "preview_mode": "duplicated-mono"
+    },
+    {
+      "platform": "fds",
+      "cmd": 20,
+      "name": "FDS",
+      "zh_name": "Famicom Disk System",
+      "form_factor": "desktop",
+      "geometry": "muxi_console:block/desk_console_fds",
+      "item": "muxi_console:item/desk_console_fds",
+      "media": "muxi_console:item/cartridge_fds",
+      "media_kind": "disk",
+      "controller_ports": 4,
+      "silhouette": "stacked magnetic-disk dock with low drive and upper adapter",
+      "bounds": {
+        "min": [
+          1,
+          0,
+          1.68
+        ],
+        "max": [
+          15,
+          7.73,
+          14
+        ]
+      },
+      "screen_plane": null,
+      "review": {
+        "row": 3,
+        "column": 4,
+        "station": [
+          16,
+          64,
+          21
+        ],
+        "camera_offset": [
+          2.8,
+          2.0,
+          -3.9
+        ],
+        "camera_pitch": 20,
+        "image": "20-fds.png"
+      }
+    },
+    {
+      "platform": "arcade",
+      "cmd": 21,
+      "name": "ARC",
+      "zh_name": "街机",
+      "form_factor": "arcade",
+      "geometry": "muxi_console:block/desk_console_arcade",
+      "item": "muxi_console:item/desk_console_arcade",
+      "media": "muxi_console:item/cartridge_arcade",
+      "media_kind": "cartridge",
+      "controller_ports": 2,
+      "silhouette": "upright single-seat cabinet with projecting control ledge and tall marquee",
+      "bounds": {
+        "min": [
+          2.85,
+          0,
+          1.8
+        ],
+        "max": [
+          13.15,
+          15.8,
+          14
+        ]
+      },
+      "screen_plane": {
+        "from": [
+          4.4,
+          8.4,
+          4.7
+        ],
+        "to": [
+          11.6,
+          13.8,
+          4.7
+        ],
+        "facing": "north"
+      },
+      "review": {
+        "row": 4,
+        "column": 0,
+        "station": [
+          0,
+          64,
+          28
+        ],
+        "camera_offset": [
+          2.8,
+          2.0,
+          -3.9
+        ],
+        "camera_pitch": 20,
+        "image": "21-arcade.png"
+      },
+      "control_positions": [
+        [
+          8,
+          7.0,
+          3.3
+        ]
+      ],
+      "cabinet_seats": 1
+    }
+  ],
+  "additional_styles": [
+    {
+      "platform": "arcade",
+      "cmd": 22,
+      "style": "double",
+      "geometry": "muxi_console:block/arcade_cabinet_2p",
+      "item": "muxi_console:item/desk_console_arcade_2p",
+      "bounds": {
+        "min": [
+          0.25,
+          0,
+          1.8
+        ],
+        "max": [
+          15.75,
+          15.8,
+          14
+        ]
+      },
+      "cabinet_seats": 2,
+      "controller_ports": 2,
+      "screen_plane": {
+        "from": [
+          3.2,
+          7,
+          4.3
+        ],
+        "to": [
+          12.8,
+          14.2,
+          4.3
+        ],
+        "facing": "north"
+      },
+      "control_positions": [
+        [
+          4.2,
+          6.5,
+          2.9
+        ],
+        [
+          11.8,
+          6.5,
+          2.9
+        ]
+      ],
+      "review": {
+        "row": 4,
+        "column": 1,
+        "station": [
+          4,
+          64,
+          28
+        ],
+        "image": "22-arcade-2p.png"
+      }
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "schema": 1,
+  "scope": "Worker-only OpenGL dependencies; exact local bytes compared with official Maven Central artifacts",
+  "dependencies": [
+    {
+      "file": "lwjgl-3.3.3.jar",
+      "artifact": "org.lwjgl:lwjgl:3.3.3",
+      "url": "https://repo.maven.apache.org/maven2/org/lwjgl/lwjgl/3.3.3/lwjgl-3.3.3.jar",
+      "bytes": 785029,
+      "sha256": "dc9c7b2d48e8396d68895f8902ffa01e46253de44dfe927533ff09457ebfeec4",
+      "license": "BSD-3-Clause",
+      "source": "https://github.com/LWJGL/lwjgl3/tree/3.3.3",
+      "licenseUrl": "https://raw.githubusercontent.com/LWJGL/lwjgl3/3.3.3/LICENSE.md"
+    },
+    {
+      "file": "lwjgl-3.3.3-natives-windows.jar",
+      "artifact": "org.lwjgl:lwjgl:3.3.3:natives-windows",
+      "url": "https://repo.maven.apache.org/maven2/org/lwjgl/lwjgl/3.3.3/lwjgl-3.3.3-natives-windows.jar",
+      "bytes": 165442,
+      "sha256": "5ee63a19187efe5bb8747fd24f7b13257db348df5ad641113a3695e43f213959",
+      "license": "BSD-3-Clause",
+      "source": "https://github.com/LWJGL/lwjgl3/tree/3.3.3",
+      "licenseUrl": "https://raw.githubusercontent.com/LWJGL/lwjgl3/3.3.3/LICENSE.md"
+    },
+    {
+      "file": "lwjgl-glfw-3.3.3.jar",
+      "artifact": "org.lwjgl:lwjgl-glfw:3.3.3",
+      "url": "https://repo.maven.apache.org/maven2/org/lwjgl/lwjgl-glfw/3.3.3/lwjgl-glfw-3.3.3.jar",
+      "bytes": 135546,
+      "sha256": "bedc757fd2b1b255146db26b74b9cbd1fcf5644b89b47b104fa721c741604259",
+      "license": "BSD-3-Clause",
+      "source": "https://github.com/LWJGL/lwjgl3/tree/3.3.3",
+      "licenseUrl": "https://raw.githubusercontent.com/LWJGL/lwjgl3/3.3.3/LICENSE.md"
+    },
+    {
+      "file": "lwjgl-glfw-3.3.3-natives-windows.jar",
+      "artifact": "org.lwjgl:lwjgl-glfw:3.3.3:natives-windows",
+      "url": "https://repo.maven.apache.org/maven2/org/lwjgl/lwjgl-glfw/3.3.3/lwjgl-glfw-3.3.3-natives-windows.jar",
+      "bytes": 166368,
+      "sha256": "98155b451dfc6f585089dec77a12f9c05789c4dceb8da472f9d308160101a70d",
+      "license": "BSD-3-Clause",
+      "source": "https://github.com/LWJGL/lwjgl3/tree/3.3.3",
+      "licenseUrl": "https://raw.githubusercontent.com/LWJGL/lwjgl3/3.3.3/LICENSE.md"
+    },
+    {
+      "file": "lwjgl-opengl-3.3.3.jar",
+      "artifact": "org.lwjgl:lwjgl-opengl:3.3.3",
+      "url": "https://repo.maven.apache.org/maven2/org/lwjgl/lwjgl-opengl/3.3.3/lwjgl-opengl-3.3.3.jar",
+      "bytes": 929192,
+      "sha256": "5062da750e5f7ec89e27e8b67b7d40fa8c4b16890159e35f828116ce6c8eca1e",
+      "license": "BSD-3-Clause",
+      "source": "https://github.com/LWJGL/lwjgl3/tree/3.3.3",
+      "licenseUrl": "https://raw.githubusercontent.com/LWJGL/lwjgl3/3.3.3/LICENSE.md"
+    },
+    {
+      "file": "lwjgl-opengl-3.3.3-natives-windows.jar",
+      "artifact": "org.lwjgl:lwjgl-opengl:3.3.3:natives-windows",
+      "url": "https://repo.maven.apache.org/maven2/org/lwjgl/lwjgl-opengl/3.3.3/lwjgl-opengl-3.3.3-natives-windows.jar",
+      "bytes": 101535,
+      "sha256": "f45e5f60596b03b2e3d8b98a123c855ebd0b5154c8155dc2a56b890ccc907477",
+      "license": "BSD-3-Clause",
+      "source": "https://github.com/LWJGL/lwjgl3/tree/3.3.3",
+      "licenseUrl": "https://raw.githubusercontent.com/LWJGL/lwjgl3/3.3.3/LICENSE.md"
+    }
+  ]
+}

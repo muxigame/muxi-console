@@ -25,7 +25,7 @@ public final class UploadManager implements AutoCloseable {
                     || maxReservedBytes < 1 || timeoutMillis < 1)
                 throw new DomainException("limits", "Invalid upload limits");
         }
-        public static Limits defaults() { return new Limits(RomInspector.MAX_ROM_BYTES, 24 * 1024, 16, 1, 256L * 1024 * 1024, 60000); }
+        public static Limits defaults() { return new Limits(RomInspector.MAX_ROM_BYTES, 24 * 1024, 16, 1, 1024L * 1024 * 1024, 60000); }
     }
 
     public record Request(String filename, Platform platform, long size, String sha256, boolean rightsConfirmed) {

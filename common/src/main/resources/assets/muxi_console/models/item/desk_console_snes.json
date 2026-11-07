@@ -1,7 +1,3 @@
 {
-  "parent": "muxi_console:block/desk_console",
-  "textures": {
-    "accent": "muxi_console:block/common/platform_snes",
-    "label": "muxi_console:item/label_snes"
-  }
+  "parent": "muxi_console:block/desk_console_snes"
 }

@@ -43,7 +43,10 @@ public final class DomainTests {
     }
 
     private static void platformsAndHashing() throws Exception {
-        eq(19, Platform.values().length, "all requested platforms are registered");
+        eq(21, Platform.values().length, "all requested platforms are registered");
+        String[] original={"nes","snes","gb","gbc","gba","md","n64","sms","gg","sg1000","pce","a2600","a7800","lynx","ngp","ngpc","ws","wsc","vb"};
+        for(int i=0;i<original.length;i++)eq(i+1,Platform.fromId(original[i]).customModelData(),"existing model ids remain stable");
+        eq(20,Platform.FDS.customModelData(),"FDS appended without renumbering");eq(21,Platform.ARCADE.customModelData(),"Arcade appended without renumbering");
         Set<String> ids = new HashSet<>();
         Set<Integer> models = new HashSet<>();
         for (Platform platform : Platform.values()) {

@@ -114,6 +114,24 @@
         "custom_model_data": 19
       },
       "model": "muxi_console:item/desk_console_vb"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 20
+      },
+      "model": "muxi_console:item/desk_console_fds"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 21
+      },
+      "model": "muxi_console:item/desk_console_arcade"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 22
+      },
+      "model": "muxi_console:item/desk_console_arcade_2p"
     }
   ]
 }

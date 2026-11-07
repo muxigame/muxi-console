@@ -1,4 +1,26 @@
-# 独立实现状态（2026-11-07）
+# 独立实现状态（2026-11-08）
+
+## 当前完整开发候选
+
+本轮完整开发目标已完成实现与对应诊断/模型审核物料，未生产发布。[候选10](../build/platform-model-10/muxi-console-0.1.0-dev.1+mc1.21.1.jar)为121,355,552字节，SHA256 `08493a72b103454f1693658a6c4ce575e9dd58a2ad027254f65b47dbb14e5dde`；Windows x86-64 / Minecraft1.21.1 / NeoForge21.1.250 / Java21。66个第一方Java源、13组2081项检查、174项原创资源及12181项资源检查通过。精确输入在[构建记录](../build/platform-model-10/build.json)。
+
+第一方MC集成、上传/卡带、协议、独立工作进程、UI、键位/手柄映射、模型、贴图及诊断自行实现；Cartridge只参考公开功能与体验，旧分叉不作输入。21类平台保留原范围并新增12类，22款独立机体包括单双人机台、掌机和VB双镜筒桌架。底层第三方核心及依赖分别登记，不声称模拟CPU核心为第一方。平台/核心/实际验证逐项见[完整范围](PLATFORM-COMPLETION.md)。
+
+- 21平台[基础原生诊断](../build/platform-smoke/platform-matrix.json)3534项通过；[最终冷恢复](../build/cold-load-all-21-02/result.json)548项、63个独立worker正常退出，覆盖新进程直接恢复、首次保存及坏组件回滚。全部17个LibretroCore类与候选10逐字节相同；旧05 NES/GBA存档亦直接恢复通过。
+- [实际产品准入](../build/admission-final-07/admission.json)覆盖21平台；[打包媒体执行](../build/media-final-07/result.json)124项覆盖N64 OpenGL、FDS换面、现代MAME和Lynx。MAME跨进程逐像素续接不一致保留，不作为严格连续性通过。
+- 真实MC run02已验证NES普通双端、N64/MAME单主控共享、双方独立输入、同批PNG/PCM、客席ROM/state拒绝及主控结束后从P1正常恢复。MAME以Pong两球拍位置验证输入，未用球自动移动替代；该轮最终用设备关机结束，未把它写成Esc保存成功。
+- 真实MC run03已补同步中一次退出排队保存、双方自动结束、普通NES双worker回归，以及内置屏与WebDisplays昼夜亮度。该轮GB旧存档首次恢复失败保留；候选10修复SameBoy首次未执行时拒绝序列化回滚点的问题。
+- 真实MC run04（runId `372c19207595455caa521d9d7faba777`）使用候选10恢复原GB卡带：252698字节旧状态SHA `6a8add62c3dc7adf5efdad8e99db5127da67389c3790d6361f3b34b7427268c0`与客户端恢复身份相同；主副手昼夜四图已看。正常保存frame1612、状态SHA `4c1aab00e159e7b5b341074f4dd1641057ece8d36eb5af875b59f22a75c632ed`，worker自然退出，取出后CMD5 GBA外壳及原标签保持。没有重刻或替换旧卡带。
+
+[模型审核图库](../build/model-review/index.html)链接原始Minecraft PNG及分轮JSON：22机型世界图、20张完整主副手图、GB活动掌机、实际内置屏/WebDisplays及N64/MAME机台画面。原图未裁切或合成；每张保留来源run/JAR/文件哈希，旧失败不覆盖。[逐轮模型结论](MODEL-REVIEW.md)区分05静态、07手持/共享、09显示与退出、10冷恢复结果。各轮三JVM均正常exit0；最后一轮的native子进程审计为空，统一入口负责租约及payload清理。
+
+当前限制：实体手柄映射功能已实现，但两MC进程均未枚举到设备，按键/热插拔未验；实际音响听感、Linux、光影、完整整合包共存、各平台代表性合法游戏仍须单独验收。掌机联机线、不中断自动主控迁移未实现；共享流最高20fps/512×512。所有诊断与截图均不代表整个商业游戏库兼容。
+
+第一方公开发行许可尚未指定，第三方滚动核心的精确对应源码与许可交付未闭合，manifest仍为 `releaseReady=false`。未捆绑商业ROM/原厂BIOS，未替换Minecraft干净源、修改Portal或生产发布。两份独立媒体测试提取缓存合计748720304字节因自动审批返回“blocked by policy”保留，未换通道删除；MC运行payload与其分开，由统一入口正常清理。
+
+## 2026-11-07 历史快照（独立09）
+
+以下是上一阶段的冻结记录；候选号、检查数和未实现列表只描述当时，不覆盖上述当前结果。
 
 本仓从根提交 `512ed6c` 空白基线开始，未继承或迁移 Cartridge 分叉源码、协议、native host、资源或测试。第一方 MC 集成、服务端协议、领域状态机、Java/JNA 工作进程、界面、输入、模型、贴图和诊断均重新实现。公开 ABI 和第三方模拟器另行列明来源，不将其冒称第一方。
 

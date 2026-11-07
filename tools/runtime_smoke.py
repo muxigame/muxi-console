@@ -98,12 +98,18 @@ def main():
     args = parser.parse_args()
     output = repo / "build/runtime-smoke"
     output.mkdir(parents=True, exist_ok=True)
-    sources = sorted((repo / "common/src/main/java/net/muxigame/console/runtime").glob("*.java")) + sorted((repo / "tests/runtime").glob("*.java"))
+    sources = sorted((repo / "common/src/main/java/net/muxigame/console/runtime").glob("*.java")) + sorted(
+        path for path in (repo / "tests/runtime").glob("*.java") if path.name not in {"MediaLaunchSmoke.java", "MediaAdmissionChecks.java"})
     classes = output / "classes"; classes.mkdir(exist_ok=True)
     java = args.java_home / "bin/java.exe"
-    subprocess.run([str(args.java_home / "bin/javac.exe"), "-J-Xmx512m", "-J-XX:ActiveProcessorCount=1", "--release", "21", "-cp", str(args.jna), "-d", str(classes), *map(str, sources)], check=True)
+    libraries = workspace / "test-environment/resources/client/game/libraries"
+    jars = [args.jna]
+    for module in ("lwjgl", "lwjgl-glfw", "lwjgl-opengl"):
+        jars.extend(libraries / f"org/lwjgl/{module}/3.3.3/{module}-3.3.3{suffix}.jar" for suffix in ("", "-natives-windows"))
     import os
-    classpath = os.pathsep.join(map(str, (classes.resolve(), args.jna.resolve())))
+    subprocess.run([str(args.java_home / "bin/javac.exe"), "-J-Xmx512m", "-J-XX:ActiveProcessorCount=1", "--release", "21", "-cp", os.pathsep.join(map(str,jars)), "-d", str(classes), *map(str, sources)], check=True)
+    import os
+    classpath = os.pathsep.join(map(str, (classes.resolve(), *(jar.resolve() for jar in jars))))
     if args.probe_manifest:
         manifest = json.loads((repo / "third-party/cores.json").read_text(encoding="utf-8"))
         results = []

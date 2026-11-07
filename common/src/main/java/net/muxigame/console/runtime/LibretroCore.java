@@ -18,14 +18,20 @@ final class LibretroCore implements AutoCloseable {
     private Memory contentMemory;
     private InputFrame input = InputFrame.idle();
     private int pixelFormat, width, height, rotation;
-    private double fps = 60, sampleRate = 44100;
+    private double fps = 60, sampleRate = 44100, displayAspect;
     private long number;
     private byte[] pixels = new byte[0];
     private short[] samples = new short[8192];
     private int sampleCount;
-    private boolean initialized, loaded, noGame, shutdown, hardwareRequested;
+    private boolean initialized, loaded, noGame, shutdown, hardwareRequested, executionStarted;
     private volatile String callbackFailure;
     private final SystemInfo systemInfo = new SystemInfo();
+    private HardwareVideo hardware;
+    private int maximumWidth, maximumHeight;
+    private DiskControl disks;
+    // The public logger is variadic. Its fixed ABI prefix is all this no-op sink
+    // consumes; extra native arguments are deliberately never dereferenced.
+    private final Log log = (level, format) -> { };
 
     private final Environment environment = (command, data) -> {
         try { return (byte) (environment(command, data) ? 1 : 0); }
@@ -90,35 +96,61 @@ final class LibretroCore implements AutoCloseable {
                 game.write();
             } else if (!noGame) throw new IOException("Core requires game content");
             if (api.retro_load_game(game == null ? null : game.getPointer()) == 0) {
-                if (hardwareRequested) throw new IOException("Core requires a hardware renderer; this worker supports software video");
+                if (hardwareRequested) throw new IOException("Core rejected the available desktop OpenGL hardware renderer");
                 throw new IOException("Core rejected game content");
             }
             loaded = true;
             for (int port = 0; port < 4; port++) api.retro_set_controller_port_device(port, 1);
             AvInfo av = new AvInfo(); api.retro_get_system_av_info(av); av.read(); setAv(av);
+            if (hardware != null) hardware.initialize(maximumWidth, maximumHeight);
             checkCallback();
-        } catch (IOException | RuntimeException | LinkageError ex) { close(); throw ex; }
+        } catch (IOException | RuntimeException | LinkageError ex) {
+            try { close(); } catch (IOException | RuntimeException | LinkageError cleanup) { ex.addSuppressed(cleanup); }
+            throw ex;
+        }
     }
 
-    CoreInfo info() { return new CoreInfo(readString(systemInfo.library_name), readString(systemInfo.library_version), width, height, fps, sampleRate); }
+    CoreInfo info() { return new CoreInfo(readString(systemInfo.library_name), readString(systemInfo.library_version), width, height, fps, sampleRate, displayAspect); }
     AvFrame step(InputFrame input) throws IOException {
         checkThread(); this.input = input; sampleCount = 0; callbackFailure = null;
-        if (!shutdown) api.retro_run(); checkCallback();
-        return new AvFrame(number++, width, height, rotation, pixels.clone(), Arrays.copyOf(samples, sampleCount), sampleRate, shutdown);
+        if (!shutdown) runCore(); checkCallback();
+        return new AvFrame(number++, width, height, rotation, pixels.clone(), Arrays.copyOf(samples, sampleCount), sampleRate, shutdown, displayAspect);
     }
     void reset() throws IOException { checkThread(); api.retro_reset(); checkCallback(); }
     byte[] readSram() throws IOException { checkThread(); return readMemory(0); }
     void writeSram(byte[] data) throws IOException { checkThread(); validateMemory(0, data); writeMemory(0, data); }
 
     private record SavedState(byte[] core, byte[] sram, byte[] rtc) { }
-    private SavedState captureState() throws IOException {
-        int size = bounded(api.retro_serialize_size().longValue(), "Core state");
-        if (size == 0) throw new IOException("Core does not support save states");
-        try (Memory buffer = new Memory(size)) {
-            if (api.retro_serialize(buffer, new SizeT(size)) == 0) throw new IOException("Core refused to save state");
-            checkCallback();
-            return new SavedState(buffer.getByteArray(0, size), readMemory(0), readMemory(1));
+    private void runCore() {
+        if (hardware != null) hardware.beforeFrame();
+        executionStarted = true; api.retro_run();
+    }
+    private void ensureHardwareExecutionStarted() throws IOException {
+        if (hardware != null && loaded && !executionStarted) {
+            // Some hardware cores finish initialization on their first coroutine
+            // entry, rather than retro_load_game/context_reset. Until then they
+            // cannot serialize the rollback state or stop that coroutine safely.
+            input = InputFrame.idle(); sampleCount = 0; runCore(); checkCallback();
         }
+    }
+    private SavedState captureState() throws IOException {
+        ensureHardwareExecutionStarted();
+        for (int attempt = 0; attempt < 2; attempt++) {
+            int size = bounded(api.retro_serialize_size().longValue(), "Core state");
+            if (size == 0) throw new IOException("Core does not support save states");
+            try (Memory buffer = new Memory(size)) {
+                byte saved = api.retro_serialize(buffer, new SizeT(size));
+                checkCallback();
+                if (saved != 0) return new SavedState(buffer.getByteArray(0, size), readMemory(0), readMemory(1));
+            }
+            if (executionStarted || attempt != 0) throw new IOException("Core refused to save state");
+            // SameBoy advertises a state size before its first retro_run, but
+            // refuses serialization until that first frame initializes it.
+            // Only a rejected, never-executed core gets this one-frame retry;
+            // already-ready cores retain their original SRAM and boot semantics.
+            input = InputFrame.idle(); sampleCount = 0; runCore(); checkCallback();
+        }
+        throw new IOException("Core refused to save state after initialization");
     }
     byte[] saveState() throws IOException {
         checkThread(); SavedState state = captureState();
@@ -142,6 +174,9 @@ final class LibretroCore implements AutoCloseable {
             buffer.write(0, state.core, 0, state.core.length);
             if (api.retro_unserialize(buffer, new SizeT(state.core.length)) == 0) throw new IOException("Core rejected saved state");
         }
+        // MXS1 deliberately contains no frontend geometry metadata. Query the
+        // restored core's public AV information, including states saved before v2.
+        AvInfo av = new AvInfo(); api.retro_get_system_av_info(av); av.read(); setAv(av);
         // The serialized core may establish the cartridge memory type. For example,
         // a fresh mGBA instance exposes 128 KiB until SRAM autodetection selects 32 KiB.
         validateMemory(0, state.sram); validateMemory(1, state.rtc);
@@ -152,14 +187,14 @@ final class LibretroCore implements AutoCloseable {
         SavedState prior = captureState();
         InputFrame priorInput = input; boolean priorShutdown = shutdown;
         int priorWidth = width, priorHeight = height, priorRotation = rotation, priorPixelFormat = pixelFormat, priorSampleCount = sampleCount;
-        double priorFps = fps, priorRate = sampleRate; byte[] priorPixels = pixels; short[] priorSamples = samples.clone();
+        double priorFps = fps, priorRate = sampleRate, priorAspect = displayAspect; byte[] priorPixels = pixels; short[] priorSamples = samples.clone();
         try {
             applyState(target); input = InputFrame.idle(); sampleCount = 0; shutdown = false;
         } catch (IOException | RuntimeException | LinkageError failure) {
             try {
                 callbackFailure = null; applyState(prior);
                 input = priorInput; shutdown = priorShutdown; width = priorWidth; height = priorHeight; rotation = priorRotation; pixelFormat = priorPixelFormat;
-                fps = priorFps; sampleRate = priorRate; pixels = priorPixels; samples = priorSamples; sampleCount = priorSampleCount;
+                fps = priorFps; sampleRate = priorRate; displayAspect = priorAspect; pixels = priorPixels; samples = priorSamples; sampleCount = priorSampleCount;
             } catch (IOException | RuntimeException | LinkageError rollbackFailure) {
                 try { close(); } catch (RuntimeException | LinkageError closeFailure) { rollbackFailure.addSuppressed(closeFailure); }
                 IOException fatal = new IOException("Saved state failed and rollback failed; emulator core stopped", failure);
@@ -194,7 +229,13 @@ final class LibretroCore implements AutoCloseable {
             case 7 -> { shutdown = true; yield true; }
             case 9 -> { data.setPointer(0, systemPath); yield true; }
             case 10 -> { int format = data.getInt(0); if (format < 0 || format > 2) yield false; pixelFormat = format; yield true; }
-            case 14 -> { hardwareRequested = true; yield false; }
+            case 13, 58 -> { disks = data == null ? null : new DiskControl(data); yield true; }
+            case 14, 14 | 0x10000 -> {
+                hardwareRequested = true;
+                if (data == null || hardware != null) yield false;
+                int type = data.getInt(0); if (type != 1 && type != 3) yield false;
+                hardware = new HardwareVideo(data); yield true;
+            }
             case 15 -> {
                 String key = readString(data.getPointer(0)), value = options.getOrDefault(key, defaults.get(key));
                 if (value == null) { data.setPointer(Native.POINTER_SIZE, null); yield false; }
@@ -213,6 +254,7 @@ final class LibretroCore implements AutoCloseable {
             case 18 -> { noGame = data.getByte(0) != 0; yield true; }
             case 19 -> { data.setPointer(0, libraryPath); yield true; }
             case 24 -> { data.setLong(0, (1L << 1) | (1L << 5)); yield true; }
+            case 27 -> { data.setPointer(0, CallbackReference.getFunctionPointer(log)); yield true; }
             case 30 -> { data.setPointer(0, contentPath); yield true; }
             case 31 -> { data.setPointer(0, savePath); yield true; }
             case 32 -> { setAv(new AvInfo(data)); yield true; }
@@ -224,6 +266,11 @@ final class LibretroCore implements AutoCloseable {
             case 52 -> { data.setInt(0, 1); yield true; }
             case 53 -> { readOptions(data, false); yield true; }
             case 54 -> { readOptions(data == null ? null : data.getPointer(0), false); yield true; }
+            case 56 -> { data.setInt(0, 3); yield true; }
+            case 57 -> { data.setInt(0, 1); yield true; }
+            // Published in SameBoy's bundled libretro ABI: an unsigned Hz target.
+            // Negotiate an output-device rate instead of its multi-MHz fallback.
+            case 81 | 0x10000 -> { data.setInt(0, 48000); yield true; }
             case 67 -> { readOptions(data == null ? null : data.getPointer(Native.POINTER_SIZE), true); yield false; }
             case 68 -> {
                 Pointer us = data == null ? null : data.getPointer(0);
@@ -247,18 +294,25 @@ final class LibretroCore implements AutoCloseable {
         setGeometry(info.geometry);
         if (!Double.isFinite(info.timing.fps) || info.timing.fps <= 0 || info.timing.fps > 1000 ||
                 !Double.isFinite(info.timing.sample_rate) || info.timing.sample_rate < 0 || info.timing.sample_rate > 192000)
-            throw new IOException("Unsupported core audio/video timing");
+            throw new IOException("Unsupported core audio/video timing: fps=" + info.timing.fps + ", sampleRate=" + info.timing.sample_rate);
         fps = info.timing.fps; sampleRate = info.timing.sample_rate;
     }
     private void setGeometry(Geometry geometry) throws IOException {
         if (geometry.base_width <= 0 || geometry.base_height <= 0 || (long) geometry.base_width * geometry.base_height > MAX_PIXELS)
             throw new IOException("Unsupported core video geometry");
+        if (!Float.isFinite(geometry.aspect_ratio)) throw new IOException("Invalid core display aspect");
+        displayAspect = geometry.aspect_ratio > 0 ? geometry.aspect_ratio : 0;
+        maximumWidth = Math.max(geometry.base_width, geometry.max_width);
+        maximumHeight = Math.max(geometry.base_height, geometry.max_height);
         if (pixels.length == 0) { width = geometry.base_width; height = geometry.base_height; pixels = new byte[width * height * 4]; }
     }
     private void video(Pointer data, int w, int h, long pitch) throws IOException {
         checkThread();
         if (data == null) return; // Public ABI: repeat the previous complete frame.
-        if (Pointer.nativeValue(data) == -1L) throw new IOException("Hardware frame received without a supported renderer");
+        if (Pointer.nativeValue(data) == -1L) {
+            if (hardware == null) throw new IOException("Hardware frame received without a negotiated renderer");
+            pixels = hardware.read(w, h); width = w; height = h; return;
+        }
         int bpp = pixelFormat == 1 ? 4 : 2;
         if (w <= 0 || h <= 0 || (long) w * h > MAX_PIXELS || pitch < (long) w * bpp || pitch > 1024 * 1024)
             throw new IOException("Unsupported video frame size/pitch");
@@ -288,11 +342,52 @@ final class LibretroCore implements AutoCloseable {
         memory.write(0, raw, 0, raw.length); memory.setByte(raw.length, (byte) 0); strings.add(memory); return memory;
     }
     private static String readString(Pointer pointer) { return pointer == null ? "" : pointer.getString(0, "UTF-8"); }
-    @Override public void close() {
+    @Override public void close() throws IOException {
+        IOException startupFailure = null;
+        try { ensureHardwareExecutionStarted(); } catch (IOException failure) { startupFailure = failure; }
         if (loaded) { api.retro_unload_game(); loaded = false; }
+        if (hardware != null) hardware.notifyContextDestroyed();
         if (initialized) { api.retro_deinit(); initialized = false; }
+        if (hardware != null) { hardware.close(); hardware = null; }
         if (contentMemory != null) { contentMemory.close(); contentMemory = null; }
         for (Memory memory : strings) memory.close(); strings.clear();
+        if (startupFailure != null) throw startupFailure;
+    }
+
+    DiskState diskState() throws IOException {
+        checkThread(); if (disks == null) return new DiskState(0, 0, true);
+        int count = disks.unsigned(4), index = disks.unsigned(2);
+        if (count < 0 || count > 256 || index < 0 || index > count) throw new IOException("Invalid disk state from core");
+        return new DiskState(count, index, disks.bool(1));
+    }
+    void selectDisk(int index) throws IOException {
+        checkThread(); DiskState state = diskState();
+        if (disks == null || index < 0 || index >= state.count()) throw new IOException("Disk index is unavailable");
+        if (!disks.bool(0, (byte) 1)) throw new IOException("Core refused disk eject");
+        if (!disks.bool(3, index)) {
+            disks.bool(3, state.index()); disks.bool(0, (byte) (state.ejected() ? 1 : 0));
+            throw new IOException("Core refused disk selection");
+        }
+        if (!disks.bool(0, (byte) 0)) throw new IOException("Core refused disk insertion");
+        checkCallback();
+    }
+    void setDiskEjected(boolean ejected) throws IOException {
+        checkThread();
+        if (disks == null || !disks.bool(0, (byte) (ejected ? 1 : 0))) throw new IOException("Core refused disk eject/insert");
+        checkCallback();
+    }
+    /** Both public disk structs share these first seven function pointers. */
+    private static final class DiskControl {
+        private final Function[] functions = new Function[7];
+        DiskControl(Pointer data) throws IOException {
+            for (int i = 0; i < functions.length; i++) {
+                Pointer function = data.getPointer((long) i * Native.POINTER_SIZE);
+                if (function == null && i < 5) throw new IOException("Incomplete disk control interface");
+                if (function != null) functions[i] = Function.getFunction(function);
+            }
+        }
+        int unsigned(int index) { return functions[index].invokeInt(new Object[0]); }
+        boolean bool(int index, Object... arguments) { return ((Number) functions[index].invoke(Byte.class, arguments)).byteValue() != 0; }
     }
 
     public interface Environment extends Callback { byte invoke(int command, Pointer data); }
@@ -301,6 +396,7 @@ final class LibretroCore implements AutoCloseable {
     public interface AudioBatch extends Callback { SizeT invoke(Pointer data, SizeT frames); }
     public interface InputPoll extends Callback { void invoke(); }
     public interface InputState extends Callback { short invoke(int port, int device, int index, int id); }
+    public interface Log extends Callback { void invoke(int level, Pointer format); }
     public static final class SizeT extends IntegerType {
         public SizeT() { this(0); }
         public SizeT(long value) { super(Native.SIZE_T_SIZE, value, true); }

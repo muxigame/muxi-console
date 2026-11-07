@@ -21,7 +21,9 @@ BASE = "https://buildbot.libretro.com/nightly/windows/x86_64/latest/"
 INFO = "https://raw.githubusercontent.com/libretro/libretro-core-info/master/"
 # Public project identities and platform support; no implementation code is imported.
 SPECS = {
-    "fceumm": ("libretro/libretro-fceumm", ["nes"], "fceumm"),
+    "fceumm": ("libretro/libretro-fceumm", ["nes", "fds"], "fceumm"),
+    "mupen64plus_next": ("libretro/mupen64plus-libretro-nx", ["n64"], "mupen64plus"),
+    "mame": ("libretro/mame", ["arcade"], "mame"),
     "sameboy": ("libretro/SameBoy", ["gb", "gbc"], "sameboy"),
     "mgba": ("libretro/mgba", ["gba"], "mgba"),
     "bsnes2014_performance": ("libretro/bsnes2014", ["snes"], "bsnes2014_performance"),
@@ -47,9 +49,9 @@ def download(url):
     with urllib.request.urlopen(request, timeout=60) as response:
         if not response.url.startswith((BASE, INFO)):
             raise ValueError("Unexpected official-core download redirect")
-        raw = response.read(32 * 1024 * 1024 + 1)
-        if len(raw) > 32 * 1024 * 1024:
-            raise ValueError("Core archive exceeds 32 MiB")
+        raw = response.read(256 * 1024 * 1024 + 1)
+        if len(raw) > 256 * 1024 * 1024:
+            raise ValueError("Core archive exceeds 256 MiB")
         return raw, response.headers.get("Last-Modified")
 
 
@@ -73,7 +75,8 @@ def fetch_one(name, workspace, pin, prior, offline):
         raise ValueError(f"Official archive differs from its pin: {name}")
     with zipfile.ZipFile(io.BytesIO(archive)) as container:
         members = [entry for entry in container.infolist() if Path(entry.filename).name == filename and not entry.is_dir()]
-        if len(members) != 1 or members[0].file_size > 64 * 1024 * 1024:
+        limit = 512 * 1024 * 1024 if name == "mame" else 64 * 1024 * 1024
+        if len(members) != 1 or members[0].file_size > limit:
             raise ValueError(f"Archive has no unique bounded expected library: {name}")
         library = container.read(members[0])
     pe = struct.unpack_from("<I", library, 0x3C)[0] if len(library) >= 64 else 0
@@ -99,8 +102,8 @@ def fetch_one(name, workspace, pin, prior, offline):
         raise ValueError(f"Official info has no license field: {name}")
     entry = {
         "systems": games,
-        "purpose": "diagnostic-only" if name == "2048" else "software-emulation",
-        "renderer": "software",
+        "purpose": "diagnostic-only" if name == "2048" else "emulation",
+        "renderer": "opengl" if name == "mupen64plus_next" else "software",
         "source": "https://github.com/" + repository,
         "sourceRepositoryEvidence": "https://raw.githubusercontent.com/libretro/libretro-super/master/rules.d/core-rules.sh",
         "sourceRevision": None,
@@ -123,6 +126,10 @@ def fetch_one(name, workspace, pin, prior, offline):
             "upstreamLastModified": modified,
         }},
     }
+    # A platform-label update does not invalidate evidence for unchanged bytes.
+    if existing and existing.get("librarySha256") == sha(library):
+        for key in ("binaryVersion", "exportProbe", "binaryReportedRevision", "binaryReportedRevisionResolved", "revisionResolutionEvidence"):
+            if key in prior: entry[key] = prior[key]
     return name, entry
 
 
@@ -147,7 +154,7 @@ def main():
             manifest["cores"][name] = entry
         manifest["pinnedAtUtc"] = datetime.now(timezone.utc).isoformat()
         manifest["scope"] = "Windows x86_64 development candidate; exact source correspondence not yet verified; no proprietary BIOS or game ROMs"
-        manifest["unsupportedSystems"] = {"n64": "Worker has no OpenGL/Vulkan hardware interface; no unverified N64 binary is bundled."}
+        manifest["unsupportedSystems"] = {} if "mupen64plus_next" in manifest["cores"] else {"n64": "No N64 core has been pinned."}
         manifest_path.parent.mkdir(exist_ok=True)
         manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     if args.record_probes:

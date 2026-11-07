@@ -18,7 +18,7 @@ public final class ConsoleContent {
     public static final Supplier<Block> WRITER=BLOCKS.register("cartridge_writer",()->new DeviceBlock(DeviceBlock.Kind.WRITER,BlockBehaviour.Properties.of().strength(1.4f).noOcclusion()));
     public static final Supplier<Block> SCREEN=BLOCKS.register("screen",()->new DeviceBlock(DeviceBlock.Kind.SCREEN,BlockBehaviour.Properties.of().strength(1.2f).noOcclusion()));
     public static final Supplier<BlockEntityType<DeviceEntity>> DEVICE=ENTITIES.register("device",()->BlockEntityType.Builder.of(DeviceEntity::new,DESK.get(),WRITER.get(),SCREEN.get()).build(null));
-    public static final Supplier<Item> DESK_ITEM=ITEMS.register("desk_console",()->new BlockItem(DESK.get(),new Item.Properties()));
+    public static final Supplier<Item> DESK_ITEM=ITEMS.register("desk_console",()->new HardwareBlockItem(DESK.get(),new Item.Properties()));
     public static final Supplier<Item> WRITER_ITEM=ITEMS.register("cartridge_writer",()->new BlockItem(WRITER.get(),new Item.Properties()));
     public static final Supplier<Item> SCREEN_ITEM=ITEMS.register("screen",()->new BlockItem(SCREEN.get(),new Item.Properties()));
     public static final Supplier<Item> BLANK=ITEMS.register("blank_cartridge",()->new Item(new Item.Properties()));
@@ -28,6 +28,7 @@ public final class ConsoleContent {
     public static void register(IEventBus bus){BLOCKS.register(bus);ITEMS.register(bus);ENTITIES.register(bus);bus.addListener(ConsoleContent::creative);}
     private static void creative(net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent event){
         if(event.getTabKey().location().equals(net.minecraft.resources.ResourceLocation.withDefaultNamespace("tools_and_utilities"))){for(var s:new Supplier[]{DESK_ITEM,WRITER_ITEM,SCREEN_ITEM,BLANK,CONTROLLER,HANDHELD})event.accept((Item)s.get());}
+        if(event.getTabKey().location().equals(net.minecraft.resources.ResourceLocation.withDefaultNamespace("tools_and_utilities")))for(var body:HardwareCatalog.bodies())event.accept(HardwareCatalog.variant(new ItemStack(body.handheld()?HANDHELD.get():DESK_ITEM.get()),body.id()));
     }
     private ConsoleContent(){}
 }

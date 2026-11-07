@@ -10,6 +10,9 @@
     "button": "muxi_console:block/common/button",
     "connector": "muxi_console:block/common/connector",
     "screen": "muxi_console:block/common/screen",
+    "wood": "muxi_console:block/common/wood",
+    "light": "muxi_console:block/common/light",
+    "lens": "muxi_console:block/common/lens",
     "accent": "muxi_console:block/common/amber",
     "label": "muxi_console:item/label_blank",
     "display": "muxi_console:block/standby"
@@ -973,18 +976,18 @@
     "firstperson_righthand": {
       "rotation": [
         0,
-        45,
+        180,
         0
       ],
       "translation": [
-        0,
-        1,
-        0
+        -2,
+        6,
+        -1
       ],
       "scale": [
-        0.55,
-        0.55,
-        0.55
+        0.42,
+        0.42,
+        0.42
       ]
     },
     "thirdperson_lefthand": {
@@ -1007,18 +1010,18 @@
     "firstperson_lefthand": {
       "rotation": [
         0,
-        225,
+        180,
         0
       ],
       "translation": [
-        0,
-        1,
-        0
+        -2,
+        6,
+        -1
       ],
       "scale": [
-        0.55,
-        0.55,
-        0.55
+        0.42,
+        0.42,
+        0.42
       ]
     }
   }
