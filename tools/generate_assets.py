@@ -20,6 +20,8 @@ import zlib
 
 import pixel_hardware as hardware
 import inserted_media as attachments
+import cartridge_case_assets as case_assets
+import gui_item_fit
 
 ROOT = Path(__file__).resolve().parents[1]
 RESOURCES = ROOT / "common/src/main/resources"
@@ -611,6 +613,9 @@ def languages():
         "item.muxi_console.cartridge": ("游戏卡带", "Game Cartridge"),
         "item.muxi_console.blank_cartridge": ("空白卡带", "Blank Cartridge"),
         "item.muxi_console.controller": ("木犀控制器", "Muxi Controller"),
+        "block.muxi_console.cartridge_case": ("卡带收纳盒", "Cartridge Case"),
+        "item.muxi_console.cartridge_case": ("卡带收纳盒", "Cartridge Case"),
+        "tooltip.muxi_console.cartridge_case": ("仅收纳卡带 · 右键打开，潜行放置", "Cartridges only · right-click to open; sneak-use to place"),
         "key.categories.muxi_console": ("木犀游戏机", "Muxi Console"),
         "key.muxi_console.menu": ("打开游戏菜单", "Open game menu"),
         "key.muxi_console.release": ("释放游戏控制", "Release game controls"),
@@ -797,9 +802,24 @@ def generated_files():
         js(f"{DATA}/recipe/{name}.json", {"type": "minecraft:crafting_shaped", "category": "misc",
             "pattern": pattern, "key": {symbol: {"item": f"minecraft:{item}"} for symbol, item in ingredients.items()},
             "result": {"id": f"{NS}:{name}", "count": count}})
+    # The new case is independent of the historical BLOCKS/ITEMS collections;
+    # those generated recipes, tags and model bytes remain unchanged.
+    case_model,case_textures=case_assets.resources(NS,box,base_model,surface)
+    js(f"{ASSETS}/models/block/cartridge_case.json",case_model)
+    js(f"{ASSETS}/models/item/cartridge_case.json",{"parent":f"{NS}:block/cartridge_case"})
+    for path,payload in case_textures.items():files[f"{ASSETS}/{path}"]=payload
+    js(f"{ASSETS}/blockstates/cartridge_case.json",{"variants":{
+        f"facing={direction}":{"model":f"{NS}:block/cartridge_case","y":angle}
+        for direction,angle in (("north",0),("east",90),("south",180),("west",270))}})
+    js(f"{DATA}/recipe/cartridge_case.json",{"type":"minecraft:crafting_shaped","category":"misc",
+        "pattern":["IPI","P P","INI"],"key":{"I":{"item":"minecraft:iron_ingot"},"P":{"item":"minecraft:paper"},"N":{"item":"minecraft:iron_nugget"}},
+        "result":{"id":f"{NS}:cartridge_case","count":1}})
+    # Whole-box drops including contents are emitted by the block, never a second loot table.
     for locale, values in languages().items():
         js(f"{ASSETS}/lang/{locale}.json", values)
     js(f"{ASSETS}/model_catalog.json",model_catalog())
+    # Apply only per-item inventory transforms; world and hand geometry stay authored.
+    gui_item_fit.fit(files,NS)
     return files
 
 
@@ -827,6 +847,7 @@ def check_closure(files):
         if "parent" in model:
             inherited = resolved(local_model(model["parent"]), (*stack, path))
             inherited["textures"].update(model.get("textures", {}))
+            inherited.setdefault("display",{}).update(model.get("display",{}))
             if "elements" in model:
                 inherited["elements"] = model["elements"]
             return inherited
@@ -871,7 +892,7 @@ def check_closure(files):
                     require(local_model(variant["model"]))
             if "/recipe/" in path:
                 output = data["result"]["id"].split(":", 1)[1]
-                if output not in ITEMS or output == "cartridge":
+                if output not in (*ITEMS,"cartridge_case") or output == "cartridge":
                     raise ValueError(f"Invalid crafting output: {output}")
                 require(f"{ASSETS}/models/item/{output}.json")
         if path.endswith(".png"):
@@ -889,6 +910,28 @@ def check_closure(files):
         if f"platform.{NS}.{platform}" not in locales[0]:
             raise ValueError(f"Missing platform translation: {platform}")
         checks += 1
+    case=resolved(f"{ASSETS}/models/block/cartridge_case.json")
+    bounds=[min(e["from"][axis] for e in case["elements"]) for axis in range(3)]+[max(e["to"][axis] for e in case["elements"]) for axis in range(3)]
+    if bounds!=[1,0,3.5,15,1.25,12.5]:raise ValueError("Cartridge case no longer matches its thin card-folio physical shape")
+    checks+=1
+    checks+=gui_item_fit.check(files,NS)
+    joined={0};pending=[0]
+    while pending:
+        current=case["elements"][pending.pop()]
+        for index,other in enumerate(case["elements"]):
+            if index not in joined and all(min(current["to"][axis],other["to"][axis])>=max(current["from"][axis],other["from"][axis])-1e-7 for axis in range(3)):
+                joined.add(index);pending.append(index)
+    if len(joined)!=len(case["elements"]):raise ValueError("Cartridge case has floating clasps, hinges or feet")
+    checks+=1
+    states=json.loads(files[f"{ASSETS}/blockstates/cartridge_case.json"])["variants"]
+    for direction,angle in (("north",0),("east",90),("south",180),("west",270)):
+        if states[f"facing={direction}"]!={"model":f"{NS}:block/cartridge_case","y":angle}:raise ValueError("Cartridge case facing mapping differs from its physical shape")
+        checks+=1
+    require(f"{ASSETS}/models/item/cartridge_case.json");require(f"{DATA}/recipe/cartridge_case.json")
+    if f"{DATA}/loot_table/blocks/cartridge_case.json" in files:raise ValueError("Case cannot also drop an extra loot-table box")
+    for locale in locales:
+        if not all(f"{prefix}.{NS}.cartridge_case" in locale for prefix in ("block","item","tooltip")):raise ValueError("Cartridge case name/use translations are incomplete")
+        checks+=1
     # A palette edit cannot satisfy the platform-shape requirement. Compare only
     # geometry coordinates so textures, labels and colors have no influence.
     shape_signatures = {}
@@ -1161,6 +1204,7 @@ def preview():
     pixels = canvas(width, height, "F2EFE5")
     depth = [-math.inf] * (width * height)
     mesh = models()
+    mesh["block/cartridge_case"]=case_assets.resources(NS,box,base_model,surface)[0]
     authored = generated_files()
     sampled = {}
 
@@ -1173,7 +1217,7 @@ def preview():
             w, h, raw = decode_png(authored[f"{ASSETS}/textures/{path}.png"])
             sampled[texture] = tuple(sum(raw[channel::4]) // (w*h) for channel in range(3))
         return sampled[texture]
-    tiles = [f"block/desk_console_{p[0]}" for p in PLATFORMS] + ["block/arcade_cabinet_2p","item/screen"]
+    tiles = [f"block/desk_console_{p[0]}" for p in PLATFORMS] + ["block/arcade_cabinet_2p","item/screen","block/cartridge_case"]
     # Top and north faces visible, like a camera above the front-right corner.
     def project(x, y, z, cx, cy):
         return (cx - (x - 8) * 8 - (z - 8) * 4,

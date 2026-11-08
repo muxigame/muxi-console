@@ -127,5 +127,24 @@
       },
       "model": "muxi_console:item/handheld_arcade"
     }
-  ]
+  ],
+  "display": {
+    "gui": {
+      "rotation": [
+        10,
+        195,
+        0
+      ],
+      "translation": [
+        -0.1727937,
+        0.3440334,
+        0
+      ],
+      "scale": [
+        0.7854395,
+        0.7854395,
+        0.7854395
+      ]
+    }
+  }
 }

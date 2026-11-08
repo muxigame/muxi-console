@@ -1,3 +1,22 @@
 {
-  "parent": "muxi_console:block/arcade_cabinet_2p"
+  "parent": "muxi_console:block/arcade_cabinet_2p",
+  "display": {
+    "gui": {
+      "rotation": [
+        25,
+        225,
+        0
+      ],
+      "translation": [
+        -0.0407607,
+        0.0825305,
+        0
+      ],
+      "scale": [
+        0.5764427,
+        0.5764427,
+        0.5764427
+      ]
+    }
+  }
 }

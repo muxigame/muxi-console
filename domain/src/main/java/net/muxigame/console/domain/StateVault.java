@@ -12,7 +12,7 @@ import java.util.*;
  */
 public final class StateVault implements AutoCloseable {
     public static final Limits DEFAULT_LIMITS = new Limits(1024L * 1024 * 1024, 32L * 1024 * 1024, 24576, 60000, 60000);
-    private static final int META_MAGIC = 0x53564d31, HEAD_MAGIC = 0x53564831;
+    private static final int META_MAGIC = 0x53564d31, NAMESPACED_META_MAGIC = 0x53564d32, HEAD_MAGIC = 0x53564831;
     private static final long METADATA_CHARGE = 1024;
     public record Limits(long quotaBytes, long maxStateBytes, int chunkBytes, long uploadTimeoutMillis, long retentionMillis) {
         public Limits {
@@ -42,6 +42,7 @@ public final class StateVault implements AutoCloseable {
     }
     private final Path root, cards, incoming;
     private final Limits limits;
+    private final String namespace;
     private final Map<UUID, Upload> uploads = new HashMap<>();
     private final Map<UUID, Head> heads = new HashMap<>();
     private final Map<Key, Generation> generations = new HashMap<>();
@@ -51,8 +52,11 @@ public final class StateVault implements AutoCloseable {
     private boolean closed;
 
     public StateVault(Path root) throws IOException { this(root, DEFAULT_LIMITS); }
-    public StateVault(Path root, Limits limits) throws IOException {
-        this.root = Objects.requireNonNull(root).toAbsolutePath().normalize(); this.limits = Objects.requireNonNull(limits);
+    public StateVault(Path root, Limits limits) throws IOException { this(root,limits,null); }
+    /** Explicit namespace binds each generation's metadata to its full outer machine/content key. */
+    public StateVault(Path root, Limits limits, String namespace) throws IOException {
+        this.root = Objects.requireNonNull(root).toAbsolutePath().normalize(); this.limits = Objects.requireNonNull(limits);this.namespace=namespace;
+        if(namespace!=null&&!namespace.matches("[a-f0-9-]{36}:[a-f0-9]{64}"))throw new IllegalArgumentException("Invalid checkpoint namespace");
         directory(this.root); cards = this.root.resolve("cards"); incoming = this.root.resolve("incoming"); directory(cards); directory(incoming);
         FileChannel channel = FileChannel.open(this.root.resolve("vault.lock"), StandardOpenOption.CREATE, StandardOpenOption.WRITE, LinkOption.NOFOLLOW_LINKS);
         FileLock acquired = null;
@@ -168,6 +172,9 @@ public final class StateVault implements AutoCloseable {
         prune(now);
     }
 
+    /** Includes complete generations and live upload reservations, for a shared outer quota. */
+    public synchronized long chargedBytes() throws IOException { active(); return Math.addExact(storedCharge, reservedCharge); }
+
     private Upload upload(UUID actor, UUID id, long now) throws IOException {
         identity(actor); identity(id); Upload upload = uploads.get(actor);
         if (upload == null || !upload.id.equals(id)) throw new DomainException("save_session", "Checkpoint upload identity does not match");
@@ -265,13 +272,13 @@ public final class StateVault implements AutoCloseable {
     private void writeGeneration(Generation generation) throws IOException {
         Snapshot s = generation.snapshot;
         atomicMetadata(metadata(s), out -> {
-            out.writeInt(META_MAGIC); uuid(out, s.cardUUID()); uuid(out, s.generationID()); out.writeUTF(s.fingerprint());
+            out.writeInt(namespace==null?META_MAGIC:NAMESPACED_META_MAGIC);if(namespace!=null)out.writeUTF(namespace);uuid(out, s.cardUUID()); uuid(out, s.generationID()); out.writeUTF(s.fingerprint());
             out.writeLong(s.frame()); out.writeUTF(s.hash()); out.writeLong(s.size()); out.writeLong(generation.created); out.writeLong(generation.retired);
         });
     }
     private Generation readGeneration(Path file) throws IOException {
         try (DataInputStream in = metadataInput(file)) {
-            if (in.readInt() != META_MAGIC) throw new IOException("Invalid checkpoint metadata");
+            int magic=in.readInt();if(namespace==null?magic!=META_MAGIC:magic!=NAMESPACED_META_MAGIC||!namespace.equals(in.readUTF()))throw new IOException("Invalid checkpoint metadata namespace");
             UUID card = uuid(in), id = uuid(in); String fingerprint = in.readUTF(); long frame = in.readLong(); String hash = in.readUTF();
             long size = in.readLong(), created = in.readLong(), retired = in.readLong();
             if (!validDigest(fingerprint) || !validDigest(hash) || frame < 0 || size < 1 || size > limits.maxStateBytes() || created < 0 || retired < -1 || in.read() != -1)

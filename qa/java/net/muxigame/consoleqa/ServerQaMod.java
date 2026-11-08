@@ -33,6 +33,8 @@ public final class ServerQaMod {
     private final PixelScene pixelReview=new PixelScene(owner);
     private final PolishScene polishReview=new PolishScene();
     private final CartridgeScene cartridgeReview=new CartridgeScene(owner);
+    private final MachineScene machineReview=new MachineScene(owner);
+    private final CaseScene caseReview=new CaseScene(owner);
     private final Set<UUID> prepared = new HashSet<>();
     private boolean built;
     private final java.util.ArrayDeque<JsonObject> roomHistory=new java.util.ArrayDeque<>();
@@ -49,6 +51,8 @@ public final class ServerQaMod {
     private void sampleRooms(MinecraftServer server){try{JsonArray current=rooms(server);String key=current.toString();if(!key.equals(lastRooms)){lastRooms=key;JsonObject sample=new JsonObject();sample.addProperty("serverTick",server.getTickCount());sample.add("rooms",current);roomHistory.add(sample);while(roomHistory.size()>128)roomHistory.removeFirst();}}catch(java.io.IOException error){throw new IllegalStateException(error);}}
 
     private JsonObject dispatch(MinecraftServer server, JsonObject command) {
+        if(command.get("action").getAsString().startsWith("case_"))return caseReview.command(server,command);
+        if(command.get("action").getAsString().startsWith("machine_"))return machineReview.command(server,command);
         if(command.get("action").getAsString().startsWith("cartridge_"))return cartridgeReview.command(server,command);
         if(command.get("action").getAsString().startsWith("polish_"))return polishReview.command(server,command);
         if(command.get("action").getAsString().equals("pixel_live_prepare")){JsonObject setup=new JsonObject();setup.addProperty("action","dock_prepare");dockReview.command(server,setup);return pixelReview.prepareLive(server);}
@@ -128,6 +132,7 @@ public final class ServerQaMod {
         result.add("shared",review.sharedObserve(server));
         result.add("dock",dockReview.observe(server));
         result.add("polish",polishReview.observe(server));result.add("qaChannel",owner.replyStatus());
+        result.add("case",caseReview.observe(server));
         JsonArray players = new JsonArray();
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             JsonObject row = new JsonObject(); row.addProperty("uuid", player.getUUID().toString()); row.addProperty("name", player.getGameProfile().getName());
@@ -157,12 +162,7 @@ public final class ServerQaMod {
             for (ServerPlayer player : server.getPlayerList().getPlayers())
                 for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++)
                     CardData.read(player.getInventory().getItem(slot)).ifPresent(card -> currentCards.add(card.instanceId()));
-            for (UUID cardId : currentCards) state.states.latest(cardId).ifPresent(snapshot -> {
-                JsonObject row = new JsonObject(); row.addProperty("card", snapshot.cardUUID().toString()); row.addProperty("hash", snapshot.hash());
-                row.addProperty("fingerprint", snapshot.fingerprint()); row.addProperty("frame", snapshot.frame()); row.addProperty("size", snapshot.size());
-                row.addProperty("generation", snapshot.generationID().toString()); snapshots.add(row);
-            });
-            result.add("states", snapshots);
+            result.add("states", MachineScene.saved(server,false));result.addProperty("storageScope","machine+content");
         } catch (Exception error) { throw new IllegalStateException(error); }
         return result;
     }

@@ -60,6 +60,7 @@ final class CartridgeActions {
     static JsonObject stack(Minecraft mc,ItemStack item){
         JsonObject out=new JsonObject();out.addProperty("empty",item.isEmpty());out.addProperty("count",item.getCount());if(item.isEmpty())return out;
         out.addProperty("item",BuiltInRegistries.ITEM.getKey(item.getItem()).toString());out.addProperty("model",HardwareCatalog.model(item));out.addProperty("name",item.getHoverName().getString());
+        net.muxigame.console.mc.MachineData.read(item).ifPresent(id->out.addProperty("machine",id.toString()));
         out.addProperty("data",item.getOrDefault(DataComponents.CUSTOM_DATA,CustomData.EMPTY).copyTag().toString());out.addProperty("nbt",item.saveOptional(mc.level.registryAccess()).toString());
         CardData.read(item).ifPresent(c->{out.addProperty("instance",c.instanceId().toString());out.addProperty("hash",c.sha256());out.addProperty("platform",c.platform().id());out.addProperty("title",c.title());out.addProperty("bytes",c.size());});
         if(item.is(ConsoleContent.HANDHELD.get())){

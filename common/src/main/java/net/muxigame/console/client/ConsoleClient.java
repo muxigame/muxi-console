@@ -41,12 +41,12 @@ public final class ConsoleClient implements ClientActions {
     private UUID observedHandheld,attemptedHandheld,suppressedHandheld;private boolean controlsReleased;
     public record ProgressSnapshot(UUID card,String stage,long bytes,long total,int percent,String text,boolean loading,String error){}
     private static final ProgressSnapshot IDLE_PROGRESS=new ProgressSnapshot(null,"idle",0,0,-1,"",false,"");
-    private volatile ProgressSnapshot terminalProgress=IDLE_PROGRESS;private volatile long terminalProgressUntil;
+    private volatile ProgressSnapshot terminalProgress=IDLE_PROGRESS;private volatile long terminalProgressUntil;private volatile UUID terminalMachine;
     private static final class Session {
-        final JsonObject context;final String room;final long epoch,position;final int port;final Platform platform;final String hash;final long size;final UUID card;final boolean shared,leader;volatile boolean hasPicture;
+        final JsonObject context;final String room;final long epoch,position;final int port;final Platform platform;final String hash;final long size;final UUID card,machine;final boolean shared,leader;volatile boolean hasPicture;
         volatile ProcessConsoleRuntime runtime;final PcmPlayer audio=new PcmPlayer();final java.util.concurrent.atomic.AtomicInteger queued=new java.util.concurrent.atomic.AtomicInteger();volatile boolean ready,inputPending,closeRecorded,leaving;volatile long tick=-1,sequence=0,frame=0,lastInputTick=-1,lastCheckpointFrame=0;
         final LoadProgress progress;CompletableFuture<Void> checkpoint;SaveUpload saveUpload;
-        Session(JsonObject j){context=j.deepCopy();room=j.get("room").getAsString();epoch=j.get("epoch").getAsLong();position=j.get("position").getAsLong();port=j.get("port").getAsInt();platform=Platform.fromId(j.get("platform").getAsString());hash=j.get("hash").getAsString();size=j.get("size").getAsLong();card=UUID.fromString(j.get("instance").getAsString());shared=platform.sharedRuntime();leader=j.get("leader").getAsBoolean();progress=new LoadProgress(card);}
+        Session(JsonObject j){context=j.deepCopy();room=j.get("room").getAsString();epoch=j.get("epoch").getAsLong();position=j.get("position").getAsLong();port=j.get("port").getAsInt();platform=Platform.fromId(j.get("platform").getAsString());hash=j.get("hash").getAsString();size=j.get("size").getAsLong();card=UUID.fromString(j.get("instance").getAsString());machine=UUID.fromString(j.get("machine").getAsString());if(!new MachineSaveKey(machine,j.get("content").getAsString()).contentSHA().equals(hash))throw new IllegalArgumentException("Session game identity differs");shared=platform.sharedRuntime();leader=j.get("leader").getAsBoolean();progress=new LoadProgress(card);}
     }
     private static final class Upload {
         final JsonObject writer;final Path file,temporary;final RomDescriptor descriptor;UUID id;long offset;
@@ -58,6 +58,7 @@ public final class ConsoleClient implements ClientActions {
     }
     public record Snapshot(String status,String room,long epoch,int port,boolean ready,long frames,String frameCrc,int width,int height,Set<Long> workers,long serverTick,long sequence,boolean workerRunning,String lastError,long downloadsGranted,long downloadsDenied,long normalWorkerExits,long forcedWorkerExits,long failedWorkerExits,String restoredStateHash,String savedStateHash,long restoredStates,long savedStates){}
     public Snapshot snapshot(){Session s=active;return new Snapshot(status,s==null?"":s.room,s==null?0:s.epoch,s==null?-1:s.port,s!=null&&s.ready,displayedFrames,frameCrc,pictureWidth,pictureHeight,Set.copyOf(ownedWorkers),s==null?-1:s.tick,s==null?0:s.sequence,s!=null&&s.runtime!=null&&s.runtime.isAlive(),lastError,downloadsGranted,downloadsDenied,normalWorkerExits,forcedWorkerExits,failedWorkerExits,restoredStateHash,savedStateHash,restoredStates,savedStates);}
+    public Optional<MachineSaveKey> saveOwner(){Session s=active;return s==null?Optional.empty():Optional.of(new MachineSaveKey(s.machine,s.hash));}
     private static Minecraft mc(){return Minecraft.getInstance();}
     private static JsonObject object(){return new JsonObject();}
     private RuntimeFiles files()throws IOException{if(runtimeFiles==null)runtimeFiles=new RuntimeFiles(mc().gameDirectory.toPath());return runtimeFiles;}
@@ -65,7 +66,7 @@ public final class ConsoleClient implements ClientActions {
     private static ProgressSnapshot progress(LoadProgress.Snapshot p){return new ProgressSnapshot(p.card(),p.stage(),p.bytes(),p.total(),p.percent(),p.text(),p.loading(),p.error());}
     public ProgressSnapshot progressSnapshot(){Session s=active;return s!=null?progress(s.progress.snapshot()):System.nanoTime()<terminalProgressUntil?terminalProgress:IDLE_PROGRESS;}
     /** A progress display cannot attach to a different cartridge or a stowed handheld. */
-    public ProgressSnapshot heldProgress(UUID card){Held held=heldCartridge();ProgressSnapshot p=progressSnapshot();return held!=null&&held.card.instanceId().equals(card)&&card.equals(p.card())?p:IDLE_PROGRESS;}
+    public ProgressSnapshot heldProgress(UUID card){Held held=heldCartridge();Session s=active;ProgressSnapshot p=progressSnapshot();boolean machine=s!=null?sameHeld(held,s):held!=null&&Objects.equals(held.machine,terminalMachine);return machine&&held.card.instanceId().equals(card)&&card.equals(p.card())?p:IDLE_PROGRESS;}
     public void selectionChanged(){if(upload==null)status="选择文件并确认授权后，即可上传刻录";}
     public void receive(Wire.Message message){
         if(SharedPlayClient.INSTANCE.receive(message))return;
@@ -82,7 +83,7 @@ public final class ConsoleClient implements ClientActions {
             case "rom_chunk","rom_denied","state_chunk","state_denied" -> {if(message.operation().equals("rom_denied"))downloadsDenied++;else if(message.operation().equals("rom_chunk"))downloadsGranted++;UUID id=UUID.fromString(b.get("request").getAsString());CompletableFuture<Wire.Message> f=downloads.remove(id);if(f!=null)f.complete(message);}
             case "checkpoint_request" -> {Session s=active;if(s!=null&&s.room.equals(b.get("room").getAsString())&&s.epoch==b.get("epoch").getAsLong()){status="正在保存并同步会话…";CompletableFuture<Void> previous=s.checkpoint;if(previous==null)checkpoint(s);else previous.whenComplete((v,e)->mc().execute(()->{if(active==s)checkpoint(s);}));}}
             case "state_ack" -> {Session s=active;if(s!=null&&s.saveUpload!=null){SaveUpload save=s.saveUpload;UUID id=UUID.fromString(b.get("upload").getAsString());if(save.id==null)save.id=id;if(!save.id.equals(id))return;save.offset=b.get("offset").getAsLong();sendStatePiece(s,save);}}
-            case "state_committed" -> {Session s=active;if(s!=null&&s.saveUpload!=null){SaveUpload save=s.saveUpload;if(save.id.toString().equals(b.get("upload").getAsString())&&save.hash.equals(b.get("hash").getAsString())){savedStateHash=save.hash;savedStates++;s.saveUpload=null;s.checkpoint=null;save.completed.complete(null);}}}
+            case "state_committed" -> {Session s=active;if(s!=null&&s.saveUpload!=null){SaveUpload save=s.saveUpload;if(save.id.toString().equals(b.get("upload").getAsString())&&save.hash.equals(b.get("hash").getAsString())&&s.machine.toString().equals(b.get("machine").getAsString())&&s.hash.equals(b.get("content").getAsString())){savedStateHash=save.hash;savedStates++;s.saveUpload=null;s.checkpoint=null;save.completed.complete(null);}}}
             case "session_start" -> start(b);
             case "input_ack" -> {Session s=active;if(s!=null&&s.room.equals(b.get("room").getAsString())&&s.epoch==b.get("epoch").getAsLong()){s.sequence=b.get("nextSequence").getAsLong();s.inputPending=false;if(!b.get("accepted").getAsBoolean())s.lastInputTick=b.get("nextTick").getAsLong()-1;}}
             case "session_end" -> {status=b.get("reason").getAsString();stop();if(mc().screen instanceof GameScreen)mc().setScreen(null);}
@@ -135,16 +136,16 @@ public final class ConsoleClient implements ClientActions {
             if(open){controlsReleased=false;suppressedHandheld=null;showGame(existing);}return;
         }
         boolean sameRoom=existing!=null&&existing.room.equals(context.get("room").getAsString());
-        stop();Session s=new Session(context);active=s;terminalProgress=IDLE_PROGRESS;terminalProgressUntil=0;if(!sameRoom)controlsReleased=false;status="正在准备 "+s.platform.id().toUpperCase(Locale.ROOT)+"…";
+        stop();Session s=new Session(context);active=s;terminalProgress=IDLE_PROGRESS;terminalProgressUntil=0;terminalMachine=null;if(!sameRoom)controlsReleased=false;status="正在准备 "+s.platform.id().toUpperCase(Locale.ROOT)+"…";
         boolean held=context.has("presentation")&&context.get("presentation").getAsString().equals("held");
         if(held)controlsReleased=true;
         if(open&&!held){controlsReleased=false;suppressedHandheld=null;showGame(s);}
         restoredStateHash="";if(s.shared&&!s.leader){s.progress.begin(LoadProgress.Stage.SHARED,0);status="正在连接主机画面与控制席…";SharedPlayClient.INSTANCE.start(context);return;}
         emulator.execute(()->{try{
             if(s.context.has("saveError"))throw new IOException(s.context.get("saveError").getAsString());
-            Path rom=rom(s);RomTransfer.requireActive(()->loading(s));s.progress.begin(LoadProgress.Stage.STARTING,0);RuntimeFiles.Selected config=files().select(s.platform,rom,s.card);RomTransfer.requireActive(()->loading(s));ProcessConsoleRuntime runtime=ProcessConsoleRuntime.open(config.launch());s.runtime=runtime;ownedWorkers.add(runtime.workerPid());liveRuntimes.put(runtime.workerPid(),runtime);
+            Path rom=rom(s);RomTransfer.requireActive(()->loading(s));s.progress.begin(LoadProgress.Stage.STARTING,0);RuntimeFiles.Selected config=files().select(s.platform,rom,new MachineSaveKey(s.machine,s.hash));RomTransfer.requireActive(()->loading(s));ProcessConsoleRuntime runtime=ProcessConsoleRuntime.open(config.launch());s.runtime=runtime;ownedWorkers.add(runtime.workerPid());liveRuntimes.put(runtime.workerPid(),runtime);
             if(!loading(s)){close(s);return;}
-            if(s.context.has("state")){JsonObject saved=s.context.getAsJsonObject("state");if(!saved.get("fingerprint").getAsString().equals(config.fingerprint()))throw new IOException("存档使用了不同版本的模拟器核心，请恢复原核心后再读取");byte[] restored=downloadState(s,saved);RomTransfer.requireActive(()->loading(s));s.progress.begin(LoadProgress.Stage.RESTORING,0);runtime.loadState(restored);if(loading(s)){restoredStateHash=saved.get("hash").getAsString();restoredStates++;}}
+            if(s.context.has("state")){JsonObject saved=s.context.getAsJsonObject("state");if(!saved.get("machine").getAsString().equals(s.machine.toString())||!saved.get("content").getAsString().equals(s.hash))throw new IOException("存档不属于当前机器和游戏");if(!saved.get("fingerprint").getAsString().equals(config.fingerprint()))throw new IOException("存档使用了不同版本的模拟器核心，请恢复原核心后再读取");byte[] restored=downloadState(s,saved);RomTransfer.requireActive(()->loading(s));s.progress.begin(LoadProgress.Stage.RESTORING,0);runtime.loadState(restored);if(loading(s)){restoredStateHash=saved.get("hash").getAsString();restoredStates++;}}
             if(!loading(s)){close(s);return;}s.ready=true;s.progress.begin(LoadProgress.Stage.WAITING,0);JsonObject j=s.context.deepCopy();j.addProperty("fingerprint",config.fingerprint());j.addProperty("fps",runtime.info().fps());mc().execute(()->{if(loading(s)){status="等待其他控制器准备…";Wire.command("ready",j);}});
         }catch(Exception e){failed(s,e);}});
     }
@@ -165,15 +166,16 @@ public final class ConsoleClient implements ClientActions {
         }catch(Exception e){failed(s,e);}finally{s.queued.decrementAndGet();}});
     }
     private void showGame(Session s){if(mc().screen==null||mc().screen instanceof GameScreen||mc().screen instanceof DeviceScreen)mc().setScreen(new GameScreen(this,s.port));}
-    private record Held(net.minecraft.world.InteractionHand hand,Cartridge card){}
+    private record Held(net.minecraft.world.InteractionHand hand,Cartridge card,UUID machine){}
+    private static boolean sameHeld(Held held,Session session){return held!=null&&session.card.equals(held.card.instanceId())&&session.machine.equals(held.machine);}
     private Held heldCartridge(){
         if(mc().player==null||!mc().player.isAlive()||mc().player.isSpectator())return null;
         Held first=null;Session s=active;
-        for(var hand:net.minecraft.world.InteractionHand.values()){var item=mc().player.getItemInHand(hand);if(!item.is(ConsoleContent.HANDHELD.get()))continue;var card=CardData.read(item);if(card.isEmpty())continue;Held held=new Held(hand,card.get());if(s!=null&&s.room.startsWith("handheld/")&&s.card.equals(held.card.instanceId()))return held;if(first==null)first=held;}return first;
+        for(var hand:net.minecraft.world.InteractionHand.values()){var item=mc().player.getItemInHand(hand);if(!item.is(ConsoleContent.HANDHELD.get()))continue;var card=CardData.read(item);if(card.isEmpty())continue;Held held=new Held(hand,card.get(),MachineData.read(item).orElse(null));if(s!=null&&s.room.startsWith("handheld/")&&sameHeld(held,s))return held;if(first==null)first=held;}return first;
     }
     public boolean handheldSession(){Session s=active;return s!=null&&s.room.startsWith("handheld/");}
     public boolean heldControlsReleased(){return controlsReleased;}
-    public boolean heldWorldPlaying(){Session s=active;Held held=heldCartridge();return s!=null&&s.ready&&!s.leaving&&s.room.startsWith("handheld/")&&held!=null&&s.card.equals(held.card.instanceId());}
+    public boolean heldWorldPlaying(){Session s=active;Held held=heldCartridge();return s!=null&&s.ready&&!s.leaving&&s.room.startsWith("handheld/")&&sameHeld(held,s);}
     /** Exiting fullscreen returns input to the world without giving up the controller seat. */
     public void releaseControls(){net.muxigame.console.client.input.NativeControls.clear();controlsReleased=true;inputSource=null;clearInputVisual();submitInput(PortInput.IDLE);}
     public void resumeControls(){controlsReleased=false;}
@@ -189,10 +191,10 @@ public final class ConsoleClient implements ClientActions {
     public void openModelFullscreen(){Session s=active;if(s!=null&&!s.leaving){controlsReleased=false;mc().setScreen(new GameScreen(this,s.port));}}
     public void tick(){
         if(mc().player==null||mc().level==null||mc().getConnection()==null){observedHandheld=null;attemptedHandheld=null;suppressedHandheld=null;if(active!=null)stop();return;}
-        Held held=heldCartridge();UUID selected=held==null?null:held.card.instanceId();
+        Held held=heldCartridge();UUID selected=held==null?null:held.machine==null?held.card.instanceId():held.machine;
         if(!Objects.equals(observedHandheld,selected)){observedHandheld=selected;attemptedHandheld=null;suppressedHandheld=null;}
         Session s=active;
-        if(s!=null&&s.room.startsWith("handheld/")&&!s.card.equals(selected)){
+        if(s!=null&&s.room.startsWith("handheld/")&&!sameHeld(held,s)){
             submitInput(PortInput.IDLE);leave();if(mc().screen instanceof GameScreen)mc().setScreen(null);return;
         }
         if(s==null){
@@ -216,8 +218,8 @@ public final class ConsoleClient implements ClientActions {
     /** Optional frontend integration; null returns to this mod's physical keyboard/gamepad sampler. */
     public void setInputSource(java.util.function.Supplier<PortInput> source){inputSource=source;clearInputVisual();}
     public void device(JsonObject context,String action,int port){JsonObject j=context.deepCopy();j.addProperty("action",action);j.addProperty("port",port);Wire.command("device_action",j);}
-    public void leave(){net.muxigame.console.client.input.NativeControls.clear();clearInputVisual();Session s=active;if(s!=null&&s.room.startsWith("handheld/"))suppressedHandheld=s.card;if(s!=null&&mc().getConnection()!=null&&s.ready){if(!s.leaving){s.leaving=true;inputSource=null;status="正在保存并离开…";Wire.command("leave_request",s.context.deepCopy());}return;}if(s!=null&&mc().getConnection()!=null)Wire.command("leave",object());stop();}
-    public void stop(){net.muxigame.console.client.input.NativeControls.clear();Session s=active;active=null;inputSource=null;clearInputVisual();displayedFrames=0;frameCrc="";SharedPlayClient.INSTANCE.stop();BrowserLinkClient.INSTANCE.stop();downloads.values().forEach(f->f.cancel(false));downloads.clear();if(s!=null){s.progress.cancel();terminalProgress=progress(s.progress.snapshot());terminalProgressUntil=System.nanoTime()+TimeUnit.SECONDS.toNanos(5);if(s.checkpoint!=null)s.checkpoint.completeExceptionally(new IOException("会话已停止"));emulator.execute(()->close(s));}}
+    public void leave(){net.muxigame.console.client.input.NativeControls.clear();clearInputVisual();Session s=active;if(s!=null&&s.room.startsWith("handheld/"))suppressedHandheld=s.machine;if(s!=null&&mc().getConnection()!=null&&s.ready){if(!s.leaving){s.leaving=true;inputSource=null;status="正在保存并离开…";Wire.command("leave_request",s.context.deepCopy());}return;}if(s!=null&&mc().getConnection()!=null)Wire.command("leave",object());stop();}
+    public void stop(){net.muxigame.console.client.input.NativeControls.clear();Session s=active;active=null;inputSource=null;clearInputVisual();displayedFrames=0;frameCrc="";SharedPlayClient.INSTANCE.stop();BrowserLinkClient.INSTANCE.stop();downloads.values().forEach(f->f.cancel(false));downloads.clear();if(s!=null){s.progress.cancel();terminalMachine=s.machine;terminalProgress=progress(s.progress.snapshot());terminalProgressUntil=System.nanoTime()+TimeUnit.SECONDS.toNanos(5);if(s.checkpoint!=null)s.checkpoint.completeExceptionally(new IOException("会话已停止"));emulator.execute(()->close(s));}}
     private byte[] downloadState(Session s,JsonObject metadata)throws Exception{
         long size=metadata.get("size").getAsLong();if(size<1||size>32L*1024*1024)throw new IOException("存档大小超出当前范围");ByteArrayOutputStream output=new ByteArrayOutputStream((int)size);s.progress.begin(LoadProgress.Stage.RESTORING,size);
         for(long offset=0;offset<size;){RomTransfer.requireActive(()->loading(s));JsonObject request=s.context.deepCopy();request.addProperty("generation",metadata.get("generation").getAsString());request.addProperty("offset",offset);Wire.Message response=readPiece(s,"state_read",request);

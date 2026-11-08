@@ -133,5 +133,24 @@
       },
       "model": "muxi_console:item/desk_console_arcade_2p"
     }
-  ]
+  ],
+  "display": {
+    "gui": {
+      "rotation": [
+        25,
+        225,
+        0
+      ],
+      "translation": [
+        -0.0422239,
+        3.4241541,
+        0
+      ],
+      "scale": [
+        0.7025134,
+        0.7025134,
+        0.7025134
+      ]
+    }
+  }
 }

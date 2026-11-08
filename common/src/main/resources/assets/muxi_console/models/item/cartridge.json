@@ -127,5 +127,24 @@
       },
       "model": "muxi_console:item/cartridge_arcade"
     }
-  ]
+  ],
+  "display": {
+    "gui": {
+      "rotation": [
+        10,
+        195,
+        0
+      ],
+      "translation": [
+        -0.0139762,
+        0.2084811,
+        0
+      ],
+      "scale": [
+        0.9,
+        0.9,
+        0.9
+      ]
+    }
+  }
 }

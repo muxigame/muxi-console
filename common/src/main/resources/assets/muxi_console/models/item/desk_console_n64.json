@@ -1,3 +1,22 @@
 {
-  "parent": "muxi_console:block/desk_console_n64"
+  "parent": "muxi_console:block/desk_console_n64",
+  "display": {
+    "gui": {
+      "rotation": [
+        25,
+        225,
+        0
+      ],
+      "translation": [
+        -0.0387425,
+        3.3097417,
+        0
+      ],
+      "scale": [
+        0.7069708,
+        0.7069708,
+        0.7069708
+      ]
+    }
+  }
 }

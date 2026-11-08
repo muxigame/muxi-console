@@ -1,3 +1,22 @@
 {
-  "parent": "muxi_console:block/desk_console_sms"
+  "parent": "muxi_console:block/desk_console_sms",
+  "display": {
+    "gui": {
+      "rotation": [
+        25,
+        225,
+        0
+      ],
+      "translation": [
+        -0.0458357,
+        3.4902796,
+        0
+      ],
+      "scale": [
+        0.7007729,
+        0.7007729,
+        0.7007729
+      ]
+    }
+  }
 }

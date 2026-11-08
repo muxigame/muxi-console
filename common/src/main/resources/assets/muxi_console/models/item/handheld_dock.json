@@ -1,3 +1,22 @@
 {
-  "parent": "muxi_console:block/handheld_dock"
+  "parent": "muxi_console:block/handheld_dock",
+  "display": {
+    "gui": {
+      "rotation": [
+        25,
+        225,
+        0
+      ],
+      "translation": [
+        -0.0,
+        4.1655666,
+        0
+      ],
+      "scale": [
+        0.7071068,
+        0.7071068,
+        0.7071068
+      ]
+    }
+  }
 }

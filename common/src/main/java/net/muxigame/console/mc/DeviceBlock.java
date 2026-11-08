@@ -25,6 +25,10 @@ public class DeviceBlock extends BaseEntityBlock {
     protected void createBlockStateDefinition(StateDefinition.Builder<Block,BlockState> builder){builder.add(FACING,MODEL);}
     public BlockState getStateForPlacement(BlockPlaceContext c){return defaultBlockState().setValue(FACING,c.getHorizontalDirection().getOpposite());}
     public BlockEntity newBlockEntity(BlockPos p,BlockState s){return new DeviceEntity(p,s);}
+    @Override public void setPlacedBy(Level level,BlockPos pos,BlockState state,net.minecraft.world.entity.LivingEntity owner,ItemStack item){
+        super.setPlacedBy(level,pos,state,owner,item);
+        if(!level.isClientSide&&kind==Kind.DESK&&level.getBlockEntity(pos) instanceof DeviceEntity device){device.adoptMachine(item.copyWithCount(1));device.changed();}
+    }
     protected RenderShape getRenderShape(BlockState s){return RenderShape.MODEL;}
     @Override protected net.minecraft.world.phys.shapes.VoxelShape getShape(BlockState s,BlockGetter level,BlockPos pos,net.minecraft.world.phys.shapes.CollisionContext context){
         HardwareCatalog.Body body=kind==Kind.DESK?HardwareCatalog.body(s.getValue(MODEL)):null;
@@ -34,7 +38,7 @@ public class DeviceBlock extends BaseEntityBlock {
         return Block.box(x0,b[1],z0,x1,b[4],z1);
     }
     @Override protected java.util.List<ItemStack> getDrops(BlockState state,net.minecraft.world.level.storage.loot.LootParams.Builder params){
-        java.util.List<ItemStack> drops=super.getDrops(state,params);if(kind==Kind.DESK)for(ItemStack item:drops)if(item.is(ConsoleContent.DESK_ITEM.get()))HardwareCatalog.variant(item,state.getValue(MODEL));return drops;
+        java.util.List<ItemStack> drops=super.getDrops(state,params);if(kind==Kind.DESK)for(ItemStack item:drops)if(item.is(ConsoleContent.DESK_ITEM.get())){HardwareCatalog.variant(item,state.getValue(MODEL));if(params.getOptionalParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.BLOCK_ENTITY) instanceof DeviceEntity device)MachineData.write(item,device.machineId());}return drops;
     }
     protected ItemInteractionResult useItemOn(ItemStack stack,BlockState state,Level level,BlockPos pos,Player player,InteractionHand hand,BlockHitResult hit){
         if(level.isClientSide)return ItemInteractionResult.SUCCESS;

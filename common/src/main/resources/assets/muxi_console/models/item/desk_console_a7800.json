@@ -1,3 +1,22 @@
 {
-  "parent": "muxi_console:block/desk_console_a7800"
+  "parent": "muxi_console:block/desk_console_a7800",
+  "display": {
+    "gui": {
+      "rotation": [
+        25,
+        225,
+        0
+      ],
+      "translation": [
+        -0.0340314,
+        3.6137162,
+        0
+      ],
+      "scale": [
+        0.7130028,
+        0.7130028,
+        0.7130028
+      ]
+    }
+  }
 }

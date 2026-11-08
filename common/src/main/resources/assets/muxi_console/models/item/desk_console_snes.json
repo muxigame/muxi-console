@@ -1,3 +1,22 @@
 {
-  "parent": "muxi_console:block/desk_console_snes"
+  "parent": "muxi_console:block/desk_console_snes",
+  "display": {
+    "gui": {
+      "rotation": [
+        25,
+        225,
+        0
+      ],
+      "translation": [
+        -0.055755,
+        3.3141363,
+        0
+      ],
+      "scale": [
+        0.733484,
+        0.733484,
+        0.733484
+      ]
+    }
+  }
 }

@@ -1,3 +1,22 @@
 {
-  "parent": "muxi_console:block/desk_console_a2600"
+  "parent": "muxi_console:block/desk_console_a2600",
+  "display": {
+    "gui": {
+      "rotation": [
+        25,
+        225,
+        0
+      ],
+      "translation": [
+        -0.0301205,
+        3.3596984,
+        0
+      ],
+      "scale": [
+        0.6815487,
+        0.6815487,
+        0.6815487
+      ]
+    }
+  }
 }

@@ -18,6 +18,7 @@ import net.minecraft.resources.ResourceLocation;
 public final class ClientRegistration {
     @SubscribeEvent public static void keys(net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent event){net.muxigame.console.client.input.NativeControls.register(event);}
     @SubscribeEvent public static void setup(FMLClientSetupEvent event){event.enqueueWork(()->ClientGate.receiver=ConsoleClient.INSTANCE::receive);}
+    @SubscribeEvent public static void menus(net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event){event.register(ConsoleContent.CASE_MENU.get(),net.minecraft.client.gui.screens.inventory.ContainerScreen::new);}
     @SubscribeEvent public static void renderers(EntityRenderersEvent.RegisterRenderers event){event.registerBlockEntityRenderer(ConsoleContent.DEVICE.get(),DeviceRenderer::new);}
     @SubscribeEvent public static void items(RegisterClientExtensionsEvent event){event.registerItem(new IClientItemExtensions(){private final HandheldRenderer renderer=new HandheldRenderer();@Override public BlockEntityWithoutLevelRenderer getCustomRenderer(){return renderer;}},ConsoleContent.HANDHELD.get(),ConsoleContent.CONTROLLER.get());}
     @SubscribeEvent public static void models(ModelEvent.ModifyBakingResult event){for(String name:new String[]{"handheld","controller"}){var id=ModelResourceLocation.inventory(ResourceLocation.fromNamespaceAndPath(MuxiConsole.ID,name));event.getModels().computeIfPresent(id,(key,model)->HandheldRenderer.wrap(model));}}

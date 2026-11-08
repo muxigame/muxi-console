@@ -1,0 +1,22 @@
+{
+  "parent": "muxi_console:block/cartridge_case",
+  "display": {
+    "gui": {
+      "rotation": [
+        32,
+        225,
+        0
+      ],
+      "translation": [
+        -0.0,
+        4.999344,
+        0
+      ],
+      "scale": [
+        0.7993381,
+        0.7993381,
+        0.7993381
+      ]
+    }
+  }
+}

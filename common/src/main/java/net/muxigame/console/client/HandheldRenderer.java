@@ -43,7 +43,13 @@ public final class HandheldRenderer extends BlockEntityWithoutLevelRenderer {
         var progress=ConsoleClient.INSTANCE.heldProgress(card.get().instanceId());
         if(LcdLoadingRenderer.visible(progress)){for(var plane:planes(item))LcdLoadingRenderer.draw(pose,buffers,plane,progress);return;}
         var state=ConsoleClient.INSTANCE.snapshot();var picture=ConsoleClient.INSTANCE.picture();
-        if(state.ready()&&state.room().equals("handheld/"+card.get().instanceId())&&picture!=null)picture(item,picture,pose,buffers);
+        if(state.ready()&&matchesSession(item)&&picture!=null)picture(item,picture,pose,buffers);
+    }
+    private static boolean matchesSession(ItemStack item){
+        var client=ConsoleClient.INSTANCE;var owner=client.saveOwner();var card=CardData.read(item);
+        return item.is(ConsoleContent.HANDHELD.get())&&client.handheldSession()&&owner.isPresent()&&card.isPresent()
+            &&MachineData.read(item).filter(owner.get().machineUUID()::equals).isPresent()
+            &&owner.get().contentSHA().equals(card.get().sha256())&&card.get().instanceId().equals(client.inputFeedback().card());
     }
     public static int presented(ItemStack item,PoseStack pose,MultiBufferSource buffers,int light){
         int highlighted=body(item,pose,buffers,light,net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY,input(item));live(item,pose,buffers);return highlighted;
@@ -67,8 +73,8 @@ public final class HandheldRenderer extends BlockEntityWithoutLevelRenderer {
     }
 
     public static ItemStack heldForSession(){
-        var mc=Minecraft.getInstance();if(mc.player==null)return ItemStack.EMPTY;String room=ConsoleClient.INSTANCE.snapshot().room();
-        for(var hand:net.minecraft.world.InteractionHand.values()){var item=mc.player.getItemInHand(hand);if(item.is(ConsoleContent.HANDHELD.get())&&CardData.read(item).filter(c->room.equals("handheld/"+c.instanceId())).isPresent())return item;}
+        var mc=Minecraft.getInstance();if(mc.player==null)return ItemStack.EMPTY;
+        for(var hand:net.minecraft.world.InteractionHand.values()){var item=mc.player.getItemInHand(hand);if(matchesSession(item))return item;}
         return ItemStack.EMPTY;
     }
 

@@ -1,3 +1,22 @@
 {
-  "parent": "muxi_console:block/desk_console_gbc"
+  "parent": "muxi_console:block/desk_console_gbc",
+  "display": {
+    "gui": {
+      "rotation": [
+        25,
+        225,
+        0
+      ],
+      "translation": [
+        -0.7065097,
+        0.2439498,
+        0
+      ],
+      "scale": [
+        0.8037612,
+        0.8037612,
+        0.8037612
+      ]
+    }
+  }
 }

@@ -2,7 +2,41 @@
 
 本目录从空白编写，只读取本仓新产品 API 和统一 runner 文档。两个 QA JAR 分侧安装，Java 包为 `net.muxigame.consoleqa`，不会包含任何产品 class，也不发布。
 
-## 当前准备：实体整卡槽与真实加载进度
+## 当前：机器存档与卡带收纳盒
+
+本轮产品把存档归属改为真实机器 UUID 与精确 ROM SHA；卡带 UUID 只作实体媒体和权限身份。`MachineActions`、`MachineScene`只读 `MachineData.read`、当前 `saveOwner()`、实际机器存档元数据和磁盘文件，不创建机器身份、不注入存档。服务器 fixture 只提供普通空掌机、桌机、底座、工具和空盒；机器身份由产品正常使用/放置分配。历史以卡带 UUID 查存档的脚本和结果保留为旧候选证据，不能直接用来验当前机器存档。
+
+使用 `qa/build.py --name machine-saves-01 --product build/machine-saves-01/muxi-console-0.1.0-dev.1+mc1.21.1.jar --cartridge-review` 编译，新增四个源文件 `CaseActions`、`CaseScene`、`MachineActions`、`MachineScene` 均纳入分侧源哈希。`--cartridge-review`仍仅嵌入本仓已验证原创诊断；本轮只正常上传声明并刻录小GBA两张、GB一张、NES一张，不重跑完整核心矩阵、不把ROM加入产品。
+
+统一 runner 正常启动并核 `qa/drive.py --check` 后，唯一驱动所有者依次执行 `python -B qa/case_review.py --run <规范绝对run路径> --build <QA报告>` 与 `python -B qa/machine_review.py --run <同run> --build <同QA报告>`。两个阶段均自然结束，不使用输入暂停、不并发命令。case阶段以原生27格容器验证便携/摆放、卡专用限制、空白堆叠、数字键/shift/来源槽锁、关闭持久化和整盒拆除取回；最后四张实际卡全部取回host，`case-result.json`固定记录 `gba_a/gba_b/gb/nes`、原UUID/SHA/完整NBT与真实槽。machine阶段严格引用同run/同候选该结果及SHA，复用这四张原卡，不重烧替代。
+
+机器阶段用正常菜单装取卡和真实前端输入：A按A键的红画面保存后，同SHA另一UUID卡在A恢复；将该真实卡正常丢弃、按实际实体坐标拾取交给B，B从蓝画面独立开始并按Start变绿；A换GB建立独立游戏存档，换回GBA恢复A红画面。再验证同掌机安装到底座保留机器归属、NES桌机正常保存取卡后生存拆除、拾取同机物品重新摆放与恢复。所有活动截图前后必须同卡、room、epoch、worker，ready且已有实际画面；截图仍需人工查看，不能以audit代替视觉验收。
+
+每次正常保存核客户端checkpoint SHA、vault最新元数据、实际磁盘SHA/大小及路径 `server/<实际世界>/muxi-console/states/machines/<机器>/<ROM SHA>/cards/<机器>/<代际>.state`。最终核四个机器/游戏命名空间、四张原卡各只有一个实际位置、完整NBT保持，所有worker自然关闭。实际计数和未完成范围以新run不可覆盖的结果JSON为准；首次执行中断须保留false并用明确同源独立续办，不能重写为零失败。
+
+`muxi-console-machine-saves-01` 的case阶段真实35项/4图完成。原machine阶段同SHA异卡在A恢复已完成19项/2图，随后guest仍是初始创造模式，原生InventoryScreen被CreativeModeInventoryScreen自动替换，正常背包callback按边界拒绝；原false SHA `31b47132f6b5cfec225012f2751f3c1f348a41f4957e2ffe93e34e5b8afc3e99`、19条pass及2原图均保留。`qa/machine_review.py --continue-machine --source-sha256 <该SHA>`只接这一精确错误/计数及同run/产品、实际双worker空、A最新checkpoint磁盘哈希与同四原卡状态；B原卡已被guest实际拾取，不重丢、不重烧、不重跑A前置。后续仅用普通指定副手卡装入、正常保存后的Shift取卡完成guest路径，继续换游戏/底座/桌机，另写独立结果和5新图。
+
+续办实际完成57/57项、5新图，SHA `462f821e8bfbacc276d0ee53d288bc0e2560bb4f0f819a7fb6259d1f3628d29b`，与原19项联合验证存储功能；case35项另计，不能把重复身份/存活断言说成独立功能数。最终host/guest分别7/1个worker自然退出，强制/失败均0、双worker空、观察超时0；四个machine+game存档和三份去重ROM在实际世界的磁盘SHA/大小均核对。run01已正常停止，三JVM exit0/native remaining/unknown/errors/actions为空；统一清理实际释放953530564字节，原世界、JSON和PNG保留。
+
+原01图审还发现产品渲染器两处仍按旧卡UUID房间匹配，使世界LCD暗、MODEL回退成纯屏；原图不能记显示通过。root将按正常关闭世界复制到修复候选的新统一run，仅补同原机器/原卡恢复后的世界LCD与MODEL两图及安全保存。存储功能继承范围、二进制差异与新视觉证据分别说明，不把01失败或暗图覆盖。
+
+新候选视觉使用 `qa/machine_visual.py --run <新run> --build <新QA报告> --source-run <已关闭run01>`。先核原run正常退出及原case35/4、machine false19/2、续办57/5精确SHA引用和同卡集，再核统一runner声明复制世界、实际四checkpoint的SHA/代际不变、原A整机及完整卡。不会再次prepare、清空背包或造机器身份。正常恢复后新采世界LCD与实际完整MODEL（modelRendered/model5）两图，并安全保存核新世界磁盘SHA。用户随后要求压薄盒体和全物品图标审，由新候选原图单独验，不借原厚盒图宣称薄盒完成。
+
+随后依次运行 `qa/case_visual.py --run <同新run> --build <新QA报告>` 和 `qa/icon_review.py --run <同新run> --build <新QA报告>`。case_existing只读adopt原唯一sentinel盒；独立case_icon_fixtures仅在已验证空槽供应普通无身份writer/dock各1，给物槽及完整NBT公开记录，不宣称这两个空件来自旧01背包，也不取走已安装底座。原生Inventory、薄盒放置、原生27格菜单、整盒拆回库存各采新图，前后核原23份blank、outerNBT、4原卡、3机器与所有committed checkpoint未变。
+
+IconReviewScreen仅是私有QA展示页，按真实 `GuiGraphics.renderItem` 的16×16源格放大到32px绘制，并画槽边界、不裁剪越界。hardware28项包含22机体正确物品类型、两generic与writer/dock/screen/case；media23项包含21种无发行身份的CMD卡样式及blank/controller，共51项各一次。预览只在客户端临时对象中使用CMD，没有CardData、MachineData或CUSTOM_DATA，不进玩家物品栏、不产生卡UUID/ROM/存档。两页原图须核实际renderSequence、实际调用数与目录种类完整；另外用真实原生Inventory图佐证case/dock/writer位置，不能把QA展示页冒称玩家已拥有全部机型。
+
+中间产品03在独立`muxi-console-machine-saves-02`仅跑icons，原结果数据12/12项、51个预览、2原图，SHA `2e858af2bdc1faa7bb0b0557bdf15b1a18cfb139ab09334c63de2ff57443c45e`。图审发现原版Tutorial遮住部分hardware，且部分空掌机联合envelope中心仍偏低，故不整体放行视觉；保留原JSON的true数据范围与两原图，不把它改false或冒称无视觉问题。产品04继续最小调整空机中心/保守缩放，新的独立run才补最终视觉。三个视觉driver开场走现有正常dock_view/Tutorial NONE并等10tick，不修改产品隐藏UI。中间run已正常关闭并由统一清理释放939076523字节。
+
+最终产品04（`dfc0a88f5ecc360ff4f96ef13714687c9b2cfd3c84212c48a757d0ebc6159953`）绑定QA04，在`muxi-console-machine-saves-03`从已正常关闭的原01世界独立复制恢复。QA报告SHA `4ea2b4ad7837782dd95efd3eb95979e9635e4c1135b6a85549dfb4eb984c7f27`，产品/双QA JAR与20个Java源哈希最终全部复核相符。机器视觉真实10/10项、2新原图，SHA `71ce8480b7f22b2229bb2c96e03ec3a7f70dc5778f9d51097bde2fab6ffdcf3a`；世界手持LCD与完整MODEL被实际查看通过，红色原进度、完整机身和真实3:2内屏恢复，旧01显示缺陷已修复。
+
+最终薄盒12/12项、4新图（SHA `dd9ac6f8f186a88828f314439a4e7900be988703b5f0d221aa86d9bc76e4360e`），最终图标12/12项、51个实际预览、2新图（SHA `2efb80baa3d2d106b4279ca0b42e31610aeba33cb396e8bf1cbc2d54740eb4b7`）；最终8图已实际逐张查看通过。全部7份原JSON共有157条通过的检查记录，其中含重复身份/存活断言，不是157个独立功能，也不代表原machine无中断或中间icons视觉通过。原false、原显示缺陷图和中间图标否决均保持原样。
+
+最终实际世界 `client-2/runs/muxi-console-machine-saves-03/server/qa-world/muxi-console` 的4份checkpoint与3份去重ROM全部再次直接读取并核SHA/大小，原4卡分别唯一位于host/1、host/2掌机内、host/15、guest/3，原3机器身份和完整卡NBT保持。case/icon没有修改已提交存档；最终A-GBA checkpoint为 `c2ae0b92a058b5d84ed223fcc1a661c6d7ffd8d3c55cd645cfe0fd6f4908c8fd`。三个run均三JVM exit0/native审计完整且remaining/unknown/errors/actions空，合计9个worker自然退出、强制/失败均0；所有驱动观察超时0。统一运行副本清理释放953530564、939076523、944052292字节，合计2836659379字节。
+
+`qa/machine_gallery.py`以三run正常关闭为硬门，核7原JSON的精确SHA和续办/复制链、4卡3机4key及21份原PNG（960×540、PIL verify/decode、原SHA；本轮21份不同bytes）。输出 [机器存档与薄盒图审](../build/machine-save-review/index.html)，只主嵌最终8图，历史13图仅独立原图链接；33个anchor与8个img相对链接全部核验，不编辑或拷贝原图。图审人工结论与原生JSON数据范围分开，不修改其`visualAcceptance:false`或`physicalOSInput:false`边界。
+
+## 历史：实体整卡槽与真实加载进度
 
 `qa/build.py --cartridge-review`只在私有QA中加入大卡诊断：保持已验证`regression.gba`全部65536字节，末尾仅补FF到8388608字节；固定原ROM、原生成器、基线结果、QA派生生成器及派生文件哈希。不会修改或向产品加入ROM。另用本仓已验证原创NES、GB、小GBA和PCE，正常上传声明并刻录六张卡（GB额外一张用于旧格式）；不造卡UUID、ROM或存档。当前准备/编译不等价原生通过，实际结果以对应新run为准。
 

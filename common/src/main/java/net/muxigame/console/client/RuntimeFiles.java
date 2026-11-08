@@ -32,10 +32,13 @@ public final class RuntimeFiles {
     public static String core(Platform platform){return switch(platform){case NES,FDS->"fceumm";case SNES->"bsnes2014_performance";case GB,GBC->"sameboy";case GBA->"mgba";case MD->"blastem";case SMS,GG,SG1000->"gearsystem";case PCE->"mednafen_pce_fast";case A2600->"stella2014";case A7800->"prosystem";case LYNX->"mednafen_lynx";case NGP,NGPC->"mednafen_ngp";case WS,WSC->"mednafen_wswan";case VB->"mednafen_vb";case N64->"mupen64plus_next";case ARCADE->"mame";};}
     public record Selected(LaunchConfig launch,String fingerprint){}
     public Selected select(Platform platform,Path rom,UUID instance)throws IOException{
+        return select(platform,rom,new MachineSaveKey(instance,Hashing.sha256(rom)));
+    }
+    public Selected select(Platform platform,Path rom,MachineSaveKey key)throws IOException{
         String os=System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win")?"windows-x86_64":"linux-x86_64";
         String suffix=os.startsWith("windows")?".dll":".so";
         Path library=extract("cores/"+os+"/"+core(platform)+suffix);
-        Path system=base.resolve("firmware"),save=base.resolve("saves").resolve(instance.toString());safeDirectory(system);safeDirectory(save);String fingerprint=Hashing.sha256(library);
+        Path system=base.resolve("firmware"),save=base.resolve("machine-saves").resolve(key.machineUUID().toString()).resolve(key.contentSHA());safeDirectory(system);safeDirectory(save);String fingerprint=Hashing.sha256(library);
         if(platform==Platform.LYNX){Path firmware=system.resolve("lynxboot.img");if(!Files.isRegularFile(firmware,LinkOption.NOFOLLOW_LINKS)||Files.isSymbolicLink(firmware)||Files.size(firmware)!=512)throw new IOException("此机型需要你自行提供已获授权的 512 字节 lynxboot.img，放入 muxi-console/firmware");fingerprint=Hashing.sha256((fingerprint+"\nlynx-firmware="+Hashing.sha256(firmware)).getBytes(StandardCharsets.UTF_8));}
         if(platform==Platform.FDS){Path firmware=system.resolve("disksys.rom");if(!Files.isRegularFile(firmware,LinkOption.NOFOLLOW_LINKS)||Files.isSymbolicLink(firmware)||Files.size(firmware)!=8192)throw new IOException("FDS 需要你自行提供已获授权的 8192 字节 disksys.rom，放入 muxi-console/firmware");fingerprint=Hashing.sha256((fingerprint+"\nfds-firmware="+Hashing.sha256(firmware)).getBytes(StandardCharsets.UTF_8));}
         List<Path> classpath=new ArrayList<>(List.of(extract("worker/runtime.jar"),extract("worker/jna-5.14.0.jar")));Map<String,String> options=new TreeMap<>();

@@ -89,6 +89,8 @@ public final class ClientQaMod {
     private JsonObject dispatch(JsonObject command) {
         Minecraft client = Minecraft.getInstance();
         String action = command.get("action").getAsString();
+        if(action.startsWith("icon_")){IconActions.command(client,command);return observe(client);}
+        if(action.startsWith("case_")){CaseActions.command(client,command);return observe(client);}
         if(action.startsWith("cartridge_")){try{CartridgeActions.command(client,command);JsonObject result=observe(client);if(action.equals("cartridge_cache"))result.add("cacheCheck",CartridgeActions.cache(client,command.get("hash").getAsString()));return result;}catch(Exception e){throw new IllegalStateException(e);}}
         if(action.startsWith("polish_")){try{JsonObject callback=polishActions.command(client,command);JsonObject result=observe(client);result.add("polishCallback",callback);return result;}catch(Exception e){throw new IllegalStateException(e);}}
         if(action.startsWith("hand_")){JsonObject callback=heldActions.command(client,command);JsonObject result=observe(client);result.add("handCallback",callback);return result;}
@@ -99,7 +101,7 @@ public final class ClientQaMod {
                 case "review_view" -> NativeReview.view(client,command.has("held")&&command.get("held").getAsBoolean());
                 case "swap_hands" -> client.getConnection().send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.SWAP_ITEM_WITH_OFFHAND,BlockPos.ZERO,Direction.DOWN));
                 case "select_card" -> {String instance=command.get("instance").getAsString();int selected=-1;for(int i=0;i<36;i++)if(CardData.read(client.player.getInventory().getItem(i)).map(c->c.instanceId().toString().equals(instance)).orElse(false)){selected=i;break;}if(selected<0)throw new IllegalArgumentException("The real cartridge is absent");if(selected>8){client.gameMode.handleInventoryMouseClick(client.player.inventoryMenu.containerId,selected,8,net.minecraft.world.inventory.ClickType.SWAP,client.player);selected=8;}client.player.getInventory().selected=selected;client.getConnection().send(new ServerboundSetCarriedItemPacket(selected));}
-                case "state_probe" -> {UUIDCheck(command.get("generation").getAsString());var state=ConsoleClient.INSTANCE.snapshot();if(!state.ready())throw new IllegalStateException("Actual occupied control seat required");stateProbe="pending";stateProbeRequest=java.util.UUID.randomUUID().toString();JsonObject j=new JsonObject();j.addProperty("request",stateProbeRequest);j.addProperty("room",state.room());j.addProperty("epoch",state.epoch());j.addProperty("generation",command.get("generation").getAsString());j.addProperty("offset",0);Wire.command("state_read",j);}
+                case "state_probe" -> {UUIDCheck(command.get("generation").getAsString());var state=ConsoleClient.INSTANCE.snapshot();if(!state.ready())throw new IllegalStateException("Actual occupied control seat required");var key=ConsoleClient.INSTANCE.saveOwner().orElseThrow();stateProbe="pending";stateProbeRequest=java.util.UUID.randomUUID().toString();JsonObject j=new JsonObject();j.addProperty("request",stateProbeRequest);j.addProperty("room",state.room());j.addProperty("epoch",state.epoch());j.addProperty("machine",key.machineUUID().toString());j.addProperty("content",key.contentSHA());j.addProperty("generation",command.get("generation").getAsString());j.addProperty("offset",0);Wire.command("state_read",j);}
                 case "browser_native" -> {
                     browserPosition=command.get("position").getAsLong();browserSide=command.get("side").getAsString();
                     browserNative=NativeReview.browser(client,browserPosition,browserSide,true);
@@ -255,6 +257,9 @@ public final class ClientQaMod {
         result.add("heldReview",heldActions.observe(client));
         result.add("polish",PolishActions.observe(client));
         result.add("cartridge",CartridgeActions.observe(client));
+        result.add("machine",MachineActions.observe());
+        result.add("case",CaseActions.observe(client));
+        result.add("icons",IconActions.observe(client));
         var state = ConsoleClient.INSTANCE.snapshot();
         result.addProperty("status", state.status()); result.addProperty("room", state.room()); result.addProperty("epoch", state.epoch());
         result.addProperty("port", state.port()); result.addProperty("ready", state.ready()); result.addProperty("frames", state.frames()); result.addProperty("crc", state.frameCrc());

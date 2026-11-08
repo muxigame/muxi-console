@@ -1,3 +1,22 @@
 {
-  "parent": "muxi_console:block/cartridge_writer"
+  "parent": "muxi_console:block/cartridge_writer",
+  "display": {
+    "gui": {
+      "rotation": [
+        25,
+        225,
+        0
+      ],
+      "translation": [
+        -0.0496183,
+        2.8828091,
+        0
+      ],
+      "scale": [
+        0.701709,
+        0.701709,
+        0.701709
+      ]
+    }
+  }
 }

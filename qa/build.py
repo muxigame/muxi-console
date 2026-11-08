@@ -110,10 +110,16 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
             args.append(str(sources / "PixelScene.java"))
             args.append(str(sources / "PolishScene.java"))
             args.append(str(sources / "CartridgeScene.java"))
+            args.append(str(sources / "MachineScene.java"))
+            args.append(str(sources / "CaseScene.java"))
         else:
             args.append(str(sources / "HeldActions.java"))
             args.append(str(sources / "PolishActions.java"))
             args.append(str(sources / "CartridgeActions.java"))
+            args.append(str(sources / "MachineActions.java"))
+            args.append(str(sources / "CaseActions.java"))
+            args.append(str(sources / "IconActions.java"))
+            args.append(str(sources / "IconReviewScreen.java"))
         argument_file = out / (side + ".args")
         sdk.argfile(argument_file, args)
         command = [str(jdk / "javac.exe"), "-J-Xmx512m", "-J-XX:ActiveProcessorCount=1", "-J-Dfile.encoding=UTF-8", "-J-Duser.language=en", "@" + str(argument_file)]
