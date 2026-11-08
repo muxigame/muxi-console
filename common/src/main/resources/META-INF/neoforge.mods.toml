@@ -3,7 +3,7 @@ loaderVersion="[4,)"
 license="MIT; third-party components retain their own licenses"
 [[mods]]
 modId="muxi_console"
-version="0.1.0-dev.1"
+version="0.1.0"
 displayName="木犀游戏机 · Muxi Console"
 authors="Muxigame"
 description="Independently implemented console emulation, original hardware, transferable cartridges and multiplayer."

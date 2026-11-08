@@ -58,11 +58,30 @@ def download(url):
 def fetch_one(name, workspace, pin, prior, offline):
     repository, games, documentation = SPECS[name]
     filename = name + "_libretro.dll"
+    existing = prior.get("platforms", {}).get("windows-x86_64")
+    if not pin and prior.get("binaryOrigin") == "source-rebuild":
+        # A locally rebuilt, source-bound core is never replaced by a rolling download.
+        archive_path = (workspace / existing["archive"]).resolve()
+        cache_root = (workspace / "test-environment/cache/muxi-console").resolve()
+        if not archive_path.is_relative_to(cache_root) or not archive_path.is_file():
+            raise ValueError(f"Missing source-rebuilt archive for {name}; follow tools/rebuild_cores.py")
+        if archive_path.stat().st_size != existing["archiveBytes"] or sha(archive_path.read_bytes()) != existing["archiveSha256"]:
+            raise ValueError(f"Source-rebuilt archive differs from its pin: {name}")
+        with zipfile.ZipFile(archive_path) as container:
+            members = [entry for entry in container.infolist() if entry.filename == existing["libraryName"] and not entry.is_dir()]
+            if len(members) != 1 or members[0].file_size != existing["libraryBytes"] or members[0].file_size > 64 * 1024 * 1024:
+                raise ValueError(f"Source-rebuilt archive has no unique bounded library: {name}")
+            library = container.read(members[0])
+        if sha(library) != existing["librarySha256"]:
+            raise ValueError(f"Source-rebuilt library differs from its pin: {name}")
+        dll_path = archive_path.parent / existing["libraryName"]
+        if not dll_path.exists() or sha(dll_path.read_bytes()) != existing["librarySha256"]:
+            dll_path.write_bytes(library)
+        return name, prior
     cache = workspace / "test-environment/cache/muxi-console/libretro"
     cache.mkdir(parents=True, exist_ok=True)
     archive_path = cache / (filename + ".zip")
     dll_path = cache / filename
-    existing = prior.get("platforms", {}).get("windows-x86_64")
     if not pin and not existing:
         raise ValueError(f"No existing pin for {name}; use --pin for explicit initial registration")
     if archive_path.exists():

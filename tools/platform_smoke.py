@@ -96,7 +96,12 @@ def main():
              "snes": "bsnes2014_performance", "md": "blastem", "sms": "gearsystem", "gg": "gearsystem", "sg1000": "gearsystem",
              "gb": "sameboy", "gbc": "sameboy", "a2600": "stella2014", "ws": "mednafen_wswan", "wsc": "mednafen_wswan", "pce": "mednafen_pce_fast", "a7800":"prosystem",
              "ngp":"mednafen_ngp", "ngpc":"mednafen_ngp", "vb":"mednafen_vb", "lynx":"mednafen_lynx"}
-    core = args.core or workspace / f"test-environment/cache/muxi-console/libretro/{cores.get(args.platform, '2048')}_libretro.dll"
+    core = args.core
+    if core is None:
+        pin = json.loads((repo / 'third-party/cores.json').read_text(encoding='utf-8'))['cores'][cores.get(args.platform, '2048')]['platforms']['windows-x86_64']
+        core = workspace / Path(pin['archive']).parent / pin['libraryName']
+        if core.stat().st_size != pin['libraryBytes'] or hashlib.sha256(core.read_bytes()).hexdigest() != pin['librarySha256']:
+            raise ValueError('Default platform core differs from the current pin')
     content = args.content
     if not content and args.platform in GENERATORS:
         extension = {"snes":"sfc", "sg1000":"sg", "a2600":"a26", "a7800":"a78", "lynx":"o"}.get(args.platform,args.platform)

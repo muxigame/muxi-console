@@ -1,6 +1,6 @@
 """Build independent sources using the workspace's installed SDK; never launches Minecraft."""
 from pathlib import Path
-import argparse, hashlib, io, json, os, subprocess, sys, zipfile
+import argparse, hashlib, io, json, os, re, subprocess, sys, tomllib, zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKSPACE = ROOT.parent
@@ -10,7 +10,7 @@ import local_mc_runtime as sdk
 def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
-def build(name, tests):
+def build(name, tests, release=False):
     out = ROOT / 'build' / name
     if out.exists() or Path(name).name != name:
         raise ValueError('Choose a new simple build name')
@@ -45,7 +45,6 @@ def build(name, tests):
         files=[p for folder in ['domain','runtime','input','save','compat','hardware','audio','stream'] for p in sorted((ROOT/'tests'/folder).rglob('*.java'))]
         if files:
             tc=out/'test-classes';tc.mkdir(); compile_set(files,tc,str(classes)+os.pathsep+classpath,'tests')
-            import re
             for p in files:
                 body=p.read_text(encoding='utf-8')
                 # Runtime probes require an explicit official core/ROM, exercised by runtime_smoke.py.
@@ -55,12 +54,22 @@ def build(name, tests):
                 (out/(p.stem+'.log')).write_text(r.stdout+r.stderr,encoding='utf-8');print(r.stdout.strip())
                 if r.returncode: raise RuntimeError(p.stem+' failed: '+r.stderr[-2000:])
                 test_results.append(p.stem)
-    artifact=out/'muxi-console-0.1.0-dev.1+mc1.21.1.jar'
+    mod_metadata=tomllib.loads((ROOT/'common/src/main/resources/META-INF/neoforge.mods.toml').read_text(encoding='utf-8'))
+    version=mod_metadata['mods'][0]['version']
+    if not re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?',version):
+        raise ValueError('Unsafe or unresolved mod version')
+    artifact=out/('muxi-console-'+version+'+mc1.21.1.jar')
     resources={}
     for p in (ROOT/'common/src/main/resources').rglob('*'):
         if p.is_file(): resources[p.relative_to(ROOT/'common/src/main/resources').as_posix()]=p.read_bytes()
     resources['META-INF/muxi/OWNERSHIP.md']=(ROOT/'OWNERSHIP.md').read_bytes()
+    resources['META-INF/LICENSE']=(ROOT/'LICENSE').read_bytes()
+    for p in (ROOT/'third-party/licenses').rglob('*'):
+        if p.is_file(): resources['META-INF/muxi/licenses/'+p.relative_to(ROOT/'third-party/licenses').as_posix()]=p.read_bytes()
     jna=game/'libraries/net/java/dev/jna/jna/5.14.0/jna-5.14.0.jar'
+    from build_worker import JNA
+    if jna.stat().st_size!=JNA['bytes'] or sha(jna)!=JNA['sha256']:
+        raise ValueError('Worker JNA dependency differs from its official pin')
     resources['worker/jna-5.14.0.jar']=jna.read_bytes()
     worker_deps=json.loads((ROOT/'third-party/worker-dependencies.json').read_text(encoding='utf-8'))
     for dependency in worker_deps['dependencies']:
@@ -76,6 +85,26 @@ def build(name, tests):
             info=zipfile.ZipInfo(p.relative_to(classes).as_posix(),(2026,1,1,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED;bundle.writestr(info,p.read_bytes())
     resources['worker/runtime.jar']=worker.getvalue()
     core_manifest=json.loads((ROOT/'third-party/cores.json').read_text(encoding='utf-8'))
+    source_delivery=None
+    if release:
+        if any(not core.get('releaseReady') for core in core_manifest['cores'].values() if core.get('purpose') in ('software-emulation','emulation')):
+            raise ValueError('Packaged core lacks verified corresponding source and licensing')
+        from release_sources import source_delivery as verified_source_delivery
+        source_delivery=verified_source_delivery(require_complete=True)
+        resources['META-INF/muxi/source-bundle.zip']=Path(source_delivery['path']).read_bytes()
+        if len(resources['META-INF/muxi/source-bundle.zip'])!=source_delivery['bytes'] or hashlib.sha256(resources['META-INF/muxi/source-bundle.zip']).hexdigest()!=source_delivery['sha256']:
+            raise ValueError('Verified source bundle changed during packaging')
+        resources['META-INF/muxi/source_manifest.json']=(ROOT/'third-party/source_manifest.json').read_bytes()
+        if hashlib.sha256(resources['META-INF/muxi/source_manifest.json']).hexdigest()!=source_delivery['manifestSha256']:
+            raise ValueError('Verified source manifest changed during packaging')
+        resources['META-INF/muxi/SOURCE-DELIVERY.txt']=(
+            'Muxi Console '+version+'\n\n'
+            'Original project: https://github.com/muxigame/muxi-console (MIT).\n'
+            'Third-party components retain their own licenses; see licenses/ and source_manifest.json.\n'
+            'Complete corresponding core and worker source material accompanies this binary in source-bundle.zip.\n'
+            'Extract that ZIP, then follow README-SOURCES.txt and the included build instructions.\n'
+            'source-bundle.zip SHA256: '+source_delivery['sha256']+'\n'
+        ).encode('utf-8')
     resources['META-INF/muxi/cores.json']=json.dumps(core_manifest,indent=2).encode()
     for name,core in core_manifest['cores'].items():
         if core.get('purpose') not in ('software-emulation','emulation'):continue
@@ -91,13 +120,13 @@ def build(name, tests):
     with zipfile.ZipFile(artifact,'w',zipfile.ZIP_DEFLATED) as jar:
         for p in classes.rglob('*.class'):resources[p.relative_to(classes).as_posix()]=p.read_bytes()
         for path,body in sorted(resources.items()):
-            info=zipfile.ZipInfo(path,(2026,1,1,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED;jar.writestr(info,body)
+            info=zipfile.ZipInfo(path,(2026,1,1,0,0,0));info.compress_type=zipfile.ZIP_STORED if path=='META-INF/muxi/source-bundle.zip' else zipfile.ZIP_DEFLATED;jar.writestr(info,body)
     if any(sha(ROOT/p)!=h for p,h in inputs.items()): raise RuntimeError('Sources changed during compilation')
-    report={'artifact':str(artifact),'sha256':sha(artifact),'sources':inputs,'tests':test_results,'minecraftTested':False,'productionPublished':False}
+    report={'artifact':str(artifact),'sha256':sha(artifact),'version':version,'releasePackaging':release,'correspondingSource':None if source_delivery is None else {'bytes':source_delivery['bytes'],'sha256':source_delivery['sha256']},'sources':inputs,'tests':test_results,'minecraftTested':False,'productionPublished':False}
     (out/'build.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
     print(json.dumps({k:v for k,v in report.items() if k!='sources'}))
     return artifact
 
 if __name__=='__main__':
     sys.stdout.reconfigure(encoding='utf-8',errors='replace')
-    p=argparse.ArgumentParser();p.add_argument('--name',required=True);p.add_argument('--tests',action='store_true');a=p.parse_args();build(a.name,a.tests)
+    p=argparse.ArgumentParser();p.add_argument('--name',required=True);p.add_argument('--tests',action='store_true');p.add_argument('--release',action='store_true',help='Require complete verified corresponding source and bundle it with third-party licenses');a=p.parse_args();build(a.name,a.tests,a.release)

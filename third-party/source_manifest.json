@@ -1,0 +1,2354 @@
+{
+  "schema": 2,
+  "scope": "Exact upstream snapshots, recursive fixed gitlinks, unmodified notices and the MIT worker/build source; cores.json releaseReady flags are independently reviewed",
+  "delivery": {
+    "method": "complete source embedded in the same binary JAR",
+    "jarEntry": "META-INF/muxi/source-bundle.zip",
+    "notAnExternalSourceOffer": true
+  },
+  "firstParty": {
+    "license": "MIT",
+    "workerJavaFiles": 12,
+    "protocolSource": "common/src/main/java/net/muxigame/console/runtime/Wire.java",
+    "files": [
+      {
+        "path": "common/src/main/java/net/muxigame/console/runtime/AvFrame.java",
+        "bytes": 1288,
+        "sha256": "0770788aa4b57621aed948153ba506e79a182b21985e7fef20bbbd95622d88bc"
+      },
+      {
+        "path": "common/src/main/java/net/muxigame/console/runtime/ConsoleRuntime.java",
+        "bytes": 993,
+        "sha256": "75ef78b220ab25d51de9d89a7acabdc5452c7b994bd69d4b34b211581dbc6faa"
+      },
+      {
+        "path": "common/src/main/java/net/muxigame/console/runtime/CoreInfo.java",
+        "bytes": 439,
+        "sha256": "d0d7f1173657fc8de99e5f0b5d3a585a151eb96b7bcb39f480839a2c32e9ca88"
+      },
+      {
+        "path": "common/src/main/java/net/muxigame/console/runtime/DiskState.java",
+        "bytes": 344,
+        "sha256": "939a1ddb5db27448e2a898b40decfa13ace0c79a1374eda4925100595ed835d0"
+      },
+      {
+        "path": "common/src/main/java/net/muxigame/console/runtime/HardwareVideo.java",
+        "bytes": 8398,
+        "sha256": "8eddbe9eba6f78608fa29c1a46ffa5abbb9ce41f0133c3aa04e5cf9484de2ee6"
+      },
+      {
+        "path": "common/src/main/java/net/muxigame/console/runtime/InputFrame.java",
+        "bytes": 525,
+        "sha256": "9478f301371a5863221319bc129bb821f083fd047b7cad31a71f14f3c1f5c372"
+      },
+      {
+        "path": "common/src/main/java/net/muxigame/console/runtime/LaunchConfig.java",
+        "bytes": 1065,
+        "sha256": "68fdc7da0ae8252816a3c23d2664d53770a3e885004f3cc4afeec772a0d07e19"
+      },
+      {
+        "path": "common/src/main/java/net/muxigame/console/runtime/LibretroCore.java",
+        "bytes": 28414,
+        "sha256": "df0feb6df7c5d5738af03e1e439c5e6581b4e3a4ebea5cde2d5fc0ef5a09d1b9"
+      },
+      {
+        "path": "common/src/main/java/net/muxigame/console/runtime/PortInput.java",
+        "bytes": 577,
+        "sha256": "71e0fadfcee4c48f0e5bc9ac03fa65bcb530d3c24610236ebcc85e597fcea16e"
+      },
+      {
+        "path": "common/src/main/java/net/muxigame/console/runtime/ProcessConsoleRuntime.java",
+        "bytes": 12716,
+        "sha256": "a0e13d56bb7893359933e6e3789865ba4c56ffe7f9e4c23e8a962d9cb89c58a3"
+      },
+      {
+        "path": "common/src/main/java/net/muxigame/console/runtime/Wire.java",
+        "bytes": 4997,
+        "sha256": "8c5d69129bb0a3ef94f11808f36fa70bbc2afaf20ea29c8d7c6bbab92eea7980"
+      },
+      {
+        "path": "common/src/main/java/net/muxigame/console/runtime/WorkerMain.java",
+        "bytes": 5251,
+        "sha256": "73f69c7f12a4d4be22037fe0e5f727554540c25a5d87ab7fccd4e9fafc3956e2"
+      },
+      {
+        "path": "LICENSE",
+        "bytes": 1065,
+        "sha256": "3fa7c37b0479300679f0d52fbd9586908c3db1432e9d53d1e2e6c5fc8174d887"
+      },
+      {
+        "path": "tools/build_worker.py",
+        "bytes": 10954,
+        "sha256": "1a5fc09b0cc6959574bd139682980f65741bbdb2df046ad46220869ec3e3206d"
+      },
+      {
+        "path": "docs/BUILD.md",
+        "bytes": 5792,
+        "sha256": "42cf44519974550973695905762262c9ad1f9b3875a62c6c36c53596ad1be5bb"
+      },
+      {
+        "path": "tools/rebuild_cores.py",
+        "bytes": 22783,
+        "sha256": "ad13d749afba3b8eb45194e043b3d8c88d1caede130bd2600b9c4c3c4418661f"
+      },
+      {
+        "path": "tools/release_sources.py",
+        "bytes": 25152,
+        "sha256": "2e1ec50515bf689cd0e3defcac7760e0eb68523538550a4a852929147be2b8db"
+      },
+      {
+        "path": "third-party/worker-dependencies.json",
+        "bytes": 3268,
+        "sha256": "245dd451e63e04dd44ea3e9a1399a4603dbc0969489591c47d784c572cd9092c"
+      }
+    ]
+  },
+  "cores": {
+    "fceumm": {
+      "licenseMetadata": "GPLv2",
+      "repository": "https://github.com/libretro/libretro-fceumm",
+      "binaryVersion": "(SVN) e0f3086",
+      "binarySha256": "921af51bf09d1c4ca8342cce10de95cfbce2b280360c8aa00204dab7d1f30a8f",
+      "sourceCommit": "e0f3086a8104f8fbbe49a2615b10401504a9533f",
+      "mappingEvidence": "https://api.github.com/repos/libretro/libretro-fceumm/commits/e0f3086",
+      "delivery": "complete-snapshot",
+      "source": {
+        "repository": "https://github.com/libretro/libretro-fceumm",
+        "revision": "e0f3086a8104f8fbbe49a2615b10401504a9533f",
+        "archive": "archives/fceumm-e0f3086a8104f8fbbe49a2615b10401504a9533f.tar.gz",
+        "url": "https://codeload.github.com/libretro/libretro-fceumm/tar.gz/e0f3086a8104f8fbbe49a2615b10401504a9533f",
+        "sha256": "7a81aa960e0424f736ceaf3221b93663f7ae0b0a68483ac17f8eb0c4afff28f7",
+        "bytes": 1120131,
+        "licenseFiles": [
+          "third-party/licenses/fceumm/Copying",
+          "third-party/licenses/fceumm/src/ntsc/license.txt"
+        ],
+        "submodules": [],
+        "nonGitlinkDeclarations": []
+      },
+      "correspondenceBasis": "binary-reported git revision resolved in the declared upstream repository; not a reproducible-build claim"
+    },
+    "sameboy": {
+      "licenseMetadata": "MIT",
+      "repository": "https://github.com/libretro/SameBoy",
+      "binaryVersion": "1.0.5 90e2899",
+      "binarySha256": "491aaf9074ef2f1cf641d87b3b17f44d488e648d111cd48825072d95916d7d7b",
+      "sourceCommit": "90e2899574b7b63c59dce8a7276783426d52a068",
+      "mappingEvidence": "https://api.github.com/repos/libretro/SameBoy/commits/90e2899",
+      "delivery": "complete-snapshot",
+      "source": {
+        "repository": "https://github.com/libretro/SameBoy",
+        "revision": "90e2899574b7b63c59dce8a7276783426d52a068",
+        "archive": "archives/sameboy-90e2899574b7b63c59dce8a7276783426d52a068.tar.gz",
+        "url": "https://codeload.github.com/libretro/SameBoy/tar.gz/90e2899574b7b63c59dce8a7276783426d52a068",
+        "sha256": "6d1d2b586e261078dbb05905b4e535918c4206cf16c770cacc6cf65fbb2d3167",
+        "bytes": 7914669,
+        "licenseFiles": [
+          "third-party/licenses/sameboy/.github/actions/LICENSE",
+          "third-party/licenses/sameboy/Cocoa/License.html",
+          "third-party/licenses/sameboy/HexFiend/License.txt",
+          "third-party/licenses/sameboy/LICENSE",
+          "third-party/licenses/sameboy/iOS/License.html"
+        ],
+        "submodules": [],
+        "nonGitlinkDeclarations": []
+      },
+      "correspondenceBasis": "binary-reported git revision resolved in the declared upstream repository; not a reproducible-build claim"
+    },
+    "mgba": {
+      "licenseMetadata": "MPLv2.0",
+      "repository": "https://github.com/libretro/mgba",
+      "binaryVersion": "0.11-212-7a12d6d",
+      "binarySha256": "4c289017c3ceaf737d0c303cc46ba428a95678027b3a3a61c78b2d3ae0f1756c",
+      "sourceCommit": "7a12d6d4b9acb14c0ae62c9166b6a2f3d08007f6",
+      "mappingEvidence": "https://api.github.com/repos/libretro/mgba/commits/7a12d6d",
+      "delivery": "complete-snapshot",
+      "source": {
+        "repository": "https://github.com/libretro/mgba",
+        "revision": "7a12d6d4b9acb14c0ae62c9166b6a2f3d08007f6",
+        "archive": "archives/mgba-7a12d6d4b9acb14c0ae62c9166b6a2f3d08007f6.tar.gz",
+        "url": "https://codeload.github.com/libretro/mgba/tar.gz/7a12d6d4b9acb14c0ae62c9166b6a2f3d08007f6",
+        "sha256": "5cbf639e527fb586bf33e14d59037eab35f78f45154e0b79c784fff474c3bc37",
+        "bytes": 16151731,
+        "licenseFiles": [
+          "third-party/licenses/mgba/LICENSE",
+          "third-party/licenses/mgba/cinema/gb/mooneye-gb/LICENSE",
+          "third-party/licenses/mgba/res/licenses/discord-rpc.txt",
+          "third-party/licenses/mgba/res/licenses/inih.txt",
+          "third-party/licenses/mgba/res/licenses/mingw-std-threads.txt",
+          "third-party/licenses/mgba/res/licenses/rapidjson.txt",
+          "third-party/licenses/mgba/res/shaders/gbc-lcd.shader/license.txt",
+          "third-party/licenses/mgba/src/third-party/discord-rpc/LICENSE",
+          "third-party/licenses/mgba/src/third-party/discord-rpc/include/mingw-std-threads/LICENSE",
+          "third-party/licenses/mgba/src/third-party/discord-rpc/include/rapidjson/license.txt",
+          "third-party/licenses/mgba/src/third-party/inih/LICENSE.txt",
+          "third-party/licenses/mgba/src/third-party/libpng/LICENSE",
+          "third-party/licenses/mgba/src/third-party/libpng/ci/LICENSE_MIT.txt",
+          "third-party/licenses/mgba/src/third-party/libpng/contrib/gregbook/COPYING",
+          "third-party/licenses/mgba/src/third-party/libpng/contrib/gregbook/LICENSE",
+          "third-party/licenses/mgba/src/third-party/libpng/contrib/pngexif/LICENSE_MIT.txt",
+          "third-party/licenses/mgba/src/third-party/libpng/contrib/pngminus/LICENSE.txt",
+          "third-party/licenses/mgba/src/third-party/zlib/contrib/dotzlib/LICENSE_1_0.txt",
+          "third-party/licenses/mgba/tools/debian/copyright"
+        ],
+        "submodules": [],
+        "nonGitlinkDeclarations": []
+      },
+      "correspondenceBasis": "binary-reported git revision resolved in the declared upstream repository; not a reproducible-build claim"
+    },
+    "bsnes2014_performance": {
+      "licenseMetadata": "GPLv3",
+      "repository": "https://github.com/libretro/bsnes2014",
+      "binaryVersion": "v094 (Performance) 3c1394e",
+      "binarySha256": "46f8c6419bd472563a41d4dbf1a4193389ce95e586bccddd881a3a3d721aa0d9",
+      "sourceCommit": "3c1394e042ee444c8248e1b9210e14ea55e836e9",
+      "mappingEvidence": "https://api.github.com/repos/libretro/bsnes2014/commits/3c1394e",
+      "delivery": "complete-snapshot",
+      "source": {
+        "repository": "https://github.com/libretro/bsnes2014",
+        "revision": "3c1394e042ee444c8248e1b9210e14ea55e836e9",
+        "archive": "archives/bsnes2014_performance-3c1394e042ee444c8248e1b9210e14ea55e836e9.tar.gz",
+        "url": "https://codeload.github.com/libretro/bsnes2014/tar.gz/3c1394e042ee444c8248e1b9210e14ea55e836e9",
+        "sha256": "817a9e33657f0513b17eb0f5fafd3f1cf96df28aef260ebfdc4559dc2e9782f4",
+        "bytes": 1269045,
+        "licenseFiles": [
+          "third-party/licenses/bsnes2014_performance/COPYING"
+        ],
+        "submodules": [],
+        "nonGitlinkDeclarations": []
+      },
+      "correspondenceBasis": "binary-reported git revision resolved in the declared upstream repository; not a reproducible-build claim"
+    },
+    "blastem": {
+      "licenseMetadata": "GPLv3",
+      "repository": "https://github.com/libretro/blastem",
+      "binaryVersion": "1.0.1-pre",
+      "binarySha256": "f527a808ece895df2c6088b6978a4d7957aaaa2cd35490b6d67062802b1580f2",
+      "sourceCommit": "ab743653ed110eeb7b1fe64d00cc5f9279c2bfec",
+      "mappingEvidence": "source.rebuildReport",
+      "delivery": "complete-snapshot",
+      "source": {
+        "repository": "https://github.com/libretro/blastem.git",
+        "revision": "ab743653ed110eeb7b1fe64d00cc5f9279c2bfec",
+        "archive": "rebuilt/rebuild-blastem/blastem-corresponding-public-source.tar.gz",
+        "cachePath": "../rebuild-blastem/blastem-corresponding-public-source.tar.gz",
+        "bytes": 2614634,
+        "sha256": "938818421eb48831b89cd5104bb7421ee1c0801869f536aa7a11e2d454bb2792",
+        "archiveLayout": "source/ contains the exact tracked upstream tree; BUILDING.md and build driver describe reconstruction",
+        "patchesApplied": false,
+        "licenseFiles": [
+          "third-party/licenses/blastem/source/COPYING",
+          "third-party/licenses/blastem/source/libchdr/LICENSE.txt",
+          "third-party/licenses/blastem/source/lzma/LICENSE.txt",
+          "third-party/licenses/blastem/source/zlib/LICENSE"
+        ],
+        "submodules": [],
+        "rebuildReport": {
+          "schemaVersion": 1,
+          "core": "blastem",
+          "repository": "https://github.com/libretro/blastem.git",
+          "sourceCommit": "ab743653ed110eeb7b1fe64d00cc5f9279c2bfec",
+          "submodules": [],
+          "provenanceScope": "This build only; no correspondence is claimed for the old rolling DLL.",
+          "buildScript": {
+            "path": "rebuild_cores.py",
+            "size": 22783,
+            "sha256": "ad13d749afba3b8eb45194e043b3d8c88d1caede130bd2600b9c4c3c4418661f",
+            "license": "MIT"
+          },
+          "toolchain": [
+            {
+              "name": "llvm-mingw-20250613-ucrt-x86_64.zip",
+              "size": 152446205,
+              "url": "https://github.com/mstorsjo/llvm-mingw/releases/download/20250613/llvm-mingw-20250613-ucrt-x86_64.zip",
+              "sha256": "45145c035d9246e1de16f1873aa9afa863d93909f4a8f363e2eb38a04031d3c3",
+              "archive": {
+                "path": "${WORKSPACE}/test-environment/toolchains/muxi-console-rebuild-llvm-mingw-20250613/downloads/llvm-mingw-20250613-ucrt-x86_64.zip",
+                "size": 152446205,
+                "sha256": "45145c035d9246e1de16f1873aa9afa863d93909f4a8f363e2eb38a04031d3c3"
+              },
+              "version": "clang version 20.1.7 (https://github.com/llvm/llvm-project.git 6146a88f60492b520a36f8f8f3231e15f3cc6082)",
+              "executable": {
+                "path": "${WORKSPACE}/test-environment/toolchains/muxi-console-rebuild-llvm-mingw-20250613/install/llvm-mingw-20250613-ucrt-x86_64/bin/clang.exe",
+                "size": 16896,
+                "sha256": "ed024eb590e39db2d7b73030627365d3c5fcda30f9050e4f1ed6f807ab10a65f"
+              }
+            },
+            {
+              "name": "mingw-w64-x86_64-make-4.4.1-5-any.pkg.tar.zst",
+              "url": "https://mirror.msys2.org/mingw/mingw64/mingw-w64-x86_64-make-4.4.1-5-any.pkg.tar.zst",
+              "sha256": "c19e7caf09bbc89b2730556b2da73004118d4e1f967a685cc48524c7ff80d864",
+              "archive": {
+                "path": "${WORKSPACE}/test-environment/toolchains/muxi-console-rebuild-gnu-make-4.4.1/downloads/mingw-w64-x86_64-make-4.4.1-5-any.pkg.tar.zst",
+                "size": 129916,
+                "sha256": "c19e7caf09bbc89b2730556b2da73004118d4e1f967a685cc48524c7ff80d864"
+              },
+              "version": "GNU Make 4.4.1",
+              "executable": {
+                "path": "${WORKSPACE}/test-environment/toolchains/muxi-console-rebuild-gnu-make-4.4.1/install/mingw64/bin/mingw32-make.exe",
+                "size": 328181,
+                "sha256": "80dd0ec32dfb0fdd06f70e5fb89ea5e0b6ad340e10e2775eabb782ad2c93a441"
+              }
+            }
+          ],
+          "build": {
+            "command": [
+              "${WORKSPACE}/test-environment/toolchains/muxi-console-rebuild-gnu-make-4.4.1/install/mingw64/bin/mingw32-make.exe",
+              "-j1",
+              "-W",
+              "link.T",
+              "SHELL=${GIT_USR_BIN}/sh.exe",
+              "CC=${WORKSPACE}/test-environment/toolchains/muxi-console-rebuild-llvm-mingw-20250613/install/llvm-mingw-20250613-ucrt-x86_64/bin/x86_64-w64-mingw32-clang.exe",
+              "OS=Windows",
+              "CPU=x86_64",
+              "LIBRETRO=1",
+              "NOLTO=1",
+              "PYTHON=${PYTHON}",
+              "LIBLDFLAGS=-Wl,--no-insert-timestamp",
+              "libblastem.dll"
+            ],
+            "variables": {
+              "SHELL": "${GIT_USR_BIN}/sh.exe",
+              "CC": "${WORKSPACE}/test-environment/toolchains/muxi-console-rebuild-llvm-mingw-20250613/install/llvm-mingw-20250613-ucrt-x86_64/bin/x86_64-w64-mingw32-clang.exe",
+              "OS": "Windows",
+              "CPU": "x86_64",
+              "LIBRETRO": "1",
+              "NOLTO": "1",
+              "PYTHON": "${PYTHON}",
+              "LIBLDFLAGS": "-Wl,--no-insert-timestamp"
+            },
+            "preparationSteps": [
+              {
+                "operation": "Byte-exact C string embedding before make; no source or runtime semantic patch",
+                "generator": "embed_blastem_data in rebuild_cores.py",
+                "input": {
+                  "path": "${WORKSPACE}/test-environment/cache/muxi-console/rebuild-blastem/source/rom.db",
+                  "size": 27369,
+                  "sha256": "3c53534bd561ec77903cecb881502f899bde5164cec37baeaea595701f55f491"
+                },
+                "generated": {
+                  "path": "${WORKSPACE}/test-environment/cache/muxi-console/rebuild-blastem/source/rom.db.c",
+                  "size": 110789,
+                  "sha256": "c70dda51610f462e2ea3b6a3fedaf77d2cf1991db5ea5f2fbfb94f3aaa9f8401"
+                }
+              },
+              {
+                "operation": "Byte-exact C string embedding before make; no source or runtime semantic patch",
+                "generator": "embed_blastem_data in rebuild_cores.py",
+                "input": {
+                  "path": "${WORKSPACE}/test-environment/cache/muxi-console/rebuild-blastem/source/systems.cfg",
+                  "size": 1250,
+                  "sha256": "4184a032e723b9cfdbf933d2cfd403d309cb57f26f0e6f36b8c26bcf108c830f"
+                },
+                "generated": {
+                  "path": "${WORKSPACE}/test-environment/cache/muxi-console/rebuild-blastem/source/systems.cfg.c",
+                  "size": 5094,
+                  "sha256": "2e45283a95aef1b25d8ff5b4d8bdd73a02a4661610d49b0f83d092094d0ea23e"
+                }
+              }
+            ],
+            "environmentOverrides": {
+              "PATH": "${LLVM_MINGW_ROOT}/bin;${GNU_MAKE_ROOT}/bin;${GIT_ROOT}/usr/bin;${GIT_ROOT}/mingw64/bin;${PYTHON_DIRECTORY};${SYSTEM_PATH}",
+              "SHELL": "${GIT_USR_BIN}/sh.exe",
+              "MSYS2_ARG_CONV_EXCL": "*",
+              "SOURCE_DATE_EPOCH": "1791659242"
+            },
+            "attemptLogs": [
+              {
+                "path": "${WORKSPACE}/test-environment/cache/muxi-console/rebuild-blastem/build-1.log",
+                "size": 650817,
+                "sha256": "3a727d8d19ffbc4a80df06d3ee14831b546048976425816f963fe302c4010282"
+              },
+              {
+                "path": "${WORKSPACE}/test-environment/cache/muxi-console/rebuild-blastem/build-2.log",
+                "size": 10353,
+                "sha256": "3ebe19494c3dcfddf6895d88dd9a6de0f49b477a5a3a4af275511da1cae66aaf"
+              },
+              {
+                "path": "${WORKSPACE}/test-environment/cache/muxi-console/rebuild-blastem/build-3.log",
+                "size": 3840,
+                "sha256": "6a47dd76d20192580834ce6bcd1bf6b0930b8817a220ef90c2a0761117a9ce9b"
+              }
+            ],
+            "notes": [
+              "Actual native objects were compiled with the preserved historical driver; the final driver performed a deterministic timestamp-zero relink.",
+              "No semantic native source patch is applied. Build variables and the BlastEm byte-embedding preparation are recorded explicitly.",
+              "Initial GNU make/MSYS sed backslash requoting failed during data embedding; the retained failure log is represented by its hash only."
+            ]
+          },
+          "patches": [],
+          "library": {
+            "path": "blastem_libretro.dll",
+            "size": 10126336,
+            "sha256": "f527a808ece895df2c6088b6978a4d7957aaaa2cd35490b6d67062802b1580f2",
+            "name": "blastem_libretro.dll"
+          },
+          "archive": {
+            "path": "blastem_libretro.dll.zip",
+            "size": 1118233,
+            "sha256": "a9804edddcf4dc7ac22257b6489e7dbd76c6a29ff32aa35e025f44954e91fb08"
+          },
+          "pe": {
+            "machine": "0x8664",
+            "format": "PE32+",
+            "timestamp": 0,
+            "imports": [
+              "WS2_32.dll",
+              "ole32.dll",
+              "api-ms-win-crt-stdio-l1-1-0.dll",
+              "api-ms-win-crt-runtime-l1-1-0.dll",
+              "api-ms-win-crt-time-l1-1-0.dll",
+              "api-ms-win-crt-string-l1-1-0.dll",
+              "api-ms-win-crt-private-l1-1-0.dll",
+              "api-ms-win-crt-convert-l1-1-0.dll",
+              "api-ms-win-crt-heap-l1-1-0.dll",
+              "api-ms-win-crt-math-l1-1-0.dll",
+              "api-ms-win-crt-environment-l1-1-0.dll",
+              "api-ms-win-crt-utility-l1-1-0.dll",
+              "SHELL32.dll",
+              "KERNEL32.dll"
+            ]
+          },
+          "probe": {
+            "apiVersion": 1,
+            "name": "BlastEm",
+            "version": "1.0.1-pre",
+            "extensions": "md|gen|smd|32x|sms|gg|sg|sg1|sc|sc3|sf7|col|cue|toc|iso|chd|vgm|vgz|flac|wav|bin|rom|gz",
+            "exports": [
+              "retro_api_version",
+              "retro_init",
+              "retro_deinit",
+              "retro_get_system_info",
+              "retro_get_system_av_info",
+              "retro_set_environment",
+              "retro_set_video_refresh",
+              "retro_set_audio_sample",
+              "retro_set_audio_sample_batch",
+              "retro_set_input_poll",
+              "retro_set_input_state",
+              "retro_set_controller_port_device",
+              "retro_reset",
+              "retro_run",
+              "retro_serialize_size",
+              "retro_serialize",
+              "retro_unserialize",
+              "retro_cheat_reset",
+              "retro_cheat_set",
+              "retro_load_game",
+              "retro_load_game_special",
+              "retro_unload_game",
+              "retro_get_region",
+              "retro_get_memory_data",
+              "retro_get_memory_size"
+            ],
+            "gameCompatibilityTested": false,
+            "normalExit": true
+          },
+          "createdUtc": "2026-11-08T13:22:56.117014+00:00",
+          "history": {
+            "stage": "Deterministic relink of objects compiled in the preserved initial successful build; no runtime source or compile-flag change",
+            "initialReport": {
+              "path": "${WORKSPACE}/test-environment/cache/muxi-console/rebuild-blastem/initial-success/rebuild-report.json",
+              "size": 11034,
+              "sha256": "1c86f5d4162ee831117c5f9069e3f04e931e21b94e7fe8eef76cda1eef5d686b"
+            },
+            "initialDriver": {
+              "path": "${WORKSPACE}/test-environment/cache/muxi-console/rebuild-blastem/initial-success/build-driver.py",
+              "size": 16563,
+              "sha256": "0900e0f3b5ff088c85040e80772b6ce4f50d5b490b3a7d8e1ea00cc3869e0ca4"
+            },
+            "retainedArtifacts": {
+              "path": "${WORKSPACE}/test-environment/cache/muxi-console/rebuild-blastem/initial-success/retained-artifacts.json",
+              "size": 2715,
+              "sha256": "8fb3e8e0459b612e022191636e309aef1e73df308b00f97e608b3b7fe07abcb7"
+            }
+          },
+          "publicView": "Host workspace paths use placeholders; inherited PATH entries unrelated to building are omitted. Original private cache record is retained separately.",
+          "generatedSourceSnapshots": [
+            {
+              "member": "source/rom.db.c",
+              "size": 110789,
+              "sha256": "c70dda51610f462e2ea3b6a3fedaf77d2cf1991db5ea5f2fbfb94f3aaa9f8401",
+              "origin": "Actual generated source compiled by the recorded build; preferred forms and generators are also included"
+            },
+            {
+              "member": "source/sh2.c",
+              "size": 32498579,
+              "sha256": "5c532347ea474ebab02496ed963f749df6cbf2ca48e8261f03e0d0e307905b30",
+              "origin": "Actual generated source compiled by the recorded build; preferred forms and generators are also included"
+            },
+            {
+              "member": "source/sh2.h",
+              "size": 2744,
+              "sha256": "a7e0e8181f44d34a77c0b3922bbf74b4a6b3fa3a71c7ebeb9f2295d8ff3d2a07",
+              "origin": "Actual generated source compiled by the recorded build; preferred forms and generators are also included"
+            },
+            {
+              "member": "source/systems.cfg.c",
+              "size": 5094,
+              "sha256": "2e45283a95aef1b25d8ff5b4d8bdd73a02a4661610d49b0f83d092094d0ea23e",
+              "origin": "Actual generated source compiled by the recorded build; preferred forms and generators are also included"
+            },
+            {
+              "member": "source/upd78k2.c",
+              "size": 2481395,
+              "sha256": "2b5e00ff0af30c13e8b3f367c950630f9d97e2a8c6267bbfcb844a8966c938d8",
+              "origin": "Actual generated source compiled by the recorded build; preferred forms and generators are also included"
+            },
+            {
+              "member": "source/upd78k2.h",
+              "size": 2672,
+              "sha256": "003273ac2177dc4c2c0fb6fff8b0d1d2f826a17db4d60a82354d9f62b65d2077",
+              "origin": "Actual generated source compiled by the recorded build; preferred forms and generators are also included"
+            }
+          ],
+          "independentBuild": {
+            "resultMember": "INDEPENDENT-BUILD.json",
+            "byteIdentical": false,
+            "recordedExitCode": 1,
+            "note": "The delivered archive compiled independently without source fetch or reused objects. An exit 1 may reflect the strict byte-comparison guard after successful compilation; actual hashes remain in the evidence."
+          },
+          "sourceArchive": {
+            "path": "blastem-corresponding-public-source.tar.gz",
+            "size": 2614634,
+            "sha256": "938818421eb48831b89cd5104bb7421ee1c0801869f536aa7a11e2d454bb2792",
+            "format": "tar.gz",
+            "patchesApplied": false,
+            "completePreferredSource": true,
+            "buildInstructions": "BUILDING.md",
+            "sourceDirectory": "source",
+            "publicSanitized": true
+          }
+        },
+        "rebuildReportSha256": "e9e900c260a96b2336b7e8742cc9b603668746d802fcec02866c9de487da1ecb",
+        "originalPublicRecordSha256": "385ef93e2a7a2e89703de279da0bc33fc1841a9fd90f49727c3d5c4a6b1d1f19",
+        "originalPrivateRecordSha256": "76e23b853fa7dff3fc3d391554498a0c7e22202c1bba510828251ec106824ef2"
+      },
+      "binaryOrigin": "source-rebuild",
+      "correspondenceBasis": "local DLL built from this source archive and recorded toolchain; no claim for replaced rolling DLL"
+    },
+    "gearsystem": {
+      "licenseMetadata": "GPLv3",
+      "repository": "https://github.com/drhelius/Gearsystem",
+      "binaryVersion": "3.9.24-12-g1be9a12",
+      "binarySha256": "6b4b33dc9af28f1402679f73a6e98ef2edf4b4e58e64adf4190101193a94f1c5",
+      "sourceCommit": "1be9a12b82cae84ddd6f9b7006d546abe2d58bd4",
+      "mappingEvidence": "https://api.github.com/repos/drhelius/Gearsystem/commits/1be9a12",
+      "delivery": "complete-snapshot",
+      "source": {
+        "repository": "https://github.com/drhelius/Gearsystem",
+        "revision": "1be9a12b82cae84ddd6f9b7006d546abe2d58bd4",
+        "archive": "archives/gearsystem-1be9a12b82cae84ddd6f9b7006d546abe2d58bd4.tar.gz",
+        "url": "https://codeload.github.com/drhelius/Gearsystem/tar.gz/1be9a12b82cae84ddd6f9b7006d546abe2d58bd4",
+        "sha256": "39d1fbd823137d381a16b66d700abc35eb5667a58c13e9d2cb99804890040f60",
+        "bytes": 8654256,
+        "licenseFiles": [
+          "third-party/licenses/gearsystem/LICENSE",
+          "third-party/licenses/gearsystem/platforms/ios/LICENSE/LICENSE.txt",
+          "third-party/licenses/gearsystem/platforms/linux/debian/copyright",
+          "third-party/licenses/gearsystem/platforms/shared/desktop/license.h"
+        ],
+        "submodules": [],
+        "nonGitlinkDeclarations": []
+      },
+      "correspondenceBasis": "binary-reported git revision resolved in the declared upstream repository; not a reproducible-build claim"
+    },
+    "mednafen_pce_fast": {
+      "licenseMetadata": "GPLv2",
+      "repository": "https://github.com/libretro/beetle-pce-fast-libretro",
+      "binaryVersion": "v1.31.0.0",
+      "binarySha256": "20c919696cefac5b6ed6a452791e7154f010e272aaeeb0236252f0d5eda9dbcb",
+      "sourceCommit": "2de1ce1c3f237b161c126c54ba407990bb86d1e9",
+      "mappingEvidence": "source.rebuildReport",
+      "delivery": "complete-snapshot",
+      "source": {
+        "repository": "https://github.com/libretro/beetle-pce-fast-libretro.git",
+        "revision": "2de1ce1c3f237b161c126c54ba407990bb86d1e9",
+        "archive": "rebuilt/rebuild-pce/pce-corresponding-public-source.tar.gz",
+        "cachePath": "../rebuild-pce/pce-corresponding-public-source.tar.gz",
+        "bytes": 1182351,
+        "sha256": "5575b070552947d7452088f7188be00215acfb3654490a39c4321e80a8f6dec5",
+        "archiveLayout": "source/ contains the exact tracked upstream tree; BUILDING.md and build driver describe reconstruction",
+        "patchesApplied": false,
+        "licenseFiles": [
+          "third-party/licenses/mednafen_pce_fast/source/COPYING",
+          "third-party/licenses/mednafen_pce_fast/source/deps/libchdr/LICENSE.txt",
+          "third-party/licenses/mednafen_pce_fast/source/deps/lzma-19.00/LICENSE",
+          "third-party/licenses/mednafen_pce_fast/source/deps/zstd/COPYING",
+          "third-party/licenses/mednafen_pce_fast/source/deps/zstd/LICENSE",
+          "third-party/licenses/mednafen_pce_fast/source/mednafen/tremor/COPYING"
+        ],
+        "submodules": [],
+        "rebuildReport": {
+          "schemaVersion": 1,
+          "core": "pce",
+          "repository": "https://github.com/libretro/beetle-pce-fast-libretro.git",
+          "sourceCommit": "2de1ce1c3f237b161c126c54ba407990bb86d1e9",
+          "submodules": [],
+          "provenanceScope": "This build only; no correspondence is claimed for the old rolling DLL.",
+          "buildScript": {
+            "path": "rebuild_cores.py",
+            "size": 22783,
+            "sha256": "ad13d749afba3b8eb45194e043b3d8c88d1caede130bd2600b9c4c3c4418661f",
+            "license": "MIT"
+          },
+          "toolchain": [
+            {
+              "name": "llvm-mingw-20250613-ucrt-x86_64.zip",
+              "size": 152446205,
+              "url": "https://github.com/mstorsjo/llvm-mingw/releases/download/20250613/llvm-mingw-20250613-ucrt-x86_64.zip",
+              "sha256": "45145c035d9246e1de16f1873aa9afa863d93909f4a8f363e2eb38a04031d3c3",
+              "archive": {
+                "path": "${WORKSPACE}/test-environment/toolchains/muxi-console-rebuild-llvm-mingw-20250613/downloads/llvm-mingw-20250613-ucrt-x86_64.zip",
+                "size": 152446205,
+                "sha256": "45145c035d9246e1de16f1873aa9afa863d93909f4a8f363e2eb38a04031d3c3"
+              },
+              "version": "clang version 20.1.7 (https://github.com/llvm/llvm-project.git 6146a88f60492b520a36f8f8f3231e15f3cc6082)",
+              "executable": {
+                "path": "${WORKSPACE}/test-environment/toolchains/muxi-console-rebuild-llvm-mingw-20250613/install/llvm-mingw-20250613-ucrt-x86_64/bin/clang.exe",
+                "size": 16896,
+                "sha256": "ed024eb590e39db2d7b73030627365d3c5fcda30f9050e4f1ed6f807ab10a65f"
+              }
+            },
+            {
+              "name": "mingw-w64-x86_64-make-4.4.1-5-any.pkg.tar.zst",
+              "url": "https://mirror.msys2.org/mingw/mingw64/mingw-w64-x86_64-make-4.4.1-5-any.pkg.tar.zst",
+              "sha256": "c19e7caf09bbc89b2730556b2da73004118d4e1f967a685cc48524c7ff80d864",
+              "archive": {
+                "path": "${WORKSPACE}/test-environment/toolchains/muxi-console-rebuild-gnu-make-4.4.1/downloads/mingw-w64-x86_64-make-4.4.1-5-any.pkg.tar.zst",
+                "size": 129916,
+                "sha256": "c19e7caf09bbc89b2730556b2da73004118d4e1f967a685cc48524c7ff80d864"
+              },
+              "version": "GNU Make 4.4.1",
+              "executable": {
+                "path": "${WORKSPACE}/test-environment/toolchains/muxi-console-rebuild-gnu-make-4.4.1/install/mingw64/bin/mingw32-make.exe",
+                "size": 328181,
+                "sha256": "80dd0ec32dfb0fdd06f70e5fb89ea5e0b6ad340e10e2775eabb782ad2c93a441"
+              }
+            }
+          ],
+          "build": {
+            "command": [
+              "${WORKSPACE}/test-environment/toolchains/muxi-console-rebuild-gnu-make-4.4.1/install/mingw64/bin/mingw32-make.exe",
+              "-j1",
+              "-W",
+              "libretro.o",
+              "SHELL=${GIT_USR_BIN}/sh.exe",
+              "CC=${WORKSPACE}/test-environment/toolchains/muxi-console-rebuild-llvm-mingw-20250613/install/llvm-mingw-20250613-ucrt-x86_64/bin/x86_64-w64-mingw32-clang.exe",
+              "platform=win",
+              "CXX=${WORKSPACE}/test-environment/toolchains/muxi-console-rebuild-llvm-mingw-20250613/install/llvm-mingw-20250613-ucrt-x86_64/bin/x86_64-w64-mingw32-clang++.exe",
+              "SHARED=-shared -Wl,--no-undefined -Wl,--no-insert-timestamp",
+              "GIT_VERSION=2de1ce1"
+            ],
+            "variables": {
+              "SHELL": "${GIT_USR_BIN}/sh.exe",
+              "CC": "${WORKSPACE}/test-environment/toolchains/muxi-console-rebuild-llvm-mingw-20250613/install/llvm-mingw-20250613-ucrt-x86_64/bin/x86_64-w64-mingw32-clang.exe",
+              "platform": "win",
+              "CXX": "${WORKSPACE}/test-environment/toolchains/muxi-console-rebuild-llvm-mingw-20250613/install/llvm-mingw-20250613-ucrt-x86_64/bin/x86_64-w64-mingw32-clang++.exe",
+              "SHARED": "-shared -Wl,--no-undefined -Wl,--no-insert-timestamp",
+              "GIT_VERSION": "2de1ce1"
+            },
+            "preparationSteps": [],
+            "environmentOverrides": {
+              "PATH": "${LLVM_MINGW_ROOT}/bin;${GNU_MAKE_ROOT}/bin;${GIT_ROOT}/usr/bin;${GIT_ROOT}/mingw64/bin;${PYTHON_DIRECTORY};${SYSTEM_PATH}",
+              "SHELL": "${GIT_USR_BIN}/sh.exe",
+              "MSYS2_ARG_CONV_EXCL": "*",
+              "SOURCE_DATE_EPOCH": "1793358911"
+            },
+            "attemptLogs": [
+              {
+                "path": "${WORKSPACE}/test-environment/cache/muxi-console/rebuild-pce/build-1.log",
+                "size": 93418,
+                "sha256": "055197b1659a85350d6908985ee16f8d2c0ac245dd8384ba192f991c80cd5d54"
+              },
+              {
+                "path": "${WORKSPACE}/test-environment/cache/muxi-console/rebuild-pce/build-2.log",
+                "size": 3097,
+                "sha256": "491de6f6f7d8925afc4bce1425736b89f59a16b960e76c845a2f631d793ccaa9"
+              }
+            ],
+            "notes": [
+              "Actual native objects were compiled with the preserved historical driver; the final driver performed a deterministic timestamp-zero relink.",
+              "No semantic native source patch is applied. Build variables and the BlastEm byte-embedding preparation are recorded explicitly."
+            ]
+          },
+          "patches": [],
+          "library": {
+            "path": "mednafen_pce_fast_libretro.dll",
+            "size": 4010496,
+            "sha256": "20c919696cefac5b6ed6a452791e7154f010e272aaeeb0236252f0d5eda9dbcb",
+            "name": "mednafen_pce_fast_libretro.dll"
+          },
+          "archive": {
+            "path": "mednafen_pce_fast_libretro.dll.zip",
+            "size": 462411,
+            "sha256": "2674132ca9deb46b2c4478a1d71f165905c5c7c23cde1819a205282b3438ebbc"
+          },
+          "pe": {
+            "machine": "0x8664",
+            "format": "PE32+",
+            "timestamp": 0,
+            "imports": [
+              "api-ms-win-crt-stdio-l1-1-0.dll",
+              "api-ms-win-crt-runtime-l1-1-0.dll",
+              "api-ms-win-crt-string-l1-1-0.dll",
+              "api-ms-win-crt-filesystem-l1-1-0.dll",
+              "api-ms-win-crt-time-l1-1-0.dll",
+              "api-ms-win-crt-convert-l1-1-0.dll",
+              "api-ms-win-crt-heap-l1-1-0.dll",
+              "api-ms-win-crt-math-l1-1-0.dll",
+              "api-ms-win-crt-private-l1-1-0.dll",
+              "api-ms-win-crt-utility-l1-1-0.dll",
+              "api-ms-win-crt-locale-l1-1-0.dll",
+              "KERNEL32.dll"
+            ]
+          },
+          "probe": {
+            "apiVersion": 1,
+            "name": "Beetle PCE Fast",
+            "version": "v1.31.0.0",
+            "extensions": "pce|cue|ccd|chd|toc|m3u",
+            "exports": [
+              "retro_api_version",
+              "retro_init",
+              "retro_deinit",
+              "retro_get_system_info",
+              "retro_get_system_av_info",
+              "retro_set_environment",
+              "retro_set_video_refresh",
+              "retro_set_audio_sample",
+              "retro_set_audio_sample_batch",
+              "retro_set_input_poll",
+              "retro_set_input_state",
+              "retro_set_controller_port_device",
+              "retro_reset",
+              "retro_run",
+              "retro_serialize_size",
+              "retro_serialize",
+              "retro_unserialize",
+              "retro_cheat_reset",
+              "retro_cheat_set",
+              "retro_load_game",
+              "retro_load_game_special",
+              "retro_unload_game",
+              "retro_get_region",
+              "retro_get_memory_data",
+              "retro_get_memory_size"
+            ],
+            "gameCompatibilityTested": false,
+            "normalExit": true
+          },
+          "createdUtc": "2026-11-08T13:22:58.867666+00:00",
+          "history": {
+            "stage": "Deterministic relink of objects compiled in the preserved initial successful build; no runtime source or compile-flag change",
+            "initialReport": {
+              "path": "${WORKSPACE}/test-environment/cache/muxi-console/rebuild-pce/initial-success/rebuild-report.json",
+              "size": 9497,
+              "sha256": "6dcc682eb45e0ac4ccb30c2cbe11c1540240abda5a3d55a05f900c441f397547"
+            },
+            "initialDriver": {
+              "path": "${WORKSPACE}/test-environment/cache/muxi-console/rebuild-pce/initial-success/build-driver.py",
+              "size": 16563,
+              "sha256": "0900e0f3b5ff088c85040e80772b6ce4f50d5b490b3a7d8e1ea00cc3869e0ca4"
+            },
+            "retainedArtifacts": {
+              "path": "${WORKSPACE}/test-environment/cache/muxi-console/rebuild-pce/initial-success/retained-artifacts.json",
+              "size": 2696,
+              "sha256": "4e2c96d0ef71ce0b1872f6b23073d6131077d3d9f046b6ffe2118db5e50d0dc6"
+            }
+          },
+          "publicView": "Host workspace paths use placeholders; inherited PATH entries unrelated to building are omitted. Original private cache record is retained separately.",
+          "generatedSourceSnapshots": [],
+          "independentBuild": {
+            "resultMember": "INDEPENDENT-BUILD.json",
+            "byteIdentical": true,
+            "recordedExitCode": 0,
+            "note": "Exact independent build result retained without changing the original final DLL or ZIP."
+          },
+          "sourceArchive": {
+            "path": "pce-corresponding-public-source.tar.gz",
+            "size": 1182351,
+            "sha256": "5575b070552947d7452088f7188be00215acfb3654490a39c4321e80a8f6dec5",
+            "format": "tar.gz",
+            "patchesApplied": false,
+            "completePreferredSource": true,
+            "buildInstructions": "BUILDING.md",
+            "sourceDirectory": "source",
+            "publicSanitized": true
+          }
+        },
+        "rebuildReportSha256": "c2f7ceea5a7dcb189aa4a52653b89b43e43e6da19d3cba1adae39db2f3e22088",
+        "originalPublicRecordSha256": "2e6ac7cd6388599884745385783c29e9f008c5b7656a3bb202917bfcbe2e2292",
+        "originalPrivateRecordSha256": "c4ae91c0e561d1f95bb63b03edef2f9bb3eb1e9fbc4458dd629fb67687adc50b"
+      },
+      "binaryOrigin": "source-rebuild",
+      "correspondenceBasis": "local DLL built from this source archive and recorded toolchain; no claim for replaced rolling DLL"
+    },
+    "stella2014": {
+      "licenseMetadata": "GPLv2",
+      "repository": "https://github.com/libretro/stella2014-libretro",
+      "binaryVersion": "3.9.3 7d1361e",
+      "binarySha256": "2b9bdcc6c9b8c15b80997e20dc2e2dff99e73b1ecf0ecb16e6a1dbc51145fffb",
+      "sourceCommit": "7d1361e407e63f29e52892655069e5fb4096e691",
+      "mappingEvidence": "https://api.github.com/repos/libretro/stella2014-libretro/commits/7d1361e",
+      "delivery": "complete-snapshot",
+      "source": {
+        "repository": "https://github.com/libretro/stella2014-libretro",
+        "revision": "7d1361e407e63f29e52892655069e5fb4096e691",
+        "archive": "archives/stella2014-7d1361e407e63f29e52892655069e5fb4096e691.tar.gz",
+        "url": "https://codeload.github.com/libretro/stella2014-libretro/tar.gz/7d1361e407e63f29e52892655069e5fb4096e691",
+        "sha256": "c0f5e53f3c21e7760e434784634d44a02e57a30917da5279cfd3add4736afd82",
+        "bytes": 804754,
+        "licenseFiles": [
+          "third-party/licenses/stella2014/stella/license.txt"
+        ],
+        "submodules": [],
+        "nonGitlinkDeclarations": []
+      },
+      "correspondenceBasis": "binary-reported git revision resolved in the declared upstream repository; not a reproducible-build claim"
+    },
+    "prosystem": {
+      "licenseMetadata": "GPLv2",
+      "repository": "https://github.com/libretro/prosystem-libretro",
+      "binaryVersion": "1.3e 8a88014",
+      "binarySha256": "9127b2fc7c6b339a16b46a734ceee0e21b948580575ea3fbed41e33e27a13406",
+      "sourceCommit": "8a88014287c7a01cd568067e5a557d0a2b2a051f",
+      "mappingEvidence": "https://api.github.com/repos/libretro/prosystem-libretro/commits/8a88014",
+      "delivery": "complete-snapshot",
+      "source": {
+        "repository": "https://github.com/libretro/prosystem-libretro",
+        "revision": "8a88014287c7a01cd568067e5a557d0a2b2a051f",
+        "archive": "archives/prosystem-8a88014287c7a01cd568067e5a557d0a2b2a051f.tar.gz",
+        "url": "https://codeload.github.com/libretro/prosystem-libretro/tar.gz/8a88014287c7a01cd568067e5a557d0a2b2a051f",
+        "sha256": "23401c8b104ef24db111bbc4b13e37f224ffe16febfb89c704c70cdb269603bc",
+        "bytes": 180994,
+        "licenseFiles": [
+          "third-party/licenses/prosystem/License.txt",
+          "third-party/licenses/prosystem/bupboop/License.txt"
+        ],
+        "submodules": [],
+        "nonGitlinkDeclarations": []
+      },
+      "correspondenceBasis": "binary-reported git revision resolved in the declared upstream repository; not a reproducible-build claim"
+    },
+    "mednafen_lynx": {
+      "licenseMetadata": "Zlib|GPLv2",
+      "repository": "https://github.com/libretro/beetle-lynx-libretro",
+      "binaryVersion": "v1.24.0 fcdefcf",
+      "binarySha256": "93258f72309f0f9626a1816f6fc9fae23e235ac1910b9155ecf31857d17a806e",
+      "sourceCommit": "fcdefcfb3c11d6d2e71be076a5d3df2e88ab73ed",
+      "mappingEvidence": "https://api.github.com/repos/libretro/beetle-lynx-libretro/commits/fcdefcf",
+      "delivery": "complete-snapshot",
+      "source": {
+        "repository": "https://github.com/libretro/beetle-lynx-libretro",
+        "revision": "fcdefcfb3c11d6d2e71be076a5d3df2e88ab73ed",
+        "archive": "archives/mednafen_lynx-fcdefcfb3c11d6d2e71be076a5d3df2e88ab73ed.tar.gz",
+        "url": "https://codeload.github.com/libretro/beetle-lynx-libretro/tar.gz/fcdefcfb3c11d6d2e71be076a5d3df2e88ab73ed",
+        "sha256": "3dd45a6f6585c444a415cb097996c572467754748e7163eca466d89b31bd8b37",
+        "bytes": 210797,
+        "licenseFiles": [
+          "third-party/licenses/mednafen_lynx/COPYING",
+          "third-party/licenses/mednafen_lynx/mednafen/lynx/license.txt"
+        ],
+        "submodules": [],
+        "nonGitlinkDeclarations": []
+      },
+      "correspondenceBasis": "binary-reported git revision resolved in the declared upstream repository; not a reproducible-build claim"
+    },
+    "mednafen_ngp": {
+      "licenseMetadata": "GPLv2",
+      "repository": "https://github.com/libretro/beetle-ngp-libretro",
+      "binaryVersion": "v1.29.0.0 a50d5ac",
+      "binarySha256": "48ee72698b2966959a6564fe425e392017543ca47b3256ccad62068cf551a44a",
+      "sourceCommit": "a50d5ac288a81f2104ddf43195a4efdd15c72227",
+      "mappingEvidence": "https://api.github.com/repos/libretro/beetle-ngp-libretro/commits/a50d5ac",
+      "delivery": "complete-snapshot",
+      "source": {
+        "repository": "https://github.com/libretro/beetle-ngp-libretro",
+        "revision": "a50d5ac288a81f2104ddf43195a4efdd15c72227",
+        "archive": "archives/mednafen_ngp-a50d5ac288a81f2104ddf43195a4efdd15c72227.tar.gz",
+        "url": "https://codeload.github.com/libretro/beetle-ngp-libretro/tar.gz/a50d5ac288a81f2104ddf43195a4efdd15c72227",
+        "sha256": "ffeabf2a357548f3a55423d542c31bb1e08571d81d7104f8213df3bfa2eb9c9f",
+        "bytes": 208229,
+        "licenseFiles": [
+          "third-party/licenses/mednafen_ngp/COPYING"
+        ],
+        "submodules": [],
+        "nonGitlinkDeclarations": []
+      },
+      "correspondenceBasis": "binary-reported git revision resolved in the declared upstream repository; not a reproducible-build claim"
+    },
+    "mednafen_wswan": {
+      "licenseMetadata": "GPLv2",
+      "repository": "https://github.com/libretro/beetle-wswan-libretro",
+      "binaryVersion": "v0.9.35.1 4b01295",
+      "binarySha256": "8f5d3314e3dfa2b030ed3b2967febb3f6e216bc8bcf463e0eb0227d4dd2c3f74",
+      "sourceCommit": "4b01295838ea89e3f1355bbe4cb5cf98aa6108cd",
+      "mappingEvidence": "https://api.github.com/repos/libretro/beetle-wswan-libretro/commits/4b01295",
+      "delivery": "complete-snapshot",
+      "source": {
+        "repository": "https://github.com/libretro/beetle-wswan-libretro",
+        "revision": "4b01295838ea89e3f1355bbe4cb5cf98aa6108cd",
+        "archive": "archives/mednafen_wswan-4b01295838ea89e3f1355bbe4cb5cf98aa6108cd.tar.gz",
+        "url": "https://codeload.github.com/libretro/beetle-wswan-libretro/tar.gz/4b01295838ea89e3f1355bbe4cb5cf98aa6108cd",
+        "sha256": "bce15c0e2505e15b7b55fa1d51b4a12219d07a67be62bbca5c26678d0d89c659",
+        "bytes": 207909,
+        "licenseFiles": [
+          "third-party/licenses/mednafen_wswan/COPYING"
+        ],
+        "submodules": [],
+        "nonGitlinkDeclarations": []
+      },
+      "correspondenceBasis": "binary-reported git revision resolved in the declared upstream repository; not a reproducible-build claim"
+    },
+    "mednafen_vb": {
+      "licenseMetadata": "GPLv2",
+      "repository": "https://github.com/libretro/beetle-vb-libretro",
+      "binaryVersion": "v1.31.0 d5ae54c",
+      "binarySha256": "274888f687948c8a77f878f63d2a858b9d010af2ec8fe876626b5e5077d6c014",
+      "sourceCommit": "d5ae54c8e23b573a3b34e888b2d48a588027e92c",
+      "mappingEvidence": "https://api.github.com/repos/libretro/beetle-vb-libretro/commits/d5ae54c",
+      "delivery": "complete-snapshot",
+      "source": {
+        "repository": "https://github.com/libretro/beetle-vb-libretro",
+        "revision": "d5ae54c8e23b573a3b34e888b2d48a588027e92c",
+        "archive": "archives/mednafen_vb-d5ae54c8e23b573a3b34e888b2d48a588027e92c.tar.gz",
+        "url": "https://codeload.github.com/libretro/beetle-vb-libretro/tar.gz/d5ae54c8e23b573a3b34e888b2d48a588027e92c",
+        "sha256": "ccbed557d3f316c9123f81d1ca5357c5f12100bad6aea3326caefca2a1c08189",
+        "bytes": 287526,
+        "licenseFiles": [
+          "third-party/licenses/mednafen_vb/COPYING"
+        ],
+        "submodules": [],
+        "nonGitlinkDeclarations": []
+      },
+      "correspondenceBasis": "binary-reported git revision resolved in the declared upstream repository; not a reproducible-build claim"
+    },
+    "mupen64plus_next": {
+      "licenseMetadata": "GPLv2",
+      "repository": "https://github.com/libretro/mupen64plus-libretro-nx",
+      "binaryVersion": "3.0-Vulkan 15bada8",
+      "binarySha256": "3f5ec83e22c391002dea7a026758d5e5a661b9390ef67e80a244a34e05c3c63e",
+      "sourceCommit": "15bada85906593376e8fd697f1b0b3af3a20f512",
+      "mappingEvidence": "https://api.github.com/repos/libretro/mupen64plus-libretro-nx/commits/15bada8",
+      "delivery": "complete-snapshot",
+      "source": {
+        "repository": "https://github.com/libretro/mupen64plus-libretro-nx",
+        "revision": "15bada85906593376e8fd697f1b0b3af3a20f512",
+        "archive": "archives/mupen64plus_next-15bada85906593376e8fd697f1b0b3af3a20f512.tar.gz",
+        "url": "https://codeload.github.com/libretro/mupen64plus-libretro-nx/tar.gz/15bada85906593376e8fd697f1b0b3af3a20f512",
+        "sha256": "0b739581f2610fa6967891a657c749557fa4f7555d6a7e2e3475c9b397302b13",
+        "bytes": 14971140,
+        "licenseFiles": [
+          "third-party/licenses/mupen64plus_next/GLideN64/LICENSE",
+          "third-party/licenses/mupen64plus_next/GLideN64/licenses/GLSL-FXAA/LICENSE.md",
+          "third-party/licenses/mupen64plus_next/GLideN64/licenses/GlideHQ/gpl-2.0.txt",
+          "third-party/licenses/mupen64plus_next/GLideN64/licenses/Glow/LICENSE",
+          "third-party/licenses/mupen64plus_next/GLideN64/licenses/gles2n64/LICENSE",
+          "third-party/licenses/mupen64plus_next/GLideN64/licenses/readerwriterqueue/LICENSE.md",
+          "third-party/licenses/mupen64plus_next/LICENSE",
+          "third-party/licenses/mupen64plus_next/mupen64plus-core/doc/font-license",
+          "third-party/licenses/mupen64plus_next/mupen64plus-core/doc/gpl-license",
+          "third-party/licenses/mupen64plus_next/mupen64plus-core/doc/lgpl-license",
+          "third-party/licenses/mupen64plus_next/mupen64plus-rsp-cxd4/COPYING",
+          "third-party/licenses/mupen64plus_next/mupen64plus-rsp-paraLLEl/LICENSE",
+          "third-party/licenses/mupen64plus_next/mupen64plus-rsp-paraLLEl/LICENSE.LESSER",
+          "third-party/licenses/mupen64plus_next/mupen64plus-rsp-paraLLEl/LICENSE.MIT",
+          "third-party/licenses/mupen64plus_next/mupen64plus-rsp-paraLLEl/lightning/COPYING",
+          "third-party/licenses/mupen64plus_next/mupen64plus-rsp-paraLLEl/lightning/COPYING.DOC",
+          "third-party/licenses/mupen64plus_next/mupen64plus-rsp-paraLLEl/lightning/COPYING.LESSER",
+          "third-party/licenses/mupen64plus_next/mupen64plus-video-paraLLEl/parallel-rdp/LICENSE"
+        ],
+        "submodules": [
+          {
+            "repository": "https://github.com/coreutils/gnulib",
+            "revision": "e54b645fc6b8422562327443bda575c65d931fbd",
+            "archive": "archives/mupen64plus_next--mupen64plus-rsp-paraLLEl-lightning-gnulib-e54b645fc6b8422562327443bda575c65d931fbd.tar.gz",
+            "url": "https://codeload.github.com/coreutils/gnulib/tar.gz/e54b645fc6b8422562327443bda575c65d931fbd",
+            "sha256": "0ba4b1bd643f9c941e05abf4dd24173b1dd6d0e66cf904332d770ebf8c6ed08a",
+            "bytes": 7295797,
+            "licenseFiles": [
+              "third-party/licenses/mupen64plus_next--mupen64plus-rsp-paraLLEl-lightning-gnulib/COPYING",
+              "third-party/licenses/mupen64plus_next--mupen64plus-rsp-paraLLEl-lightning-gnulib/doc/COPYING.LESSERv2",
+              "third-party/licenses/mupen64plus_next--mupen64plus-rsp-paraLLEl-lightning-gnulib/doc/COPYING.LESSERv3",
+              "third-party/licenses/mupen64plus_next--mupen64plus-rsp-paraLLEl-lightning-gnulib/modules/COPYING"
+            ],
+            "submodules": [],
+            "nonGitlinkDeclarations": [],
+            "installPath": "mupen64plus-rsp-paraLLEl/lightning/gnulib",
+            "declaredRepository": "git://git.sv.gnu.org/gnulib.git"
+          }
+        ],
+        "nonGitlinkDeclarations": []
+      },
+      "correspondenceBasis": "binary-reported git revision resolved in the declared upstream repository; not a reproducible-build claim"
+    },
+    "mame": {
+      "licenseMetadata": "GPLv2+",
+      "repository": "https://github.com/libretro/mame",
+      "binaryVersion": "0.289 (5f5a0774)",
+      "binarySha256": "0f5608fcadc4e59c88d4ae3caf0e52ed98cd890a99d9e569b71639082f1aa109",
+      "sourceCommit": "5f5a07748ce5c239c4118463ce8e6473743d4859",
+      "mappingEvidence": "https://api.github.com/repos/libretro/mame/commits/5f5a0774",
+      "delivery": "complete-snapshot",
+      "source": {
+        "repository": "https://github.com/libretro/mame",
+        "revision": "5f5a07748ce5c239c4118463ce8e6473743d4859",
+        "archive": "archives/mame-5f5a07748ce5c239c4118463ce8e6473743d4859.tar.gz",
+        "url": "https://codeload.github.com/libretro/mame/tar.gz/5f5a07748ce5c239c4118463ce8e6473743d4859",
+        "sha256": "650b20826caf153e3ce89c5a7a805f595f5d007176df9372e36278dec95e85a0",
+        "bytes": 213486494,
+        "licenseFiles": [
+          "third-party/licenses/mame/3rdparty/aes256cbc/LICENSE",
+          "third-party/licenses/mame/3rdparty/asio/COPYING",
+          "third-party/licenses/mame/3rdparty/asio/LICENSE_1_0.txt",
+          "third-party/licenses/mame/3rdparty/asmjit/LICENSE.md",
+          "third-party/licenses/mame/3rdparty/asmjit/db/LICENSE.md",
+          "third-party/licenses/mame/3rdparty/benchmark/LICENSE",
+          "third-party/licenses/mame/3rdparty/bgfx/3rdparty/cgltf/LICENSE",
+          "third-party/licenses/mame/3rdparty/bgfx/3rdparty/dear-imgui/LICENSE.txt",
+          "third-party/licenses/mame/3rdparty/bgfx/3rdparty/directx-headers/LICENSE",
+          "third-party/licenses/mame/3rdparty/bgfx/3rdparty/fcpp/COPYING",
+          "third-party/licenses/mame/3rdparty/bgfx/3rdparty/glsl-optimizer/license.txt",
+          "third-party/licenses/mame/3rdparty/bgfx/3rdparty/glslang/LICENSE.txt",
+          "third-party/licenses/mame/3rdparty/bgfx/3rdparty/iconfontheaders/LICENSE",
+          "third-party/licenses/mame/3rdparty/bgfx/3rdparty/meshoptimizer/LICENSE.md",
+          "third-party/licenses/mame/3rdparty/bgfx/3rdparty/native_app_glue/LICENSE",
+          "third-party/licenses/mame/3rdparty/bgfx/3rdparty/sdf/LICENSE.txt",
+          "third-party/licenses/mame/3rdparty/bgfx/3rdparty/spirv-cross/LICENSE",
+          "third-party/licenses/mame/3rdparty/bgfx/3rdparty/spirv-headers/LICENSE",
+          "third-party/licenses/mame/3rdparty/bgfx/3rdparty/spirv-tools/LICENSE",
+          "third-party/licenses/mame/3rdparty/bgfx/3rdparty/stb/LICENSE",
+          "third-party/licenses/mame/3rdparty/bgfx/LICENSE",
+          "third-party/licenses/mame/3rdparty/bgfx/docs/license.rst",
+          "third-party/licenses/mame/3rdparty/bimg/3rdparty/astc-encoder/LICENSE.txt",
+          "third-party/licenses/mame/3rdparty/bimg/3rdparty/edtaa3/LICENSE.md",
+          "third-party/licenses/mame/3rdparty/bimg/3rdparty/etc1/LICENSE",
+          "third-party/licenses/mame/3rdparty/bimg/3rdparty/etc2/LICENSE.txt",
+          "third-party/licenses/mame/3rdparty/bimg/3rdparty/iqa/LICENSE",
+          "third-party/licenses/mame/3rdparty/bimg/3rdparty/libsquish/LICENSE",
+          "third-party/licenses/mame/3rdparty/bimg/3rdparty/lodepng/LICENSE",
+          "third-party/licenses/mame/3rdparty/bimg/3rdparty/nvtt/NVIDIA_Texture_Tools_LICENSE.txt",
+          "third-party/licenses/mame/3rdparty/bimg/3rdparty/pvrtc/LICENSE.TXT",
+          "third-party/licenses/mame/3rdparty/bimg/3rdparty/tinyexr/deps/miniz/LICENSE",
+          "third-party/licenses/mame/3rdparty/bimg/LICENSE",
+          "third-party/licenses/mame/3rdparty/bx/LICENSE",
+          "third-party/licenses/mame/3rdparty/bx/include/tinystl/LICENSE",
+          "third-party/licenses/mame/3rdparty/catch/LICENSE_1_0.txt",
+          "third-party/licenses/mame/3rdparty/dxsdk/Documentation/License Agreements/Roland-license.txt",
+          "third-party/licenses/mame/3rdparty/dxsdk/Documentation/License Agreements/libpng-license.txt",
+          "third-party/licenses/mame/3rdparty/expat/COPYING",
+          "third-party/licenses/mame/3rdparty/flac/COPYING.FDL",
+          "third-party/licenses/mame/3rdparty/flac/COPYING.GPL",
+          "third-party/licenses/mame/3rdparty/flac/COPYING.LGPL",
+          "third-party/licenses/mame/3rdparty/flac/COPYING.Xiph",
+          "third-party/licenses/mame/3rdparty/genie/LICENSE",
+          "third-party/licenses/mame/3rdparty/glm/copying.txt",
+          "third-party/licenses/mame/3rdparty/luafilesystem/LICENSE",
+          "third-party/licenses/mame/3rdparty/luafilesystem/doc/us/license.html",
+          "third-party/licenses/mame/3rdparty/nanosvg/LICENSE.txt",
+          "third-party/licenses/mame/3rdparty/portaudio/LICENSE.txt",
+          "third-party/licenses/mame/3rdparty/portaudio/bindings/cpp/COPYING",
+          "third-party/licenses/mame/3rdparty/portaudio/doc/src/license.dox",
+          "third-party/licenses/mame/3rdparty/portmidi/license.txt",
+          "third-party/licenses/mame/3rdparty/rapidjson/contrib/natvis/LICENSE",
+          "third-party/licenses/mame/3rdparty/rapidjson/license.txt",
+          "third-party/licenses/mame/3rdparty/softfloat3/COPYING.txt",
+          "third-party/licenses/mame/3rdparty/tap-windows6/COPYING",
+          "third-party/licenses/mame/3rdparty/tap-windows6/COPYRIGHT.GPL",
+          "third-party/licenses/mame/3rdparty/tap-windows6/COPYRIGHT.MIT",
+          "third-party/licenses/mame/3rdparty/utf8proc/LICENSE.md",
+          "third-party/licenses/mame/3rdparty/ymfm/LICENSE",
+          "third-party/licenses/mame/3rdparty/zlib/LICENSE",
+          "third-party/licenses/mame/3rdparty/zlib/contrib/dotzlib/LICENSE_1_0.txt",
+          "third-party/licenses/mame/3rdparty/zlib/contrib/minizip/LICENSE.Info-Zip",
+          "third-party/licenses/mame/3rdparty/zstd/COPYING",
+          "third-party/licenses/mame/3rdparty/zstd/LICENSE",
+          "third-party/licenses/mame/3rdparty/zstd/build/LICENSE",
+          "third-party/licenses/mame/3rdparty/zstd/tests/test-license.py",
+          "third-party/licenses/mame/COPYING",
+          "third-party/licenses/mame/android-project/LICENSE",
+          "third-party/licenses/mame/artwork/LICENSE",
+          "third-party/licenses/mame/benchmarks/LICENSE",
+          "third-party/licenses/mame/bgfx/LICENSE",
+          "third-party/licenses/mame/bgfx/chains/LICENSE",
+          "third-party/licenses/mame/bgfx/effects/LICENSE",
+          "third-party/licenses/mame/bgfx/effects/default/LICENSE",
+          "third-party/licenses/mame/bgfx/effects/hlsl/LICENSE",
+          "third-party/licenses/mame/bgfx/effects/unfiltered/LICENSE",
+          "third-party/licenses/mame/docs/LICENSE",
+          "third-party/licenses/mame/docs/legal/BSD-2-Clause",
+          "third-party/licenses/mame/docs/legal/BSD-3-Clause",
+          "third-party/licenses/mame/docs/legal/BSL-1.0",
+          "third-party/licenses/mame/docs/legal/CC0",
+          "third-party/licenses/mame/docs/legal/GPL-2.0",
+          "third-party/licenses/mame/docs/legal/LGPL-2.1",
+          "third-party/licenses/mame/docs/legal/MIT",
+          "third-party/licenses/mame/docs/legal/Zlib",
+          "third-party/licenses/mame/docs/man/LICENSE",
+          "third-party/licenses/mame/docs/source/license.rst",
+          "third-party/licenses/mame/doxygen/LICENSE",
+          "third-party/licenses/mame/language/LICENSE",
+          "third-party/licenses/mame/plugins/json/LICENSE",
+          "third-party/licenses/mame/plugins/xml/LICENSE.txt",
+          "third-party/licenses/mame/regtests/LICENSE",
+          "third-party/licenses/mame/samples/LICENSE",
+          "third-party/licenses/mame/scripts/font/LICENSE",
+          "third-party/licenses/mame/tests/LICENSE",
+          "third-party/licenses/mame/web/LICENSE"
+        ],
+        "submodules": [],
+        "nonGitlinkDeclarations": [
+          {
+            "path": "3rdparty/rapidjson/thirdparty/gtest",
+            "declaredRepository": "https://github.com/google/googletest.git",
+            "reason": "not a gitlink in this exact parent tree; no omitted submodule source"
+          }
+        ]
+      },
+      "correspondenceBasis": "binary-reported git revision resolved in the declared upstream repository; not a reproducible-build claim",
+      "upstreamLicenseDeclaration": {
+        "spdx": "GPL-2.0-or-later",
+        "scope": "project as a whole; individual headers and COPYING retain component-specific terms",
+        "evidence": "https://github.com/libretro/mame/blob/5f5a07748ce5c239c4118463ce8e6473743d4859/README.md#license"
+      }
+    }
+  },
+  "dependencies": {
+    "jna": {
+      "repository": "https://github.com/java-native-access/jna",
+      "revision": "c366bc4fd0c50a30ac8d2475603ec564f6611462",
+      "archive": "archives/jna-c366bc4fd0c50a30ac8d2475603ec564f6611462.tar.gz",
+      "url": "https://codeload.github.com/java-native-access/jna/tar.gz/c366bc4fd0c50a30ac8d2475603ec564f6611462",
+      "sha256": "ad01cd6f0d2f4931190fc0fba01b3f7c84d8632d1c6485747556c9e62a35ccfa",
+      "bytes": 116170480,
+      "licenseFiles": [
+        "third-party/licenses/jna/LICENSE",
+        "third-party/licenses/jna/native/libffi/LICENSE",
+        "third-party/licenses/jna/native/libffi/LICENSE-BUILDTOOLS",
+        "third-party/licenses/jna/LGPL2.1",
+        "third-party/licenses/jna/AL2.0"
+      ],
+      "submodules": [],
+      "nonGitlinkDeclarations": [],
+      "version": "5.14.0",
+      "licenseChoice": "LGPL-2.1-or-later (the original Apache-2.0 OR LGPL dual-license notice is also preserved)",
+      "binaries": [
+        {
+          "file": "jna-5.14.0.jar",
+          "artifact": "net.java.dev.jna:jna:5.14.0",
+          "url": "https://repo.maven.apache.org/maven2/net/java/dev/jna/jna/5.14.0/jna-5.14.0.jar",
+          "bytes": 1878533,
+          "sha256": "34ed1e1f27fa896bca50dbc4e99cf3732967cec387a7a0d5e3486c09673fe8c6"
+        }
+      ]
+    },
+    "lwjgl": {
+      "repository": "https://github.com/LWJGL/lwjgl3",
+      "revision": "f0ec1437a6149dae00eaa27c47268e5e4efb129f",
+      "archive": "archives/lwjgl-f0ec1437a6149dae00eaa27c47268e5e4efb129f.tar.gz",
+      "url": "https://codeload.github.com/LWJGL/lwjgl3/tar.gz/f0ec1437a6149dae00eaa27c47268e5e4efb129f",
+      "sha256": "388f5e64c708486cd6693adf40bb0bb01a51b83026298ad19eb764fa6f460784",
+      "bytes": 15026041,
+      "licenseFiles": [
+        "third-party/licenses/lwjgl/LICENSE.md",
+        "third-party/licenses/lwjgl/modules/lwjgl/assimp/assimp_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/bgfx/bgfx_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/core/libffi_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/core/liburing_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/cuda/cuda_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/egl/khronos_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/fmod/fmod_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/freetype/freetype_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/glfw/glfw_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/harfbuzz/harfbuzz_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/jemalloc/jemalloc_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/ktx/ktx_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/libdivide/libdivide_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/llvm/llvm_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/lmdb/lmdb_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/lz4/lz4_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/meow/meow_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/meshoptimizer/meshoptimizer_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/nanovg/blendish_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/nanovg/nanosvg_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/nanovg/nanovg_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/nfd/nfd_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/openal/openal_soft_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/opencl/khronos_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/opengl/khronos_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/opengles/khronos_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/openvr/openvr_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/openxr/openxr_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/opus/opus_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/ovr/ovr_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/remotery/remotery_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/rpmalloc/rpmalloc_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/shaderc/shaderc_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/tinyexr/tinyexr_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/tinyfd/tinyfd_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/tootle/tootle_directxmesh_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/tootle/tootle_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/vma/vma_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/vulkan/khronos_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/xxhash/xxhash_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/yoga/yoga_license.txt",
+        "third-party/licenses/lwjgl/modules/lwjgl/zstd/zstd_license.txt"
+      ],
+      "submodules": [],
+      "nonGitlinkDeclarations": [],
+      "version": "3.3.3",
+      "binaries": [
+        {
+          "file": "lwjgl-3.3.3.jar",
+          "artifact": "org.lwjgl:lwjgl:3.3.3",
+          "url": "https://repo.maven.apache.org/maven2/org/lwjgl/lwjgl/3.3.3/lwjgl-3.3.3.jar",
+          "bytes": 785029,
+          "sha256": "dc9c7b2d48e8396d68895f8902ffa01e46253de44dfe927533ff09457ebfeec4",
+          "license": "BSD-3-Clause",
+          "source": "https://github.com/LWJGL/lwjgl3/tree/3.3.3",
+          "licenseUrl": "https://raw.githubusercontent.com/LWJGL/lwjgl3/3.3.3/LICENSE.md"
+        },
+        {
+          "file": "lwjgl-3.3.3-natives-windows.jar",
+          "artifact": "org.lwjgl:lwjgl:3.3.3:natives-windows",
+          "url": "https://repo.maven.apache.org/maven2/org/lwjgl/lwjgl/3.3.3/lwjgl-3.3.3-natives-windows.jar",
+          "bytes": 165442,
+          "sha256": "5ee63a19187efe5bb8747fd24f7b13257db348df5ad641113a3695e43f213959",
+          "license": "BSD-3-Clause",
+          "source": "https://github.com/LWJGL/lwjgl3/tree/3.3.3",
+          "licenseUrl": "https://raw.githubusercontent.com/LWJGL/lwjgl3/3.3.3/LICENSE.md"
+        },
+        {
+          "file": "lwjgl-glfw-3.3.3.jar",
+          "artifact": "org.lwjgl:lwjgl-glfw:3.3.3",
+          "url": "https://repo.maven.apache.org/maven2/org/lwjgl/lwjgl-glfw/3.3.3/lwjgl-glfw-3.3.3.jar",
+          "bytes": 135546,
+          "sha256": "bedc757fd2b1b255146db26b74b9cbd1fcf5644b89b47b104fa721c741604259",
+          "license": "BSD-3-Clause",
+          "source": "https://github.com/LWJGL/lwjgl3/tree/3.3.3",
+          "licenseUrl": "https://raw.githubusercontent.com/LWJGL/lwjgl3/3.3.3/LICENSE.md"
+        },
+        {
+          "file": "lwjgl-glfw-3.3.3-natives-windows.jar",
+          "artifact": "org.lwjgl:lwjgl-glfw:3.3.3:natives-windows",
+          "url": "https://repo.maven.apache.org/maven2/org/lwjgl/lwjgl-glfw/3.3.3/lwjgl-glfw-3.3.3-natives-windows.jar",
+          "bytes": 166368,
+          "sha256": "98155b451dfc6f585089dec77a12f9c05789c4dceb8da472f9d308160101a70d",
+          "license": "BSD-3-Clause",
+          "source": "https://github.com/LWJGL/lwjgl3/tree/3.3.3",
+          "licenseUrl": "https://raw.githubusercontent.com/LWJGL/lwjgl3/3.3.3/LICENSE.md"
+        },
+        {
+          "file": "lwjgl-opengl-3.3.3.jar",
+          "artifact": "org.lwjgl:lwjgl-opengl:3.3.3",
+          "url": "https://repo.maven.apache.org/maven2/org/lwjgl/lwjgl-opengl/3.3.3/lwjgl-opengl-3.3.3.jar",
+          "bytes": 929192,
+          "sha256": "5062da750e5f7ec89e27e8b67b7d40fa8c4b16890159e35f828116ce6c8eca1e",
+          "license": "BSD-3-Clause",
+          "source": "https://github.com/LWJGL/lwjgl3/tree/3.3.3",
+          "licenseUrl": "https://raw.githubusercontent.com/LWJGL/lwjgl3/3.3.3/LICENSE.md"
+        },
+        {
+          "file": "lwjgl-opengl-3.3.3-natives-windows.jar",
+          "artifact": "org.lwjgl:lwjgl-opengl:3.3.3:natives-windows",
+          "url": "https://repo.maven.apache.org/maven2/org/lwjgl/lwjgl-opengl/3.3.3/lwjgl-opengl-3.3.3-natives-windows.jar",
+          "bytes": 101535,
+          "sha256": "f45e5f60596b03b2e3d8b98a123c855ebd0b5154c8155dc2a56b890ccc907477",
+          "license": "BSD-3-Clause",
+          "source": "https://github.com/LWJGL/lwjgl3/tree/3.3.3",
+          "licenseUrl": "https://raw.githubusercontent.com/LWJGL/lwjgl3/3.3.3/LICENSE.md"
+        }
+      ]
+    }
+  },
+  "licenseFiles": [
+    {
+      "path": "third-party/licenses/README.md",
+      "bytes": 1935,
+      "sha256": "1a04f8a46263674cef776c6a790bd60b3f0bb26b51a94bf55bc967aca15adecb"
+    },
+    {
+      "path": "third-party/licenses/blastem/source/COPYING",
+      "bytes": 35147,
+      "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+    },
+    {
+      "path": "third-party/licenses/blastem/source/libchdr/LICENSE.txt",
+      "bytes": 1493,
+      "sha256": "e3989a7aee74a91b8cdbdfe204a6b8d03288863ec7533a21c51f1a987ba73539"
+    },
+    {
+      "path": "third-party/licenses/blastem/source/lzma/LICENSE.txt",
+      "bytes": 293,
+      "sha256": "9f34035d01a354ed074f49944f4ac64778c44e043df4785baa0dd15f60f1d8df"
+    },
+    {
+      "path": "third-party/licenses/blastem/source/zlib/LICENSE",
+      "bytes": 1002,
+      "sha256": "845efc77857d485d91fb3e0b884aaa929368c717ae8186b66fe1ed2495753243"
+    },
+    {
+      "path": "third-party/licenses/bsnes2014_performance/COPYING",
+      "bytes": 35119,
+      "sha256": "7e6812d3fb9dbb9e582b233d21067407c1c45cbbda3d24eb92256a6f8a4f81f8"
+    },
+    {
+      "path": "third-party/licenses/fceumm/Copying",
+      "bytes": 18010,
+      "sha256": "a6996dcf0c334281f734560926e079b2dbbd5b78e81c0ca00a413ec01e1cd2fb"
+    },
+    {
+      "path": "third-party/licenses/fceumm/src/ntsc/license.txt",
+      "bytes": 26940,
+      "sha256": "319daefe38ebeead3df178e5937898a52d67c0c795f54f1c0bb10ac3b9cffb63"
+    },
+    {
+      "path": "third-party/licenses/gearsystem/LICENSE",
+      "bytes": 35147,
+      "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+    },
+    {
+      "path": "third-party/licenses/gearsystem/platforms/ios/LICENSE/LICENSE.txt",
+      "bytes": 35223,
+      "sha256": "d0e2763686a48723084d9ed57b8e0f88d90a6c4a1c8d14a0f5bd2dc8494a57a5"
+    },
+    {
+      "path": "third-party/licenses/gearsystem/platforms/linux/debian/copyright",
+      "bytes": 2005,
+      "sha256": "746eed65fd054168c734ad6862eb53ef598a3eb539f239d7e7d7b1c0f321e492"
+    },
+    {
+      "path": "third-party/licenses/gearsystem/platforms/shared/desktop/license.h",
+      "bytes": 35557,
+      "sha256": "92d4e63101d2e8ae00f9ea88ddd2593ffc732f3c97531fd2607d6ba00a60e647"
+    },
+    {
+      "path": "third-party/licenses/jna/AL2.0",
+      "bytes": 10174,
+      "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+    },
+    {
+      "path": "third-party/licenses/jna/LGPL2.1",
+      "bytes": 24389,
+      "sha256": "eea173a556abac0370461e57e12aab266894ea6be3874c2be05fd87871f75449"
+    },
+    {
+      "path": "third-party/licenses/jna/LICENSE",
+      "bytes": 788,
+      "sha256": "521bb271ac56e0e29a1b1b688b94af17d00d378fc8e63478d8c8b2a7c4a229d0"
+    },
+    {
+      "path": "third-party/licenses/jna/native/libffi/LICENSE",
+      "bytes": 1132,
+      "sha256": "2c9c2acb9743e6b007b91350475308aee44691d96aa20eacef8e199988c8c388"
+    },
+    {
+      "path": "third-party/licenses/jna/native/libffi/LICENSE-BUILDTOOLS",
+      "bytes": 18698,
+      "sha256": "e67978cd18816c0cb7d29aaaacde7b7447402c2fb321a051698890a8eaedda94"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/LICENSE.md",
+      "bytes": 1518,
+      "sha256": "4c2f770897d0cfda4d9a65bb4d6d6983dccfd57d4c7eb74ea5ded0762cbc0e75"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/assimp/assimp_license.txt",
+      "bytes": 3791,
+      "sha256": "a26ccc3dbf2f58ea99c100945a8a126fa0f9f4d7fd2b49aa8bdb8e09355864d8"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/bgfx/bgfx_license.txt",
+      "bytes": 1387,
+      "sha256": "4af46a1c7e83fdd8799dd8d7c9dd6a1ce99eaf1188a082c31ad86130e1f781b6"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/core/libffi_license.txt",
+      "bytes": 1131,
+      "sha256": "d66f6a020ebb611afe64b93270d447aa32a9345d2d3a43d296493e9806b944f8"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/core/liburing_license.txt",
+      "bytes": 1049,
+      "sha256": "1ec30e534aecb8eef3439fe3e36b20be20461bb758ca85107602fdaa3e23d274"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/cuda/cuda_license.txt",
+      "bytes": 22310,
+      "sha256": "7187633383854e7e740beb3617c77c3bdfd3afc8105c440fdbe0aeae159d6257"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/egl/khronos_license.txt",
+      "bytes": 1146,
+      "sha256": "f3857759226191860119a14e6cc0420df506c10a5c1b6b2ff8abc8f8d31920fb"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/fmod/fmod_license.txt",
+      "bytes": 7106,
+      "sha256": "298bb7be796203ef73cfe25b0d16cebf4e40491de228ed69724ad32947c769b2"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/freetype/freetype_license.txt",
+      "bytes": 6743,
+      "sha256": "08c135755dd589039470f1fdbb400daaabaaa50d0b366d19cebff4d22986baa1"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/glfw/glfw_license.txt",
+      "bytes": 933,
+      "sha256": "12db5bb3f12c0793117746211cfa360a4c5067173b85f330d89552424c56be91"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/harfbuzz/harfbuzz_license.txt",
+      "bytes": 1829,
+      "sha256": "4345e1735f8bc6d812fed5180cabb5a5e88a4109d332652f2a45c13cfa5ee692"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/jemalloc/jemalloc_license.txt",
+      "bytes": 1702,
+      "sha256": "9daf68c8419f148737e4be0aaf4a9e97b4c2346836bfe2ac57f741cbf94cc3a1"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/ktx/ktx_license.txt",
+      "bytes": 1523,
+      "sha256": "0f92b4ce771585dfebc963ede074a30b4431b9e327911db44097d83ccf372128"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/libdivide/libdivide_license.txt",
+      "bytes": 2494,
+      "sha256": "e3f37581d811212053bbd4a2d1ea3b7b8bdbb0eb3c41cf03d4308411e9b7a451"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/llvm/llvm_license.txt",
+      "bytes": 15140,
+      "sha256": "3340babe8ac7bc6ae294d93aa01c310a250d43d5b760e5c12954882d4e5c83c7"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/lmdb/lmdb_license.txt",
+      "bytes": 2213,
+      "sha256": "3bbb1a49c318982a054416eeeee1c15c10666b44d7fcfa7455200836e2a0ee4f"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/lz4/lz4_license.txt",
+      "bytes": 1310,
+      "sha256": "81186e0b1ba15e62f4286ebcc694bf16e0ccfde894a7f9d4d670a0a24072a1f1"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/meow/meow_license.txt",
+      "bytes": 871,
+      "sha256": "cc2b266a62e4ffeaab37ddaa9310f75187ab5cf5699555a7e993553b05ad1c03"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/meshoptimizer/meshoptimizer_license.txt",
+      "bytes": 1079,
+      "sha256": "edbe0afc70ea26a220ef88e9612d9ab88807b771b3a6bdc345bbbe266c61499c"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/nanovg/blendish_license.txt",
+      "bytes": 1149,
+      "sha256": "f86e79ad7efad1d9e8cf167d499fd5aebf312c9370cd6b49d236c79342e464ff"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/nanovg/nanosvg_license.txt",
+      "bytes": 862,
+      "sha256": "05013ed6643293c88110521dd5cdd4700d5a9f74f58fd168ed604e9aa90a9157"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/nanovg/nanovg_license.txt",
+      "bytes": 859,
+      "sha256": "d1c46d70e4e62e6324ff845bc8f4831912e33a940a5e7949298250be74ef47aa"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/nfd/nfd_license.txt",
+      "bytes": 820,
+      "sha256": "b332d6f507142c66a0e904838b6437e6273734589c22a16b57392b89bfdccb2a"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/openal/openal_soft_license.txt",
+      "bytes": 25383,
+      "sha256": "b7993225104d90ddd8024fd838faf300bea5e83d91203eab98e29512acebd69c"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/opencl/khronos_license.txt",
+      "bytes": 1146,
+      "sha256": "f3857759226191860119a14e6cc0420df506c10a5c1b6b2ff8abc8f8d31920fb"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/opengl/khronos_license.txt",
+      "bytes": 1146,
+      "sha256": "f3857759226191860119a14e6cc0420df506c10a5c1b6b2ff8abc8f8d31920fb"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/opengles/khronos_license.txt",
+      "bytes": 1146,
+      "sha256": "f3857759226191860119a14e6cc0420df506c10a5c1b6b2ff8abc8f8d31920fb"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/openvr/openvr_license.txt",
+      "bytes": 1488,
+      "sha256": "f56ff606104d4ef18e617921a75c73ad73b5a1a1d70c69590c29de16919e04ad"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/openxr/openxr_license.txt",
+      "bytes": 5472,
+      "sha256": "3f96cfaede3ee055b94b9dd75caff51494fc7587a6da495f233aa23bc76b7b50"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/opus/opus_license.txt",
+      "bytes": 1927,
+      "sha256": "5ba7a10bc91e31968235a65925010c76f06c3ce276c905b7a785f42ec8f054b6"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/ovr/ovr_license.txt",
+      "bytes": 220,
+      "sha256": "f31943bc98a1eeee89316b89babf4850cb63eb3594d3cdf112d1e93e2f7e8573"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/remotery/remotery_license.txt",
+      "bytes": 10142,
+      "sha256": "09e8a9bcec8067104652c168685ab0931e7868f9c8284b66f5ae6edae5f1130b"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/rpmalloc/rpmalloc_license.txt",
+      "bytes": 1209,
+      "sha256": "79d0fc44716007dddc375601bca8879ad45bc1165bf9342b7a16572b4f41abe8"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/shaderc/shaderc_license.txt",
+      "bytes": 11356,
+      "sha256": "43070e2d4e532684de521b885f385d0841030efa2b1a20bafb76133a5e1379c1"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/tinyexr/tinyexr_license.txt",
+      "bytes": 3454,
+      "sha256": "d4020b9d0a023b65146f07c3146e3cf129d215c215c5816701e1ef9af2658960"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/tinyfd/tinyfd_license.txt",
+      "bytes": 807,
+      "sha256": "43eedc0b74269e842aebc6d28286bcd3f4a464aed058687dc6a1b3835e3593f4"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/tootle/tootle_directxmesh_license.txt",
+      "bytes": 1127,
+      "sha256": "d5f67216f1301a781226f9f4e15c9519e9126ba16aef602a256b387c10a5a851"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/tootle/tootle_license.txt",
+      "bytes": 1094,
+      "sha256": "74987b0b71ef399d83703a90cdcb76f5fe2b144b974ca61c12bc89b00bb64805"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/vma/vma_license.txt",
+      "bytes": 1098,
+      "sha256": "0146642a102ded4cf932cdc99d5b97d971a56c797877bcc335c8b1f03d222e24"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/vulkan/khronos_license.txt",
+      "bytes": 1146,
+      "sha256": "f3857759226191860119a14e6cc0420df506c10a5c1b6b2ff8abc8f8d31920fb"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/xxhash/xxhash_license.txt",
+      "bytes": 1314,
+      "sha256": "86ec6953794503942b70fcd4f35b565d44f63f703b7037ce44dad965c4aaae91"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/yoga/yoga_license.txt",
+      "bytes": 1525,
+      "sha256": "9d7695fdad1a4dfa13d5afa8d49722c1be25783945d20f3a3b818dd9c28f2130"
+    },
+    {
+      "path": "third-party/licenses/lwjgl/modules/lwjgl/zstd/zstd_license.txt",
+      "bytes": 1549,
+      "sha256": "7055266497633c9025b777c78eb7235af13922117480ed5c674677adc381c9d8"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/aes256cbc/LICENSE",
+      "bytes": 1068,
+      "sha256": "e6437f2d4632b15155f8577779ff227ac19fa2328d5fdefae13ed797a174b24c"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/asio/COPYING",
+      "bytes": 224,
+      "sha256": "5cc69ca9afd3417ed8e58bcd9c0bb730375e9e3e92b5aaf6483b93a2837e0cac"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/asio/LICENSE_1_0.txt",
+      "bytes": 1338,
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/asmjit/LICENSE.md",
+      "bytes": 858,
+      "sha256": "13870bd53bce53fb9a9bd72e72dcceeffc547c84d9a00d3d4833737a79651828"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/asmjit/db/LICENSE.md",
+      "bytes": 862,
+      "sha256": "8fc74133788bc8a7aa94168e9913a2d0b0e3f0a6064a0e72a0f1206d5ce9189e"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/benchmark/LICENSE",
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/bgfx/3rdparty/cgltf/LICENSE",
+      "bytes": 1061,
+      "sha256": "26feef79aa035d996164250235b3d09d5e0ca171eb7ac97b7de47ef058aa5cfe"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/bgfx/3rdparty/dear-imgui/LICENSE.txt",
+      "bytes": 1083,
+      "sha256": "c80c5789748d955c4a650562baa0d750494e2c7128c2ca66aaebe2e3c4e198bf"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/bgfx/3rdparty/directx-headers/LICENSE",
+      "bytes": 1073,
+      "sha256": "fd532481d828e13a0b13ccb598e02338a3617740675a862ee6bdc1541b68e93d"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/bgfx/3rdparty/fcpp/COPYING",
+      "bytes": 1616,
+      "sha256": "6da95f4f6a07687794d4ac5dbaf6fb08055810ef75005619cd36f99be1b61193"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/bgfx/3rdparty/glsl-optimizer/license.txt",
+      "bytes": 1198,
+      "sha256": "e26a745226f4a46b3ca00ffbe8be18507362189a2863d04b4f563ba176a9a836"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/bgfx/3rdparty/glslang/LICENSE.txt",
+      "bytes": 54705,
+      "sha256": "adb783e734e906d1f46db5df29991dbde84bdb0ceab502ac2febb44fe3c2b5f4"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/bgfx/3rdparty/iconfontheaders/LICENSE",
+      "bytes": 1084,
+      "sha256": "692f993c67926145cbcea3c952ce131fae614cad9bb88be7ad6c2b2d844543c4"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/bgfx/3rdparty/meshoptimizer/LICENSE.md",
+      "bytes": 1079,
+      "sha256": "063805e3b8e24ceab4c5dea358b03245ee41c31be87cf65c61d836636cb494bb"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/bgfx/3rdparty/native_app_glue/LICENSE",
+      "bytes": 577,
+      "sha256": "396e2d75715e8b4d1029ded55ae92832c8ab9c58148969653d34931248739b95"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/bgfx/3rdparty/sdf/LICENSE.txt",
+      "bytes": 1168,
+      "sha256": "a994f406e741c6a17981a7abe90e7eba772adca750270453eabd4ed92417c3dc"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/bgfx/3rdparty/spirv-cross/LICENSE",
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/bgfx/3rdparty/spirv-headers/LICENSE",
+      "bytes": 1309,
+      "sha256": "9b243f6f0bf44e295ff411a0f7b7642d1d0dff7cdc42507e9f7206f439e51b5a"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/bgfx/3rdparty/spirv-tools/LICENSE",
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/bgfx/3rdparty/stb/LICENSE",
+      "bytes": 2510,
+      "sha256": "bebfe904b14301657e4e5d655c811d51fd31b97c455b9cc2d8600d6bac6cff63"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/bgfx/LICENSE",
+      "bytes": 1299,
+      "sha256": "684e75bec43bf3a73b8140aaa09c961f84f6f0e5378bd04c6bcd53e548cb0b2d"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/bgfx/docs/license.rst",
+      "bytes": 4818,
+      "sha256": "f2170e3a2b03394d7b02dfdeaa00ef414366e9e55de3d8c975eaee0bf2a4bb97"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/bimg/3rdparty/astc-encoder/LICENSE.txt",
+      "bytes": 10139,
+      "sha256": "494accc32e50eb523a0e384d0ae6d4b702db867a89d6971216760e92b240ee12"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/bimg/3rdparty/edtaa3/LICENSE.md",
+      "bytes": 1591,
+      "sha256": "ec25a5869c228ab4cf7eb9dee26bdad3ed922b4d32e903ba864e815117501b7c"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/bimg/3rdparty/etc1/LICENSE",
+      "bytes": 9233,
+      "sha256": "5366e97b4478f15a1e2fd7e6094337426597df28de50cd9fed3f2e7e87f1229e"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/bimg/3rdparty/etc2/LICENSE.txt",
+      "bytes": 1522,
+      "sha256": "8148ff3f6be5f70ade38b1f9346343d1676cecc0c6d8b919ab8113349c7ba7f6"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/bimg/3rdparty/iqa/LICENSE",
+      "bytes": 1618,
+      "sha256": "6e237927f416d8f5aeab4eb7ddd20691a50536ff5548ba341353b4b713798a93"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/bimg/3rdparty/libsquish/LICENSE",
+      "bytes": 1121,
+      "sha256": "a6b8c383bf3ab28460d6507484d605dd722e03971606f0cd3032a3af682b63a5"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/bimg/3rdparty/lodepng/LICENSE",
+      "bytes": 886,
+      "sha256": "bdafa318b8e637d600ca1b60545e894881977a16a16b74809c95e805701621e3"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/bimg/3rdparty/nvtt/NVIDIA_Texture_Tools_LICENSE.txt",
+      "bytes": 1123,
+      "sha256": "5ff940ff7097cb97803337d64039b99ccbdfc9277566cb393ab51be3807e2896"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/bimg/3rdparty/pvrtc/LICENSE.TXT",
+      "bytes": 1390,
+      "sha256": "4c935c76282126b380620c5d026af886fec26db3bb775da41005337535c6a94e"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/bimg/3rdparty/tinyexr/deps/miniz/LICENSE",
+      "bytes": 1162,
+      "sha256": "6f20fa7672b00e2e975c291df737cf227addf3ad32e36fef3fe0f416e4664d3d"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/bimg/LICENSE",
+      "bytes": 1299,
+      "sha256": "684e75bec43bf3a73b8140aaa09c961f84f6f0e5378bd04c6bcd53e548cb0b2d"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/bx/LICENSE",
+      "bytes": 1299,
+      "sha256": "684e75bec43bf3a73b8140aaa09c961f84f6f0e5378bd04c6bcd53e548cb0b2d"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/bx/include/tinystl/LICENSE",
+      "bytes": 1267,
+      "sha256": "161a2ca80c769bb45fe6900fc3c652d8722b7217c3c2a8b1c584ca2cd1747378"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/catch/LICENSE_1_0.txt",
+      "bytes": 1338,
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/dxsdk/Documentation/License Agreements/Roland-license.txt",
+      "bytes": 2924,
+      "sha256": "9425f23857b963a7cbaf7ec973bbe094084b29ebec90081d5268612bdfc92fca"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/dxsdk/Documentation/License Agreements/libpng-license.txt",
+      "bytes": 3608,
+      "sha256": "10e95927a490ae900f382f4de1ce357d4db438838f0b9c0717f2817283c9e24b"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/expat/COPYING",
+      "bytes": 1144,
+      "sha256": "31b15de82aa19a845156169a17a5488bf597e561b2c318d159ed583139b25e87"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/flac/COPYING.FDL",
+      "bytes": 20403,
+      "sha256": "f45cc81b400a048b56c9edbd4c3317f7a8958463dfd55aa96f268ecfd6baa12c"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/flac/COPYING.GPL",
+      "bytes": 18092,
+      "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/flac/COPYING.LGPL",
+      "bytes": 26436,
+      "sha256": "5df07007198989c622f5d41de8d703e7bef3d0e79d62e24332ee739a452af62a"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/flac/COPYING.Xiph",
+      "bytes": 1509,
+      "sha256": "12600ea1a7affcbf469bd0d8b2cd725e4167114a2ee834b88f5d2857bfd7ddbf"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/genie/LICENSE",
+      "bytes": 5635,
+      "sha256": "360ac70b85d4755eae37dd4804ac7c5e6c3971bfeae6ac3a0bf7beb60f8bc6d2"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/glm/copying.txt",
+      "bytes": 2928,
+      "sha256": "696f75dafdedb1189db2980a0c5614689bec1c83fc06c7edfc698c119dcb4301"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/luafilesystem/LICENSE",
+      "bytes": 1063,
+      "sha256": "beb2c9eed6466d572c3888028a77421206053a3c023429cbd69e5015badba842"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/luafilesystem/doc/us/license.html",
+      "bytes": 4344,
+      "sha256": "17c00875c7fbe1ae032471feb3d8269ba59974ff8ffdd49f4a6564873d36bc27"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/nanosvg/LICENSE.txt",
+      "bytes": 862,
+      "sha256": "05013ed6643293c88110521dd5cdd4700d5a9f74f58fd168ed604e9aa90a9157"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/portaudio/LICENSE.txt",
+      "bytes": 3524,
+      "sha256": "ec52a1952d701f94e5135719a47376da4ee0b4a0201f1cafb49f61db6480ac3d"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/portaudio/bindings/cpp/COPYING",
+      "bytes": 1545,
+      "sha256": "3ec8d97acf149e39aa440f39eb1126a6ec5089e2864cbecdf2d2952bc0a5ed83"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/portaudio/doc/src/license.dox",
+      "bytes": 1594,
+      "sha256": "712b59060e2d982fa5701a10a73c190b45f66a3b5057d1afff0ed3181e5611b0"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/portmidi/license.txt",
+      "bytes": 1849,
+      "sha256": "8d187c40c782da0e24489c4c4bf7590635e072dc0b70b0afda7b0652d290c1ea"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/rapidjson/contrib/natvis/LICENSE",
+      "bytes": 2175,
+      "sha256": "394faaedb93c1da8ecbd61322518834908fee64381117e01a611bf9fac20baa6"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/rapidjson/license.txt",
+      "bytes": 5152,
+      "sha256": "a140e5d46fe734a1c78f1a3c3ef207871dd75648be71fdda8e309b23ab8b1f32"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/softfloat3/COPYING.txt",
+      "bytes": 1738,
+      "sha256": "145ea96b4a4a04a1a7738d2a2bf9e830f861971e69606187b018d9e8fc0b95c7"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/tap-windows6/COPYING",
+      "bytes": 1096,
+      "sha256": "7b7844e4f15d67edc1ef5aa7a23bc77836c5ff25e9f965ee6fd6c7f6cd67b6e2"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/tap-windows6/COPYRIGHT.GPL",
+      "bytes": 18092,
+      "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/tap-windows6/COPYRIGHT.MIT",
+      "bytes": 1099,
+      "sha256": "92083b0787b4a76bfb120db6e682058c1bab88a30512ee3820e3a11b22e6be68"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/utf8proc/LICENSE.md",
+      "bytes": 5125,
+      "sha256": "3b510150d34f248a221bb88e1d811238d6c6c18b51231822c42974c39bb07256"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/ymfm/LICENSE",
+      "bytes": 1519,
+      "sha256": "2d2e9213c170a9866c616fa85b6da993a6724e10befc61f468ed9bfb84c4691c"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/zlib/LICENSE",
+      "bytes": 1002,
+      "sha256": "e32ff4e00d9d94930537635291da39e7e612703334bf6fde8c7f1686fe8a45a2"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/zlib/contrib/dotzlib/LICENSE_1_0.txt",
+      "bytes": 1337,
+      "sha256": "8d8291caf1cee26d23acf3eb67c9f9a2d58f1c681b16a4fbe8cbfb9e3c0b5a9b"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/zlib/contrib/minizip/LICENSE.Info-Zip",
+      "bytes": 3509,
+      "sha256": "fc686023047ce5ce3a18a9b8a777156f0e475929d3de06bac279f3c025d2b2ca"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/zstd/COPYING",
+      "bytes": 18091,
+      "sha256": "f9c375a1be4a41f7b70301dd83c91cb89e41567478859b77eef375a52d782505"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/zstd/LICENSE",
+      "bytes": 1549,
+      "sha256": "7055266497633c9025b777c78eb7235af13922117480ed5c674677adc381c9d8"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/zstd/build/LICENSE",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "third-party/licenses/mame/3rdparty/zstd/tests/test-license.py",
+      "bytes": 4388,
+      "sha256": "a0bd1837d89c90e45722ff2c109530f2d280fa8296732b1a86adea2054f08ee9"
+    },
+    {
+      "path": "third-party/licenses/mame/COPYING",
+      "bytes": 11549,
+      "sha256": "60e9b2e1e0832d74696a9a0317693bb6cbe317747caad589a338e2c7636933e4"
+    },
+    {
+      "path": "third-party/licenses/mame/android-project/LICENSE",
+      "bytes": 1516,
+      "sha256": "1bf49001ea065f029993ed1ff55d9aa90d512288fab103e2d3826a0c2baae8a3"
+    },
+    {
+      "path": "third-party/licenses/mame/artwork/LICENSE",
+      "bytes": 6555,
+      "sha256": "36ffd9dc085d529a7e60e1276d73ae5a030b020313e6c5408593a6ae2af39673"
+    },
+    {
+      "path": "third-party/licenses/mame/benchmarks/LICENSE",
+      "bytes": 1483,
+      "sha256": "72eae7d4891477dec8733ce8273e7740d49827d1f4d07d78d6c8380424308144"
+    },
+    {
+      "path": "third-party/licenses/mame/bgfx/LICENSE",
+      "bytes": 1498,
+      "sha256": "c2ea90f99209ca6d1b3bda7abfb11e9c6c12e8531db2138c1679eb4fac6f856d"
+    },
+    {
+      "path": "third-party/licenses/mame/bgfx/chains/LICENSE",
+      "bytes": 1498,
+      "sha256": "c2ea90f99209ca6d1b3bda7abfb11e9c6c12e8531db2138c1679eb4fac6f856d"
+    },
+    {
+      "path": "third-party/licenses/mame/bgfx/effects/LICENSE",
+      "bytes": 1498,
+      "sha256": "c2ea90f99209ca6d1b3bda7abfb11e9c6c12e8531db2138c1679eb4fac6f856d"
+    },
+    {
+      "path": "third-party/licenses/mame/bgfx/effects/default/LICENSE",
+      "bytes": 1498,
+      "sha256": "c2ea90f99209ca6d1b3bda7abfb11e9c6c12e8531db2138c1679eb4fac6f856d"
+    },
+    {
+      "path": "third-party/licenses/mame/bgfx/effects/hlsl/LICENSE",
+      "bytes": 1498,
+      "sha256": "c2ea90f99209ca6d1b3bda7abfb11e9c6c12e8531db2138c1679eb4fac6f856d"
+    },
+    {
+      "path": "third-party/licenses/mame/bgfx/effects/unfiltered/LICENSE",
+      "bytes": 1498,
+      "sha256": "c2ea90f99209ca6d1b3bda7abfb11e9c6c12e8531db2138c1679eb4fac6f856d"
+    },
+    {
+      "path": "third-party/licenses/mame/docs/LICENSE",
+      "bytes": 6556,
+      "sha256": "6a1ee543e5282cd9061881edf462e6fdab181f328da71fc2c9a6950a80e94d01"
+    },
+    {
+      "path": "third-party/licenses/mame/docs/legal/BSD-2-Clause",
+      "bytes": 1283,
+      "sha256": "32bef3825a21972c113e32b123fad97ae146ffc32c1b22ab5e7c06c35a692f1c"
+    },
+    {
+      "path": "third-party/licenses/mame/docs/legal/BSD-3-Clause",
+      "bytes": 1481,
+      "sha256": "a27554938d3dd6569931e5e18b93214a57f47bc1bb8b75fc32fdd18abe042a07"
+    },
+    {
+      "path": "third-party/licenses/mame/docs/legal/BSL-1.0",
+      "bytes": 1281,
+      "sha256": "3602a15699004c836ba75fd667207389b20795e933436b761cdd97fba3eb00d6"
+    },
+    {
+      "path": "third-party/licenses/mame/docs/legal/CC0",
+      "bytes": 6648,
+      "sha256": "7097c533bb812bce9e9ad17b919dcab3f66f9c1aecf5a16291f3d0468a217ad0"
+    },
+    {
+      "path": "third-party/licenses/mame/docs/legal/GPL-2.0",
+      "bytes": 17958,
+      "sha256": "ba20c40872287b52eeca54d48e875879b33d841b98f8cedba3558b405467d5de"
+    },
+    {
+      "path": "third-party/licenses/mame/docs/legal/LGPL-2.1",
+      "bytes": 26433,
+      "sha256": "04dec8d7181eefc5a8d239bb459c2e0625c2d1153d85f305e8596d6e874c42e2"
+    },
+    {
+      "path": "third-party/licenses/mame/docs/legal/MIT",
+      "bytes": 1060,
+      "sha256": "1e718db2273870673b631bfcbf1712746c7495b0e3991df1c86ab0025a03becb"
+    },
+    {
+      "path": "third-party/licenses/mame/docs/legal/Zlib",
+      "bytes": 899,
+      "sha256": "7490df3d98428f2672e17ced7b19559b9909c002e4d2362eb23ec263685fe2f0"
+    },
+    {
+      "path": "third-party/licenses/mame/docs/man/LICENSE",
+      "bytes": 6555,
+      "sha256": "36ffd9dc085d529a7e60e1276d73ae5a030b020313e6c5408593a6ae2af39673"
+    },
+    {
+      "path": "third-party/licenses/mame/docs/source/license.rst",
+      "bytes": 1540,
+      "sha256": "9a9bd33b049fbbc2b642576051c96be55b70dd43e127e5da3abb0544ad19a4d0"
+    },
+    {
+      "path": "third-party/licenses/mame/doxygen/LICENSE",
+      "bytes": 6555,
+      "sha256": "36ffd9dc085d529a7e60e1276d73ae5a030b020313e6c5408593a6ae2af39673"
+    },
+    {
+      "path": "third-party/licenses/mame/language/LICENSE",
+      "bytes": 6555,
+      "sha256": "36ffd9dc085d529a7e60e1276d73ae5a030b020313e6c5408593a6ae2af39673"
+    },
+    {
+      "path": "third-party/licenses/mame/plugins/json/LICENSE",
+      "bytes": 1079,
+      "sha256": "282c5a454d9fd72026ce9422d34c09f6ea7b8757ac5a1a99d31d0b1c5481821a"
+    },
+    {
+      "path": "third-party/licenses/mame/plugins/xml/LICENSE.txt",
+      "bytes": 1061,
+      "sha256": "09c30b8ee962b20c78fad878cbe6fa1e376604c4616ca43703183014c729df61"
+    },
+    {
+      "path": "third-party/licenses/mame/regtests/LICENSE",
+      "bytes": 1516,
+      "sha256": "ca9d6fb9fc0c7d5b04fc49be046b3286b1edb60e11ef9bb637c05c49fc6e2ad0"
+    },
+    {
+      "path": "third-party/licenses/mame/samples/LICENSE",
+      "bytes": 6555,
+      "sha256": "36ffd9dc085d529a7e60e1276d73ae5a030b020313e6c5408593a6ae2af39673"
+    },
+    {
+      "path": "third-party/licenses/mame/scripts/font/LICENSE",
+      "bytes": 4301,
+      "sha256": "6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2"
+    },
+    {
+      "path": "third-party/licenses/mame/tests/LICENSE",
+      "bytes": 1516,
+      "sha256": "ca9d6fb9fc0c7d5b04fc49be046b3286b1edb60e11ef9bb637c05c49fc6e2ad0"
+    },
+    {
+      "path": "third-party/licenses/mame/web/LICENSE",
+      "bytes": 1516,
+      "sha256": "1bf49001ea065f029993ed1ff55d9aa90d512288fab103e2d3826a0c2baae8a3"
+    },
+    {
+      "path": "third-party/licenses/mednafen_lynx/COPYING",
+      "bytes": 18010,
+      "sha256": "a6996dcf0c334281f734560926e079b2dbbd5b78e81c0ca00a413ec01e1cd2fb"
+    },
+    {
+      "path": "third-party/licenses/mednafen_lynx/mednafen/lynx/license.txt",
+      "bytes": 928,
+      "sha256": "307319deed461baf8ec3b22f1800e53425080571ec197645c2a2b130a0b65a93"
+    },
+    {
+      "path": "third-party/licenses/mednafen_ngp/COPYING",
+      "bytes": 18010,
+      "sha256": "a6996dcf0c334281f734560926e079b2dbbd5b78e81c0ca00a413ec01e1cd2fb"
+    },
+    {
+      "path": "third-party/licenses/mednafen_pce_fast/source/COPYING",
+      "bytes": 18010,
+      "sha256": "a6996dcf0c334281f734560926e079b2dbbd5b78e81c0ca00a413ec01e1cd2fb"
+    },
+    {
+      "path": "third-party/licenses/mednafen_pce_fast/source/deps/libchdr/LICENSE.txt",
+      "bytes": 1493,
+      "sha256": "e3989a7aee74a91b8cdbdfe204a6b8d03288863ec7533a21c51f1a987ba73539"
+    },
+    {
+      "path": "third-party/licenses/mednafen_pce_fast/source/deps/lzma-19.00/LICENSE",
+      "bytes": 261,
+      "sha256": "06721414a6decad6d6677feb470f01f47126e154d895d85bc1e17628697715e5"
+    },
+    {
+      "path": "third-party/licenses/mednafen_pce_fast/source/deps/zstd/COPYING",
+      "bytes": 18091,
+      "sha256": "f9c375a1be4a41f7b70301dd83c91cb89e41567478859b77eef375a52d782505"
+    },
+    {
+      "path": "third-party/licenses/mednafen_pce_fast/source/deps/zstd/LICENSE",
+      "bytes": 1549,
+      "sha256": "7055266497633c9025b777c78eb7235af13922117480ed5c674677adc381c9d8"
+    },
+    {
+      "path": "third-party/licenses/mednafen_pce_fast/source/mednafen/tremor/COPYING",
+      "bytes": 1466,
+      "sha256": "d2ab5758336489da61c12cc5bb757da5339c4ae9001f9bb0562b4370249af814"
+    },
+    {
+      "path": "third-party/licenses/mednafen_vb/COPYING",
+      "bytes": 18010,
+      "sha256": "a6996dcf0c334281f734560926e079b2dbbd5b78e81c0ca00a413ec01e1cd2fb"
+    },
+    {
+      "path": "third-party/licenses/mednafen_wswan/COPYING",
+      "bytes": 18010,
+      "sha256": "a6996dcf0c334281f734560926e079b2dbbd5b78e81c0ca00a413ec01e1cd2fb"
+    },
+    {
+      "path": "third-party/licenses/mgba/LICENSE",
+      "bytes": 16726,
+      "sha256": "fab3dd6bdab226f1c08630b1dd917e11fcb4ec5e1e020e2c16f83a0a13863e85"
+    },
+    {
+      "path": "third-party/licenses/mgba/cinema/gb/mooneye-gb/LICENSE",
+      "bytes": 1096,
+      "sha256": "00c153054a45ffa0cdf87f6eedb01e4110ffba40bb3ff20f5d173ddbc112e0a0"
+    },
+    {
+      "path": "third-party/licenses/mgba/res/licenses/discord-rpc.txt",
+      "bytes": 1053,
+      "sha256": "12054cc15e274c9a10966fd7d8740c12dbd679dec2468e370818d899f9a3a634"
+    },
+    {
+      "path": "third-party/licenses/mgba/res/licenses/inih.txt",
+      "bytes": 1510,
+      "sha256": "9ae3b39e83e9158e44b67733baa3bb2d84e80efdcfb14a5820210a42c7abdf7f"
+    },
+    {
+      "path": "third-party/licenses/mgba/res/licenses/mingw-std-threads.txt",
+      "bytes": 1296,
+      "sha256": "86c148320eb0acc26607ed347e0fde9f49a236d0ec5291d36dc6a7e0e1d26b9f"
+    },
+    {
+      "path": "third-party/licenses/mgba/res/licenses/rapidjson.txt",
+      "bytes": 5152,
+      "sha256": "a140e5d46fe734a1c78f1a3c3ef207871dd75648be71fdda8e309b23ab8b1f32"
+    },
+    {
+      "path": "third-party/licenses/mgba/res/shaders/gbc-lcd.shader/license.txt",
+      "bytes": 1211,
+      "sha256": "7e12e5df4bae12cb21581ba157ced20e1986a0508dd10d0e8a4ab9a4cf94e85c"
+    },
+    {
+      "path": "third-party/licenses/mgba/src/third-party/discord-rpc/LICENSE",
+      "bytes": 1053,
+      "sha256": "12054cc15e274c9a10966fd7d8740c12dbd679dec2468e370818d899f9a3a634"
+    },
+    {
+      "path": "third-party/licenses/mgba/src/third-party/discord-rpc/include/mingw-std-threads/LICENSE",
+      "bytes": 1296,
+      "sha256": "86c148320eb0acc26607ed347e0fde9f49a236d0ec5291d36dc6a7e0e1d26b9f"
+    },
+    {
+      "path": "third-party/licenses/mgba/src/third-party/discord-rpc/include/rapidjson/license.txt",
+      "bytes": 5152,
+      "sha256": "a140e5d46fe734a1c78f1a3c3ef207871dd75648be71fdda8e309b23ab8b1f32"
+    },
+    {
+      "path": "third-party/licenses/mgba/src/third-party/inih/LICENSE.txt",
+      "bytes": 1510,
+      "sha256": "9ae3b39e83e9158e44b67733baa3bb2d84e80efdcfb14a5820210a42c7abdf7f"
+    },
+    {
+      "path": "third-party/licenses/mgba/src/third-party/libpng/LICENSE",
+      "bytes": 5345,
+      "sha256": "16d9daaafbf63a31a5bdc91d4600972548fef5aaa1244202393288dbd079c49a"
+    },
+    {
+      "path": "third-party/licenses/mgba/src/third-party/libpng/ci/LICENSE_MIT.txt",
+      "bytes": 1036,
+      "sha256": "508a77d2e7b51d98adeed32648ad124b7b30241a8e70b2e72c99f92d8e5874d1"
+    },
+    {
+      "path": "third-party/licenses/mgba/src/third-party/libpng/contrib/gregbook/COPYING",
+      "bytes": 18097,
+      "sha256": "d6cb0e9e560f51085556949a84af12b79a00f10ab8b66c752537faf7cd665572"
+    },
+    {
+      "path": "third-party/licenses/mgba/src/third-party/libpng/contrib/gregbook/LICENSE",
+      "bytes": 2373,
+      "sha256": "b6a03c1803eb58ffb1f1278d5c7d4096c4c116e66dce8a7553e8c77d163c3438"
+    },
+    {
+      "path": "third-party/licenses/mgba/src/third-party/libpng/contrib/pngexif/LICENSE_MIT.txt",
+      "bytes": 1036,
+      "sha256": "508a77d2e7b51d98adeed32648ad124b7b30241a8e70b2e72c99f92d8e5874d1"
+    },
+    {
+      "path": "third-party/licenses/mgba/src/third-party/libpng/contrib/pngminus/LICENSE.txt",
+      "bytes": 1164,
+      "sha256": "1806f1f10d393e9e377b3a8d1b968452b54f1a90378f14eeef45426946ace330"
+    },
+    {
+      "path": "third-party/licenses/mgba/src/third-party/zlib/contrib/dotzlib/LICENSE_1_0.txt",
+      "bytes": 1359,
+      "sha256": "36266a8fd073568394cb81cdb2b124f7fdae2c64c1a7ed09db34b4d22efa2951"
+    },
+    {
+      "path": "third-party/licenses/mgba/tools/debian/copyright",
+      "bytes": 22619,
+      "sha256": "8d7d5231c3a39495f8bf543629915664f3127d48b52f7e68502c22e01f4f5819"
+    },
+    {
+      "path": "third-party/licenses/mupen64plus_next--mupen64plus-rsp-paraLLEl-lightning-gnulib/COPYING",
+      "bytes": 1015,
+      "sha256": "e4898a8a1f899a8fe02522d0c6cbf158beccb8d424d73105bad6283a1a012fd0"
+    },
+    {
+      "path": "third-party/licenses/mupen64plus_next--mupen64plus-rsp-paraLLEl-lightning-gnulib/doc/COPYING.LESSERv2",
+      "bytes": 26530,
+      "sha256": "dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551"
+    },
+    {
+      "path": "third-party/licenses/mupen64plus_next--mupen64plus-rsp-paraLLEl-lightning-gnulib/doc/COPYING.LESSERv3",
+      "bytes": 7652,
+      "sha256": "e3a994d82e644b03a792a930f574002658412f62407f5fee083f2555c5f23118"
+    },
+    {
+      "path": "third-party/licenses/mupen64plus_next--mupen64plus-rsp-paraLLEl-lightning-gnulib/modules/COPYING",
+      "bytes": 370,
+      "sha256": "63e9f6c364581fc83232725b31880baf6f11d52155459571d69d0ed5974693f8"
+    },
+    {
+      "path": "third-party/licenses/mupen64plus_next/GLideN64/LICENSE",
+      "bytes": 19533,
+      "sha256": "7cbdf16d66376d39046abb11a26e5f5823fb631bfc48d4309f5c227957e66d45"
+    },
+    {
+      "path": "third-party/licenses/mupen64plus_next/GLideN64/licenses/GLSL-FXAA/LICENSE.md",
+      "bytes": 1083,
+      "sha256": "91515553fda3d86e82454bab0eb876a2cb9a31c0dcb8be640870fed624e53697"
+    },
+    {
+      "path": "third-party/licenses/mupen64plus_next/GLideN64/licenses/GlideHQ/gpl-2.0.txt",
+      "bytes": 17987,
+      "sha256": "ab15fd526bd8dd18a9e77ebc139656bf4d33e97fc7238cd11bf60e2b9b8666c6"
+    },
+    {
+      "path": "third-party/licenses/mupen64plus_next/GLideN64/licenses/Glow/LICENSE",
+      "bytes": 1376,
+      "sha256": "13a3b6d268be629a2a3f7078639e688c9bbc564c7f0c99063db3ad4952512f98"
+    },
+    {
+      "path": "third-party/licenses/mupen64plus_next/GLideN64/licenses/gles2n64/LICENSE",
+      "bytes": 7637,
+      "sha256": "9ccf26cfe845e0eb8bb58053e47366e7ab6b697ae010f7650978d4b71b7d1fc1"
+    },
+    {
+      "path": "third-party/licenses/mupen64plus_next/GLideN64/licenses/readerwriterqueue/LICENSE.md",
+      "bytes": 1614,
+      "sha256": "74aeda891b7216355084e184f4b908fc166862c12a80d20cda72c2d2a34f8ea8"
+    },
+    {
+      "path": "third-party/licenses/mupen64plus_next/LICENSE",
+      "bytes": 18092,
+      "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    },
+    {
+      "path": "third-party/licenses/mupen64plus_next/mupen64plus-core/doc/font-license",
+      "bytes": 2455,
+      "sha256": "1b79efd3785d8825a2d7dffa3e9e534eab9562c7af99cd798dba31f048049a2e"
+    },
+    {
+      "path": "third-party/licenses/mupen64plus_next/mupen64plus-core/doc/gpl-license",
+      "bytes": 18639,
+      "sha256": "4b3f9e9d51d6064da376c2de2e237f43a2e21b381bb02bd7e07ebca785759449"
+    },
+    {
+      "path": "third-party/licenses/mupen64plus_next/mupen64plus-core/doc/lgpl-license",
+      "bytes": 26437,
+      "sha256": "a2e55648eba0aeb849acf9429fde795a6a07bff54291110604ec47c62a7f331b"
+    },
+    {
+      "path": "third-party/licenses/mupen64plus_next/mupen64plus-rsp-cxd4/COPYING",
+      "bytes": 7048,
+      "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+    },
+    {
+      "path": "third-party/licenses/mupen64plus_next/mupen64plus-rsp-paraLLEl/LICENSE",
+      "bytes": 364,
+      "sha256": "3dcbbf07bd9ebb0b6fd117826d5c3fd35bdbfd4b31bb9ebebb4e74aef6959b32"
+    },
+    {
+      "path": "third-party/licenses/mupen64plus_next/mupen64plus-rsp-paraLLEl/LICENSE.LESSER",
+      "bytes": 7639,
+      "sha256": "a853c2ffec17057872340eee242ae4d96cbf2b520ae27d903e1b2fef1a5f9d1c"
+    },
+    {
+      "path": "third-party/licenses/mupen64plus_next/mupen64plus-rsp-paraLLEl/LICENSE.MIT",
+      "bytes": 1065,
+      "sha256": "98295fe4fb291c433b705d40710cd44aaa09e7944943afb8a4ec02e9a4f59289"
+    },
+    {
+      "path": "third-party/licenses/mupen64plus_next/mupen64plus-rsp-paraLLEl/lightning/COPYING",
+      "bytes": 35068,
+      "sha256": "fc82ca8b6fdb18d4e3e85cfd8ab58d1bcd3f1b29abe782895abd91d64763f8e7"
+    },
+    {
+      "path": "third-party/licenses/mupen64plus_next/mupen64plus-rsp-paraLLEl/lightning/COPYING.DOC",
+      "bytes": 18114,
+      "sha256": "5ae033045108dac293940c2292d311ce8b58de976dff2269c22280b8df6cfd27"
+    },
+    {
+      "path": "third-party/licenses/mupen64plus_next/mupen64plus-rsp-paraLLEl/lightning/COPYING.LESSER",
+      "bytes": 7639,
+      "sha256": "a853c2ffec17057872340eee242ae4d96cbf2b520ae27d903e1b2fef1a5f9d1c"
+    },
+    {
+      "path": "third-party/licenses/mupen64plus_next/mupen64plus-video-paraLLEl/parallel-rdp/LICENSE",
+      "bytes": 1054,
+      "sha256": "29e3d9c8af52aa066b05be4ed348b2184052e99b793779c38baca2c6e00240c5"
+    },
+    {
+      "path": "third-party/licenses/prosystem/License.txt",
+      "bytes": 18347,
+      "sha256": "9fae8c2ae211ea4b3515621484bb0a558a0ca62d05c9534265c7e223bdf981b0"
+    },
+    {
+      "path": "third-party/licenses/prosystem/bupboop/License.txt",
+      "bytes": 879,
+      "sha256": "38bc0e4b9ce70a398cfb4dde8fed87fcb469eeafd4de5c0699c81c7630ea7aed"
+    },
+    {
+      "path": "third-party/licenses/sameboy/.github/actions/LICENSE",
+      "bytes": 1160,
+      "sha256": "36c2e3fcb292f375ebae50eb992b800d5aa3960d3b6df4142e01b1061821650c"
+    },
+    {
+      "path": "third-party/licenses/sameboy/Cocoa/License.html",
+      "bytes": 3119,
+      "sha256": "347d42725025ea59455cb3270e12fe48e28589009d48d32e1d1825511fd1380d"
+    },
+    {
+      "path": "third-party/licenses/sameboy/HexFiend/License.txt",
+      "bytes": 1339,
+      "sha256": "62fe33d7821eb6bd356680a76cd37addfd560ca9f623122e19f7efd59d1d9be9"
+    },
+    {
+      "path": "third-party/licenses/sameboy/LICENSE",
+      "bytes": 1495,
+      "sha256": "875b2c940181c315fa99ce5292326b985a43cdc4e878b38995066d6b495ff151"
+    },
+    {
+      "path": "third-party/licenses/sameboy/iOS/License.html",
+      "bytes": 1769,
+      "sha256": "bab1aafdac47692ef40fc4bd0fef600b0b86cb32ee234ba118030d7269397c80"
+    },
+    {
+      "path": "third-party/licenses/stella2014/stella/license.txt",
+      "bytes": 15174,
+      "sha256": "310782e1abd43c4de6217c513e328bddf999d39302d67c6e05b10a59959827af"
+    }
+  ],
+  "pendingCores": [],
+  "completeForAllPackagedCores": true
+}

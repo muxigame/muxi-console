@@ -72,6 +72,8 @@ python -B tools/newcoldload_smoke.py --name cold-load-verification
 
 这些入口只启动受限独立worker，不启动Minecraft。核心来自 [libretro官方构建站](https://buildbot.libretro.com/nightly/windows/x86_64/latest/)；15个模拟核心覆盖21平台，另有2048作无内容诊断。导出探测仅证明API/二进制身份，不能替代运行。
 
-第一方公开发行许可证尚未指定。滚动核心尚无完整可验证的精确对应源码、子模块及构建交付，`sourceRevisionVerified=false`、`releaseReady=false`；核心自报短哈希解析不等于对应源码证明。当前未公开发布或替换干净源。
+第一方代码、协议和构建工具已按MIT在GitHub公开。0.1.0发行包内直接附上15个实际打包核心的完整源码、固定子模块、构建资料和原始许可证，以及JNA/LWJGL源码与工作进程的完整源码和独立构建入口。13个官方核心按二进制自报提交定位并保留原字节，这不代表逐字节重建证明；缺少可用提交信息的BlastEm/PCE改为从明确固定源码自行构建。相关pin、依据及交付哈希见[源码清单](../third-party/source_manifest.json)。正式打包的`--release`门只在这些材料完整且与实际二进制一致时通过。
+
+本轮新BlastEm/PCE各通过19项输入/画面/状态诊断及26项零步冷恢复检查，四阶段正常退出，未遗留工作进程。其他13核心的既有诊断范围保留，不把本轮记作全部游戏兼容或所有核心重测。源码交付完成与线上部署是不同事项，当前部署状态见[开发状态](STATUS.md)。
 
 公开依据：[libretro ABI](https://raw.githubusercontent.com/libretro/libretro-common/master/include/libretro.h)、[开发文档](https://docs.libretro.com/development/cores/developing-cores/)、[JNA](https://java-native-access.github.io/jna/5.14.0/javadoc/overview-summary.html)、[Mupen64Plus-Next](https://docs.libretro.com/library/mupen64plus/)。
