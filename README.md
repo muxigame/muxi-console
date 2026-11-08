@@ -2,11 +2,11 @@
 
 本仓是从空目录建立的独立 Minecraft 模拟器集成。Cartridge 只提供公开功能和体验参考；本仓不继承其 Git 历史，不导入其代码、协议、native host、模型、贴图、界面或测试。旧 `muxi-arcade/` 保留为历史验证，不能进入本产品构建输入。
 
-目标：Minecraft 1.21.1、NeoForge 21.1.250、Java 21；modId `muxi_console`，Java 包 `net.muxigame.console`。原创代码、界面、模型、像素贴图、构建脚本和测试按[MIT](LICENSE)开源，公开仓库为[GitHub · muxigame/muxi-console](https://github.com/muxigame/muxi-console)。第三方模拟器及依赖保留自己的许可证，MIT不替代它们的源码和许可证交付要求。源码公开与正式二进制/服务器发布分别核验；下文开发候选及历史运行记录不代表已上线。
+目标：Minecraft 1.21.1、NeoForge 21.1.250、Java 21；modId `muxi_console`，Java 包 `net.muxigame.console`。原创代码、界面、模型、像素贴图、构建脚本和测试按[MIT](LICENSE)开源，公开仓库为[GitHub · muxigame/muxi-console](https://github.com/muxigame/muxi-console)。第三方模拟器及依赖保留自己的许可证，MIT不替代它们的源码和许可证交付要求。历史开发与验收记录只代表各自固定输入及范围。
 
-当前预览版本为 **0.1.0**，Windows x86-64 / Minecraft 1.21.1 / NeoForge 21.1.250 / Java 21。支持21平台、22款原创设备、上传刻录卡带、多人控制、双全屏和浏览器屏幕联动；存档按机器与游戏内容分别保存，借卡不带进度，同机换同内容卡可续玩。掌机单卡槽、实际外露卡、真实加载进度、27格薄卡册、居中物品图标和2×2×1电脑显示器均保留。第三方游戏ROM及原厂BIOS由玩家依法自行准备。
+[下载GitHub预览发行](https://github.com/muxigame/muxi-console/releases/tag/v0.1.0)。当前预览版本为 **0.1.0**，Windows x86-64 / Minecraft 1.21.1 / NeoForge 21.1.250 / Java 21。支持21平台、22款原创设备、上传刻录卡带、多人控制、双全屏和浏览器屏幕联动；存档按机器与游戏内容分别保存，借卡不带进度，同机换同内容卡可续玩。掌机单卡槽、实际外露卡、真实加载进度、27格薄卡册、居中物品图标和2×2×1电脑显示器均保留。第三方游戏ROM及原厂BIOS由玩家依法自行准备。
 
-0.1.0包内附15个第三方核心的完整对应源码、固定子模块、构建说明和原始许可证；源码附件不会被模拟工作进程加载。18组3163项检查、390资源/30489项校验以及重建MD/PCE的90项输入与冷恢复检查已通过。发行候选531648674字节，SHA256 `370f59645046e97386f5b89b3ba44d13085e37f29dccd44f4b7dec130ccc2f44`；真实整合包两客户端已完成掌机、卡册、刻录机和普通物品掉落检查，测试环境正常退出；线上发布正在进行。历史开发与图像验收边界见[状态](docs/STATUS.md)、[机器存档审核](docs/MACHINE-SAVES.md)和[完整范围](docs/PLATFORM-COMPLETION.md)。本地build目录及历史原图不随Git仓库发布。
+0.1.0包内附15个第三方核心的完整对应源码、固定子模块、构建说明和原始许可证；源码附件不会被模拟工作进程加载。18组3163项检查、390资源/30489项校验以及重建MD/PCE的90项输入与冷恢复检查已通过。发行候选531648674字节，SHA256 `370f59645046e97386f5b89b3ba44d13085e37f29dccd44f4b7dec130ccc2f44`；真实整合包两客户端已完成掌机、卡册、刻录机和普通物品掉落检查，测试环境正常退出；已随客户端整合包 **1.4.94** 和服务端 **1.4.94-server.1** 上线。历史开发与图像验收边界见[状态](docs/STATUS.md)、[机器存档审核](docs/MACHINE-SAVES.md)和[完整范围](docs/PLATFORM-COMPLETION.md)。本地build目录及历史原图不随Git仓库发布。
 
 功能目标：玩家上传自己有权使用的 ROM，服务器校验和存储，刻录成可转交的实体卡带；原创主机、掌机、电视、控制器与刻录机；多人控制、键位绑定和 GLFW 手柄。游戏内权利声明默认 false，换文件重置；投诉与客服在云平台，不增加游戏内客服表单。已取得的本地 ROM 缓存不能远程撤回。
 
@@ -48,4 +48,4 @@ python -B tools/build.py --name <新的构建名称> --tests
 
 核心获取参数见 `python -B tools/fetch_cores.py --help`；只读校验不更新 pin，初次获取必须显式选核心。运行测试必须从总仓统一分配 `client-N/runs/`，不在本仓创建 Minecraft 安装。默认编译预算512MiB/单CPU，纯测试128MiB/单CPU，独立模拟工作进程256MiB/单CPU。
 
-第三方组件与实际验证边界见 [状态](docs/STATUS.md)、[核心清单](third-party/cores.json)、[运行时](docs/RUNTIME.md) 和 [原创美术](docs/ART-DIRECTION.md)。第一方部分使用 MIT，第三方模拟器保留各自许可证；正式二进制必须交付精确对应源码和完整许可，尚未完成的核心继续保持 `releaseReady=false`。实体手柄按键/热插拔、实际音响听感、各平台代表性合法游戏、Linux、光影仍须分别验收；掌机联机线尚未实现。本仓当前未生产发布。
+第三方组件与实际验证边界见 [状态](docs/STATUS.md)、[核心清单](third-party/cores.json)、[运行时](docs/RUNTIME.md) 和 [原创美术](docs/ART-DIRECTION.md)。第一方部分使用 MIT，第三方模拟器保留各自许可证；正式二进制必须交付精确对应源码和完整许可，尚未完成的核心继续保持 `releaseReady=false`。实体手柄按键/热插拔、实际音响听感、各平台代表性合法游戏、Linux、光影仍须分别验收；掌机联机线尚未实现。0.1.0已完成本轮生产发布。
