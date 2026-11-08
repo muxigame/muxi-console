@@ -2,7 +2,7 @@
 
 本仓是从空目录建立的独立 Minecraft 模拟器集成。Cartridge 只提供公开功能和体验参考；本仓不继承其 Git 历史，不导入其代码、协议、native host、模型、贴图、界面或测试。旧 `muxi-arcade/` 保留为历史验证，不能进入本产品构建输入。
 
-目标：Minecraft 1.21.1、NeoForge 21.1.250、Java 21；modId `muxi_console`，Java 包 `net.muxigame.console`。第一方代码和资产自行实现，底层模拟器作为单独登记的第三方组件选择，许可与来源分开记录。当前尚未指定公开发行许可，未发布或改变生产。
+目标：Minecraft 1.21.1、NeoForge 21.1.250、Java 21；modId `muxi_console`，Java 包 `net.muxigame.console`。原创代码、界面、模型、像素贴图、构建脚本和测试按[MIT](LICENSE)开源，公开仓库为[GitHub · muxigame/muxi-console](https://github.com/muxigame/muxi-console)。第三方模拟器及依赖保留自己的许可证，MIT不替代它们的源码和许可证交付要求。源码公开与正式二进制/服务器发布分别核验；下文开发候选及历史运行记录不代表已上线。
 
 当前为[机器存档与薄卡册候选04](build/machine-saves-04/muxi-console-0.1.0-dev.1+mc1.21.1.jar)：进度按机器和游戏内容分别保存，借卡不携带存档，同机同内容换卡可续玩，掌机/底座与桌机拆放保留机器身份。新增27格便携薄卡册，手持右键打开、潜行摆放，拆回保留完整内容；厚度缩至首版四分之一，76种物品模型按本体居中，兼容插卡留边。84源/18组3163项Java检查、390资源/30489项资源检查通过；[本轮审核](docs/MACHINE-SAVES.md)与[最终8张实机图](build/machine-save-review/index.html)记录正常存档、薄盒拆放、51图标及保留的原失败。原生单卡槽、实际外露卡带及LCD真实加载进度保留；21平台、多人、双全屏、完整按钮蓝色、2×2×1显示器和WebDisplays/MCEF继续保留，分轮证据见[开发状态](docs/STATUS.md)和[完整范围](docs/PLATFORM-COMPLETION.md)，不代表全部游戏兼容。底层核心和worker原字节不变，未发布。
 
@@ -44,4 +44,4 @@ python -B tools/build.py --name <新的构建名称> --tests
 
 核心获取参数见 `python -B tools/fetch_cores.py --help`；只读校验不更新 pin，初次获取必须显式选核心。运行测试必须从总仓统一分配 `client-N/runs/`，不在本仓创建 Minecraft 安装。默认编译预算512MiB/单CPU，纯测试128MiB/单CPU，独立模拟工作进程256MiB/单CPU。
 
-第三方组件与实际验证边界见 [状态](docs/STATUS.md)、[核心清单](third-party/cores.json)、[运行时](docs/RUNTIME.md) 和 [原创美术](docs/ART-DIRECTION.md)。模拟器核心仍是第三方组件；第一方公开发行许可尚未指定，精确对应源码及许可交付未闭合，`releaseReady=false`。实体手柄按键/热插拔、实际音响听感、各平台代表性合法游戏、Linux、光影和完整整合包共存仍须分别验收；掌机联机线尚未实现。本仓未生产发布。
+第三方组件与实际验证边界见 [状态](docs/STATUS.md)、[核心清单](third-party/cores.json)、[运行时](docs/RUNTIME.md) 和 [原创美术](docs/ART-DIRECTION.md)。第一方部分使用 MIT，第三方模拟器保留各自许可证；正式二进制必须交付精确对应源码和完整许可，尚未完成的核心继续保持 `releaseReady=false`。实体手柄按键/热插拔、实际音响听感、各平台代表性合法游戏、Linux、光影仍须分别验收；掌机联机线尚未实现。本仓当前未生产发布。

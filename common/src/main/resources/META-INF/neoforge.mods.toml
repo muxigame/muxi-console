@@ -1,6 +1,6 @@
 modLoader="javafml"
 loaderVersion="[4,)"
-license="First-party rights reserved; third-party licenses separate"
+license="MIT; third-party components retain their own licenses"
 [[mods]]
 modId="muxi_console"
 version="0.1.0-dev.1"
