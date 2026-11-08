@@ -16,6 +16,7 @@ import net.minecraft.resources.ResourceLocation;
 
 @EventBusSubscriber(modid=MuxiConsole.ID,bus=EventBusSubscriber.Bus.MOD,value=Dist.CLIENT)
 public final class ClientRegistration {
+    @SubscribeEvent public static void keys(net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent event){net.muxigame.console.client.input.NativeControls.register(event);}
     @SubscribeEvent public static void setup(FMLClientSetupEvent event){event.enqueueWork(()->ClientGate.receiver=ConsoleClient.INSTANCE::receive);}
     @SubscribeEvent public static void renderers(EntityRenderersEvent.RegisterRenderers event){event.registerBlockEntityRenderer(ConsoleContent.DEVICE.get(),DeviceRenderer::new);}
     @SubscribeEvent public static void items(RegisterClientExtensionsEvent event){event.registerItem(new IClientItemExtensions(){private final HandheldRenderer renderer=new HandheldRenderer();@Override public BlockEntityWithoutLevelRenderer getCustomRenderer(){return renderer;}},ConsoleContent.HANDHELD.get(),ConsoleContent.CONTROLLER.get());}

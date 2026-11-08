@@ -191,7 +191,7 @@ public final class ConsoleServer {
         try{
             ItemStack handheld=p.getItemInHand(hand);WorldState s=state(p.server);Optional<Cartridge> cart=CardData.read(handheld);
             if(p.isShiftKeyDown()){
-                if(cart.isPresent()){if(activeCard(s,cart.get().instanceId()))throw new DomainException("save","请先按Esc保存并离开掌机，再取出卡带");ItemStack c=CardData.create(cart.get());CardData.clear(handheld);if(!p.getInventory().add(c))p.drop(c,false);return;}
+                if(cart.isPresent()){if(activeCard(s,cart.get().instanceId()))throw new DomainException("save","请先收起掌机等待保存完成，再潜行取出卡带");ItemStack c=CardData.create(cart.get());CardData.clear(handheld);if(!p.getInventory().add(c))p.drop(c,false);return;}
                 for(int i=0;i<p.getInventory().getContainerSize();i++){ItemStack c=p.getInventory().getItem(i);if(c.is(ConsoleContent.CARTRIDGE.get())){Cartridge data=CardData.read(c).orElseThrow();if(!HardwareCatalog.accepts(HardwareCatalog.model(handheld),data.platform()))continue;CardData.write(handheld,data);c.shrink(1);p.inventoryMenu.broadcastChanges();return;}}
                 throw new DomainException("card","物品栏中需要一张已刻录卡带");
             }
@@ -205,7 +205,7 @@ public final class ConsoleServer {
         if(!HardwareCatalog.accepts(HardwareCatalog.model(handheld),card.platform()))throw new DomainException("hardware","卡带与掌机机型不兼容");
         WorldState world=state(player.server);String roomKey="handheld/"+card.instanceId();Room existing=world.rooms.get(roomKey);
         if(existing!=null){if(existing.device!=null||!existing.session.isController(player.getUUID())||existing.handheldSaveDeadline!=0)throw new DomainException("save","这张卡带的上一会话仍在保存，请稍候");existing.presentations.put(player.getUUID(),presentation);sendStart(player,existing,presentation.equals("fullscreen"));return;}
-        if(world.rooms.values().stream().anyMatch(room->room.session.isController(player.getUUID())||room.card.instanceId().equals(card.instanceId())))throw new DomainException("save","请先按Esc保存并离开当前游戏");
+        if(world.rooms.values().stream().anyMatch(room->room.session.isController(player.getUUID())||room.card.instanceId().equals(card.instanceId())))throw new DomainException("save","请先正常离开当前游戏；掌机可收起等待保存完成");
         Room room=new Room(roomKey,null,card,player.getUUID(),1);room.presentations.put(player.getUUID(),presentation);if(presentation.equals("fullscreen"))room.openOnStart.add(player.getUUID());world.rooms.put(room.key,room);synchronize(player.server,room);
     }
     private static void suspendHandheld(ServerPlayer player,Room room){

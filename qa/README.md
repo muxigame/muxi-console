@@ -2,6 +2,22 @@
 
 本目录从空白编写，只读取本仓新产品 API 和统一 runner 文档。两个 QA JAR 分侧安装，Java 包为 `net.muxigame.consoleqa`，不会包含任何产品 class，也不发布。
 
+## 当前：整颗按钮、两种全屏与电脑显示器
+
+使用新产品精确SHA构建分侧QA，仍以 `qa/build.py --pixel-review` 嵌入本仓既有原创GB/GBA诊断；root统一runner给实际编号run后先 `qa/drive.py --check`，再按 `screens → models → play` 执行 `qa/polish_review.py --run <实际run> --build <QA报告> --phase <阶段> --pause-after-first`。先`screens`做2×2×1四向生存放拆/阻挡不耗/唯一掉落、旧3×2及受阻part0实际NBT加载迁移、前侧背原图；首显示器暂停供图审。随后`models`采新22机体和10款便携形态。屏阶段结束仅配置未装卡GBA槽2及其自定义tag；模型阶段后普通空机fixture还原GB槽7，不覆盖已发行卡带。`play`正常声明刻录自写GB/GBA，检查精确短提示及消失、原生Options→Controls→KeyBinds真实改键/保存/重读、MODEL/SCREEN同worker切换和原比例最大化、Esc回普通持有不中断、完整按钮六向实际baked quad着色/松开、输入隔离与底座/安全保存。首MODEL全屏图也先暂停核取景。展示前通过本run正常Tutorial选项步骤结束原生新手提示，FOV45，不改产品或修饰原图。
+
+只使用正常UI回调和产品公开输入mapper；隐藏窗口授权source采 `NativeControls.sample`，不直接造反馈mask。F/F8可在原生KeyBinds绑定为游戏动作；Esc退出全屏，最终保存通过普通 `leave()`，不冒称Esc保存。旧屏fixture仅构造合法空屏历史数据，经正常NBT load和真实scheduled tick迁移，不造卡、ROM、状态或迁移结果。普通阻挡路径不等价于unchecked异常注入，范围分开记录。
+
+本轮`monitor-polish-02`的原play在首MODEL暂停时因启动未配置交互输入而收到精确`EOF when reading a line`，原false保留7项已通过检查和5张原图，finally普通leave实际保存、host/guest worker均空。`qa/polish_review.py --run <同run> --build <同QA报告> --phase play --continue-play`仅接受这个精确中止范围，核同run/产品、原false SHA、7pass/5图及正常清理，从同一原GB实体卡实际checkpoint恢复；跳过已做的提示/原生设置与GB刻录，不重放原命令。续办单独写`polish-play-continuation-result.json`，13张新图使用`resumed-`前缀、不再暂停、不覆盖原图。该联合闭合不等于原play零失败。
+
+`qa/polish_gallery.py`严格核上述原false及续办对它的SHA引用，同时收同run/同产品model32张、screen9张、原play5张、续办13张、独立clean1张与底座补图2张，共62张未经编辑的原始PNG。原续办两张底座照片被升级后的旧屏遮挡，只记显示器活动流、不能当完整底座图；另由`qa/polish_dock_visual.py`从同一原GBA实际存档正常恢复，以北侧合法近距补两张完整低位旋转机身/底座。首次补图因QA Esc参数漏传而在拍图前失败，保留false/2pass/0图，已正常保存；`--resume-failed`仅接受这个明确阶段，核原结果SHA/同卡/真实finally存档，从仍在dock的原完整GBA恢复，另写resumed true/5pass/2新图并再次安全保存、唯一整机取回。最终host自然worker退出7、forced/failed均0、guest从未启动worker，最终双worker为空；不能把联合结果改成原轮零失败。
+
+clean另有自己的结果/SHA，普通F1/hideGui暂隐藏原生HUD和选中tile轮廓后恢复，不替换屏阶段原图；原图中的L形是Minecraft选中单片轮廓，不宣称AO改动消除了原生选择框。新模型不能复用历史图片验收。截图和实际render后snapshot须共同审核，不能用绘制计数替代肉眼效果，也不冒称实体OS键鼠或真实手柄输入。启动需要人工暂停的初次阶段必须提供可交互标准输入；play续办明确禁止暂停。
+
+QA回执现由 `ReplyQueue` 保存已执行命令的不可变ack。写文件失败后只重试同ack，成功前不执行下一ID；不重放已执行mutation，不更改owner/lease/PID/哈希校验或通道。19项确定性文件故障检查见 `build/qa/replyqueue-check-02/result.json`。这项修复不抹除旧NTFS原失败，也不宣称Windows不存在文件竞争。
+
+下述F/F8视角、独立按键页及Esc保存专项均为旧候选历史工具说明，不能直接用于当前交互验收；旧原结果和构建保留。
+
 构建：`python -B qa/build.py --name <新名称> --product build/<候选>/muxi-console-0.1.0-dev.1+mc1.21.1.jar`。嵌入本仓原创 `build/runtime-smoke/two-port-battery.nes`、`build/platform-smoke/original.gb` 和生成的 `build/model-review-plan.json`，逐项固定哈希。产品内模型目录必须与当前资源原字节一致。编译固定 Java21、512MiB、单 CPU；构建不启动 Minecraft。
 
 只能由总仓统一 `scripts/ops/test_environment.py run` 创建 `test-environment/client-N/runs/` 运行。当前模型/浏览器专项使用下述最小 `--release-profile`，不再混用单独模组输入。默认新世界；明确授权的后续回归可由统一 runner 复制同任务已正常关闭的世界，必须核对原owner/正常退出和复制声明，不复制正在写入的世界。测试客户端为真实网络玩家；服务端 fixture 只放置平台和三台设备、给空白卡带/控制器/掌机，不生成已刻录卡带。

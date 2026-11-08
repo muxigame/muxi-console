@@ -57,6 +57,7 @@ public final class ClientQaMod {
     private long sharedPcmBytes,sharedPcmNonzeroSamples;
     private final DockActions dockActions=new DockActions();
     private final HeldActions heldActions=new HeldActions();
+    private final PolishActions polishActions=new PolishActions();
     public ClientQaMod() { NeoForge.EVENT_BUS.addListener(this::tick); }
     private void tick(ClientTickEvent.Post event) {
         clientTicks++;
@@ -85,6 +86,7 @@ public final class ClientQaMod {
     private JsonObject dispatch(JsonObject command) {
         Minecraft client = Minecraft.getInstance();
         String action = command.get("action").getAsString();
+        if(action.startsWith("polish_")){try{JsonObject callback=polishActions.command(client,command);JsonObject result=observe(client);result.add("polishCallback",callback);return result;}catch(Exception e){throw new IllegalStateException(e);}}
         if(action.startsWith("hand_")){JsonObject callback=heldActions.command(client,command);JsonObject result=observe(client);result.add("handCallback",callback);return result;}
         if(action.startsWith("dock_")){dockActions.command(client,command);return observe(client);}
         try {
@@ -153,8 +155,7 @@ public final class ClientQaMod {
                     probeFuture = ConsoleClient.INSTANCE.probeDownload(hash, room, epoch);
                 }
                 case "toggle_tv" -> {
-                    if (!(client.screen instanceof GameScreen screen)) throw new IllegalStateException("Game screen required");
-                    screen.keyPressed(GLFW.GLFW_KEY_F, 0, 0); screen.keyReleased(GLFW.GLFW_KEY_F, 0, 0);
+                    throw new IllegalStateException("The F view shortcut was removed; right click toggles fullscreen modes");
                 }
                 case "input_source" -> {
                     int mask = command.get("buttons").getAsInt();
@@ -240,6 +241,7 @@ public final class ClientQaMod {
         result.add("browser",NativeReview.browser(client,browserPosition,browserSide,false));result.add("browserNative",browserNative);
         result.addProperty("hideGui",client.options.hideGui);result.addProperty("fov",client.options.fov().get());
         result.addProperty("clientTicks",clientTicks);
+        result.add("qaChannel",owner.replyStatus());
         result.addProperty("stateProbe",stateProbe);
         result.addProperty("sharedPcmBytes",sharedPcmBytes);result.addProperty("sharedPcmNonzeroSamples",sharedPcmNonzeroSamples);
         JsonArray pads=new JsonArray();for(var device:net.muxigame.console.client.input.InputProfiles.availableGamepads()){JsonObject pad=new JsonObject();pad.addProperty("id",device.id());pad.addProperty("name",device.name());try{pad.addProperty("guidSha256",java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(device.guid().getBytes(java.nio.charset.StandardCharsets.UTF_8))));}catch(java.security.NoSuchAlgorithmException impossible){throw new IllegalStateException(impossible);}pads.add(pad);}result.add("availableGamepads",pads);
@@ -247,6 +249,7 @@ public final class ClientQaMod {
         result.add("picture",NativeReview.picture(client));
         result.add("dock",DockActions.observe(client));
         result.add("heldReview",heldActions.observe(client));
+        result.add("polish",PolishActions.observe(client));
         var state = ConsoleClient.INSTANCE.snapshot();
         result.addProperty("status", state.status()); result.addProperty("room", state.room()); result.addProperty("epoch", state.epoch());
         result.addProperty("port", state.port()); result.addProperty("ready", state.ready()); result.addProperty("frames", state.frames()); result.addProperty("crc", state.frameCrc());

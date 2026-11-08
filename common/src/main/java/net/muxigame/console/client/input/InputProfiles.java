@@ -47,7 +47,6 @@ public final class InputProfiles {
     private final Path path;
     private final EnumMap<Platform, Profile> profiles = new EnumMap<>(Platform.class);
     private String loadWarning = "";
-    private int focusKey = GLFW.GLFW_KEY_F;
 
     public static synchronized InputProfiles get() {
         if (instance == null) instance = new InputProfiles(Minecraft.getInstance().gameDirectory);
@@ -68,20 +67,7 @@ public final class InputProfiles {
     public synchronized void bind(Platform platform, int bit, int key) { profile(platform).bind(bit, key); }
     public synchronized void bindAxis(Platform platform,int direction,int key){profile(platform).bindAxis(direction,key);}
     public synchronized void bindGamepad(Platform platform,int bit,int button){profile(platform).bindGamepad(bit,button);}
-    public synchronized void reset(Platform platform) { profiles.put(platform, new Profile(platform, focusKey)); }
-    public synchronized int focusKey() { return focusKey; }
-    /** One global view key; assigning it releases that key from every platform's game controls. */
-    public synchronized int bindFocus(int key) {
-        validateFocusKey(key);
-        int cleared = 0;
-        for (Profile profile : profiles.values()) cleared += profile.reserveFocus(key);
-        focusKey = key;
-        return cleared;
-    }
-    private static void validateFocusKey(int key) {
-        if (key < GLFW.GLFW_KEY_SPACE || key > GLFW.GLFW_KEY_LAST || key == GLFW.GLFW_KEY_ESCAPE || key == GLFW.GLFW_KEY_F8)
-            throw new IllegalArgumentException("Escape and F8 are reserved; a view key must be bound");
-    }
+    public synchronized void reset(Platform platform) { profiles.put(platform, new Profile(platform)); }
     public synchronized void setEnabled(Platform platform, boolean enabled) { profile(platform).setEnabled(enabled); }
 
     public synchronized void setGamepad(Platform platform, int joystickId) {
@@ -107,7 +93,9 @@ public final class InputProfiles {
 
     public synchronized PortInput sample(Platform platform, long window) { return sample(platform,window,key->true,false); }
 
-    /** Ordinary Screen key callbacks, also usable by a controller frontend without synthesizing button masks. */
+    public synchronized PortInput sampleGamepad(Platform platform) { return sample(platform,0,key->false,false,key->false); }
+
+    /** Legacy keyboard-profile reader retained for migration and deterministic frontend diagnostics. */
     public synchronized PortInput sampleKeys(Platform platform, java.util.Set<Integer> keys) {
         java.util.Set<Integer> down = java.util.Set.copyOf(keys);
         return sample(platform, 0, key -> true, false, down::contains);
@@ -166,6 +154,7 @@ public final class InputProfiles {
         return (short) Math.round(value * 32767);
     }
     private static int resolveJoystick(Profile profile) {
+        if (profile.gamepadGuid().equals("*")) { var devices=availableGamepads();return devices.isEmpty()?-1:devices.getFirst().id(); }
         if (profile.gamepadGuid().isEmpty()) return -1;
         int preferred = profile.preferredJoystick();
         if (preferred >= 0 && GLFW.glfwJoystickIsGamepad(preferred)
@@ -180,23 +169,21 @@ public final class InputProfiles {
         if (Files.size(path) > 262144) throw new IOException("Input profile file exceeds limit");
         JsonObject root = JsonParser.parseString(Files.readString(path, StandardCharsets.UTF_8)).getAsJsonObject();
         if (root.get("schema").getAsInt() != 1) throw new IOException("Unknown input profile version");
-        int loadedFocus = root.has("focusKey") ? root.get("focusKey").getAsInt() : GLFW.GLFW_KEY_F;
-        validateFocusKey(loadedFocus);
         JsonObject input = root.getAsJsonObject("platforms");
         EnumMap<Platform, Profile> loaded = new EnumMap<>(Platform.class);
         boolean reservedMigrated = false;
         for (Platform platform : Platform.values()) {
-            Profile profile = new Profile(platform, loadedFocus);
+            Profile profile = new Profile(platform);
             if (input.has(platform.id())) {
                 JsonObject stored = input.getAsJsonObject(platform.id());
                 JsonArray keys = stored.getAsJsonArray("keys");
                 if (keys.size() != 16) throw new IOException("Expected sixteen key bindings");
                 for (int bit = 0; bit < 16; bit++) {
                     int key = keys.get(bit).getAsInt();
-                    if (key == GLFW.GLFW_KEY_F8 || key == loadedFocus) { key = GLFW.GLFW_KEY_UNKNOWN; reservedMigrated = true; }
+                    if (key == GLFW.GLFW_KEY_ESCAPE) { key = GLFW.GLFW_KEY_UNKNOWN; reservedMigrated = true; }
                     profile.bind(bit, key);
                 }
-                if(stored.has("axes")){JsonArray axes=stored.getAsJsonArray("axes");if(axes.size()!=8)throw new IOException("Expected eight analog directions");for(int i=0;i<8;i++){int key=axes.get(i).getAsInt();if(key==GLFW.GLFW_KEY_F8||key==loadedFocus){key=GLFW.GLFW_KEY_UNKNOWN;reservedMigrated=true;}profile.bindAxis(i,key);}}
+                if(stored.has("axes")){JsonArray axes=stored.getAsJsonArray("axes");if(axes.size()!=8)throw new IOException("Expected eight analog directions");for(int i=0;i<8;i++){int key=axes.get(i).getAsInt();if(key==GLFW.GLFW_KEY_ESCAPE){key=GLFW.GLFW_KEY_UNKNOWN;reservedMigrated=true;}profile.bindAxis(i,key);}}
                 if(stored.has("gamepadButtons")){JsonArray buttons=stored.getAsJsonArray("gamepadButtons");if(buttons.size()!=16)throw new IOException("Expected sixteen controller bindings");for(int i=0;i<16;i++)profile.bindGamepad(i,buttons.get(i).getAsInt());}
                 profile.setEnabled(stored.get("gamepadEnabled").getAsBoolean());
                 String guid = stored.get("gamepadGuid").getAsString();
@@ -206,12 +193,12 @@ public final class InputProfiles {
             }
             loaded.put(platform, profile);
         }
-        profiles.clear(); profiles.putAll(loaded); focusKey = loadedFocus;
-        loadWarning = reservedMigrated ? "已清除与操作视角或 F8 安全返回键冲突的旧绑定；其他设置保留" : "";
+        profiles.clear(); profiles.putAll(loaded);
+        loadWarning = reservedMigrated ? "已清除与 Esc 退出键冲突的旧绑定；其他设置保留" : "";
     }
 
     public synchronized void save() throws IOException {
-        JsonObject root = new JsonObject(); root.addProperty("schema", 1); root.addProperty("focusKey", focusKey);
+        JsonObject root = new JsonObject(); root.addProperty("schema", 1);
         JsonObject output = new JsonObject();
         for (Platform platform : Platform.values()) {
             Profile profile = profile(platform);
@@ -246,25 +233,21 @@ public final class InputProfiles {
         private final int[] axes={-1,-1,-1,-1,-1,-1,-1,-1};
         private final int[] pads=GAMEPAD_BUTTONS.clone();
         private boolean gamepadEnabled;
-        private int focusKey = GLFW.GLFW_KEY_F;
         private String guid = "";
         private int joystick = -1;
         public Profile(){this(Platform.NES);}
-        public Profile(Platform platform){this(platform,GLFW.GLFW_KEY_F);}
-        private Profile(Platform platform,int focusKey){
+        public Profile(Platform platform){
             pads[12]=15;pads[13]=16;
             if(platform==Platform.N64){keys[0]=GLFW.GLFW_KEY_J;keys[1]=GLFW.GLFW_KEY_K;keys[8]=GLFW.GLFW_KEY_L;keys[4]=GLFW.GLFW_KEY_UP;keys[5]=GLFW.GLFW_KEY_DOWN;keys[6]=GLFW.GLFW_KEY_LEFT;keys[7]=GLFW.GLFW_KEY_RIGHT;axes[0]=GLFW.GLFW_KEY_A;axes[1]=GLFW.GLFW_KEY_D;axes[2]=GLFW.GLFW_KEY_W;axes[3]=GLFW.GLFW_KEY_S;}
             if(platform==Platform.MD){keys[0]=GLFW.GLFW_KEY_J;keys[8]=GLFW.GLFW_KEY_K;keys[11]=GLFW.GLFW_KEY_L;keys[10]=GLFW.GLFW_KEY_O;}
-            reserveFocus(focusKey);
         }
-        private int reserveFocus(int key){int cleared=0;for(int i=0;i<keys.length;i++)if(keys[i]==key){keys[i]=GLFW.GLFW_KEY_UNKNOWN;cleared++;}for(int i=0;i<axes.length;i++)if(axes[i]==key){axes[i]=GLFW.GLFW_KEY_UNKNOWN;cleared++;}focusKey=key;return cleared;}
         public int keyBinding(int bit) { checkBit(bit); return keys[bit]; }
         public void bind(int bit, int key) {
             checkBit(bit);
             if (key != GLFW.GLFW_KEY_UNKNOWN && (key < GLFW.GLFW_KEY_SPACE || key > GLFW.GLFW_KEY_LAST))
                 throw new IllegalArgumentException("Invalid keyboard key");
-            if (key == GLFW.GLFW_KEY_ESCAPE || key == focusKey || key == GLFW.GLFW_KEY_F8)
-                throw new IllegalArgumentException("Escape, the view key and F8 are reserved for game view controls");
+            if (key == GLFW.GLFW_KEY_ESCAPE)
+                throw new IllegalArgumentException("Escape is reserved for leaving fullscreen");
             // One physical key controls one logical button in a platform profile.
             if (key != GLFW.GLFW_KEY_UNKNOWN)
                 for (int other = 0; other < keys.length; other++) if (other != bit && keys[other] == key) keys[other] = GLFW.GLFW_KEY_UNKNOWN;
@@ -272,7 +255,7 @@ public final class InputProfiles {
             keys[bit] = key;
         }
         public int axisBinding(int direction){if(direction<0||direction>=8)throw new IllegalArgumentException("Analog direction");return axes[direction];}
-        public void bindAxis(int direction,int key){axisBinding(direction);if(key!=GLFW.GLFW_KEY_UNKNOWN&&(key<GLFW.GLFW_KEY_SPACE||key>GLFW.GLFW_KEY_LAST)||key==GLFW.GLFW_KEY_ESCAPE||key==focusKey||key==GLFW.GLFW_KEY_F8)throw new IllegalArgumentException("Reserved or invalid analog key");if(key!=GLFW.GLFW_KEY_UNKNOWN){for(int i=0;i<keys.length;i++)if(keys[i]==key)keys[i]=-1;for(int i=0;i<axes.length;i++)if(i!=direction&&axes[i]==key)axes[i]=-1;}axes[direction]=key;}
+        public void bindAxis(int direction,int key){axisBinding(direction);if(key!=GLFW.GLFW_KEY_UNKNOWN&&(key<GLFW.GLFW_KEY_SPACE||key>GLFW.GLFW_KEY_LAST)||key==GLFW.GLFW_KEY_ESCAPE)throw new IllegalArgumentException("Reserved or invalid analog key");if(key!=GLFW.GLFW_KEY_UNKNOWN){for(int i=0;i<keys.length;i++)if(keys[i]==key)keys[i]=-1;for(int i=0;i<axes.length;i++)if(i!=direction&&axes[i]==key)axes[i]=-1;}axes[direction]=key;}
         public int gamepadButton(int bit){checkBit(bit);return pads[bit];}
         public void bindGamepad(int bit,int physical){checkBit(bit);if(physical< -1||physical>16)throw new IllegalArgumentException("Invalid gamepad button");if(physical>=0)for(int i=0;i<pads.length;i++)if(i!=bit&&pads[i]==physical)pads[i]=-1;pads[bit]=physical;}
         public boolean enabled() { return gamepadEnabled; }

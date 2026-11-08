@@ -20,7 +20,7 @@ public final class DeviceScreen extends ConsoleScreen {
         button(left + 14, top + 58, w, "启动 / 停止", ignored -> act("power", 0));
         button(left + 22 + w, top + 58, w, dock()?"取出掌机":"取出卡带", ignored -> act("eject", 0));
         button(left + 14, top + 86, w, "连接附近屏幕", ignored -> act("link", 0));
-        button(left + 22 + w, top + 86, w, "按键与手柄", ignored -> minecraft.setScreen(new ControlsScreen(this, currentPlatform())));
+        button(left + 22 + w, top + 86, w, "按键与手柄", ignored -> net.muxigame.console.client.input.NativeControls.openSettings(this));
         if(!dock()&&!context.has("card")&&!context.get("powered").getAsBoolean()){
             int id=context.has("model")?context.get("model").getAsInt():0;
             var body=net.muxigame.console.mc.HardwareCatalog.body(id);

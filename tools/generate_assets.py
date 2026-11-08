@@ -53,6 +53,7 @@ PLATFORMS = [
 BLOCKS = ("desk_console", "screen", "cartridge_writer", "handheld_dock")
 ITEMS = (*BLOCKS, "handheld", "cartridge", "blank_cartridge", "controller")
 LARGE_SCREEN_PLANE = (-31.25, .5, 15.25, 31.5, 6.94)
+MONITOR_PLANE = (-14.6,13.15,14.6,29.575,6.14)
 FACES = ("down", "up", "north", "south", "west", "east")
 COLORS = {
     "ink": "203B42", "shell": "DDDACA", "edge": "708C89",
@@ -350,6 +351,7 @@ def model_catalog():
             "controller_ports":DESKTOP_PORTS.get(platform,1),"silhouette":SILHOUETTES[platform],
             "bounds":bounds,
             "control_surfaces":hardware.control_surfaces(platform,box,HANDHELD_PLANES,ARCADE_PLANES),
+            "button_regions":hardware.button_regions(platform,box,HANDHELD_PLANES,ARCADE_PLANES),
             "screen_plane":None if plane is None else {"from":[plane[0],plane[1],plane[4]],"to":[plane[2],plane[3],plane[4]],"facing":"north"},
             "review":{"row":(cmd-1)//5,"column":(cmd-1)%5,"station":[((cmd-1)%5)*4,64,((cmd-1)//5)*7],
                 "camera_offset":[2.8,2.0,-3.9],"camera_pitch":20,"image":f"{cmd:02d}-{platform}.png"}})
@@ -364,12 +366,14 @@ def model_catalog():
     return {"schema":1,"namespace":NS,"coordinate_units":16,"front":"north",
         "generic_control_surfaces":hardware.control_surfaces("generic",box,HANDHELD_PLANES,ARCADE_PLANES),
         "controller_control_surfaces":hardware.control_surfaces("controller",box,HANDHELD_PLANES,ARCADE_PLANES),
-        "screen_plane":{"from":[1.5,3.0,6.90],"to":[14.5,12.75,6.90],"aspect":[4,3]},
-        "display_layout":{"width_blocks":3,"height_blocks":2,"part_property":"part",
-            "legacy_part":0,"large_parts":[1,2,3,4,5,6],"anchor_part":1,
-            "part_index":"part - 1 = column + row * 3","north_column_direction":"west",
-            "bounds":{"min":[-32,0,6.94],"max":[16,32,9]},
-            "screen_plane":{"from":[-31.25,.5,6.94],"to":[15.25,31.5,6.94],"aspect":[3,2]}},
+        "generic_button_regions":hardware.button_regions("generic",box,HANDHELD_PLANES,ARCADE_PLANES),
+        "controller_button_regions":hardware.button_regions("controller",box,HANDHELD_PLANES,ARCADE_PLANES),
+        "screen_plane":{"from":[1.1,6.65,6.14],"to":[14.9,14.4125,6.14],"aspect":[16,9]},
+        "display_layout":{"width_blocks":2,"height_blocks":2,"depth_blocks":1,"part_property":"part",
+            "legacy_part":0,"legacy_large_parts":[1,2,3,4,5,6],"large_parts":[7,8,9,10],"anchor_part":7,
+            "part_index":"part - 7 = column + row * 2","north_column_direction":"west",
+            "bounds":{"min":[-16,0,2.8],"max":[16,32,13.2]},
+            "screen_plane":{"from":[-14.6,13.15,6.14],"to":[14.6,29.575,6.14],"aspect":[16,9]}},
         "dock_layout":{"geometry":f"{NS}:block/handheld_dock",
             "bounds":{"min":[1,0,2],"max":[15,3,14]},"slot_top_y":3,
             "display_min_y":4,"display_motion":"rotation_only","display_source":"stored_handheld_item"},
@@ -379,6 +383,7 @@ def model_catalog():
             "controller_ports":2,"screen_plane":{"from":[3.2,7,4.30],"to":[12.8,14.2,4.30],"facing":"north"},
             "control_positions":[[11.8,5.8,2.9],[4.2,5.8,2.9]],
             "control_surfaces":hardware.control_surfaces("arcade",box,HANDHELD_PLANES,ARCADE_PLANES,True),
+            "button_regions":hardware.button_regions("arcade",box,HANDHELD_PLANES,ARCADE_PLANES,True),
             "review":{"row":4,"column":1,"station":[4,64,28],"image":"22-arcade-2p.png"}}]}
 
 
@@ -421,6 +426,24 @@ def large_screen_geometry(part):
     return elements
 
 
+def monitor_geometry(part):
+    """Clip the entire thin monitor/support/foot into four real, bounded tiles."""
+    if not 0 <= part < 4:raise ValueError("Invalid monitor tile")
+    column,row=part%2,part//2;ox,oy=-16*column,16*row;elements=[]
+    for source in hardware.monitor(box):
+        lo=[max(source["from"][0],ox),max(source["from"][1],oy),source["from"][2]]
+        hi=[min(source["to"][0],ox+16),min(source["to"][1],oy+16),source["to"][2]]
+        if lo[0]>=hi[0] or lo[1]>=hi[1]:continue
+        element=copy.deepcopy(source)
+        element["from"]=[lo[0]-ox,lo[1]-oy,lo[2]];element["to"]=[hi[0]-ox,hi[1]-oy,hi[2]]
+        if source["faces"]["north"]["texture"]=="#display":
+            x0,y0,x1,y1,z=MONITOR_PLANE
+            element["faces"]["north"]["uv"]=[(x1-hi[0])*16/(x1-x0),(y1-hi[1])*16/(y1-y0),
+                (x1-lo[0])*16/(x1-x0),(y1-lo[1])*16/(y1-y0)]
+        elements.append(element)
+    return elements
+
+
 def models():
     result = {}
     # Offset split lid, projecting right-side cartridge dock, low vented base.
@@ -447,8 +470,13 @@ def models():
         box([13.5, 2.7, 6.88], [14.3, 2.92, 7], "amber"),
         box([1.7, 13.15, 6.94], [4.5, 13.48, 7.2], "accent"),
     ])
+    result["block/screen"]=base_model(hardware.monitor(box,True),hardware.monitor_palette(NS))
+    result["block/screen"]["ambientocclusion"]=False
     for part in range(6):
         result[f"block/screen_{part}"] = base_model(large_screen_geometry(part))
+    for part in range(4):
+        result[f"block/monitor_{part}"]=base_model(monitor_geometry(part),hardware.monitor_palette(NS))
+        result[f"block/monitor_{part}"]["ambientocclusion"]=False
     result["block/handheld_dock"] = base_model([
         box([1, 0, 2], [15, .65, 14], "dark"),
         box([1, .65, 2], [15, 2, 14], "ink"),
@@ -530,11 +558,11 @@ def models():
         result[f"item/{name}"] = {"parent": f"{NS}:block/{name}"}
     # The inventory item represents the complete thin panel, not one tiled
     # corner and not an out-of-bounds 48x32 model.
-    result["item/screen"] = base_model([
-        box([.5, 3, 7], [15.5, 13, 8], "ink"),
-        box([.5, 3, 6.96], [15.5, 13, 7.12], "edge"),
-        box([.75, 3.1666666667, 6.94], [15.25, 12.8333333333, 7.02], "screen", north="display"),
-    ], kind="item")
+    icon=copy.deepcopy(hardware.monitor(box))
+    for element in icon:
+        for key in ("from","to"):
+            x,y,z=element[key];element[key]=[8+x*.46,.2+y*.46,8+(z-8)*.46]
+    result["item/screen"]=base_model(icon,hardware.monitor_palette(NS),kind="item")
     result["item/blank_cartridge"] = {"parent": f"{NS}:item/template_cartridge"}
     for name in ("cartridge", "handheld"):
         result[f"item/{name}"] = {"parent": f"{NS}:item/template_{name}"}
@@ -628,12 +656,33 @@ def languages():
         "tooltip.muxi_console.transferable": ("可交给其他玩家使用", "Can be given to another player"),
         "tooltip.muxi_console.handheld": ("手持使用，随时游玩", "Use while held to play anywhere"),
         "tooltip.muxi_console.desk_console": ("插入卡带后使用", "Insert a cartridge, then use"),
-        "tooltip.muxi_console.screen": ("3 × 2 格薄型大屏 · 连接游戏机或掌机底座", "Thin 3 × 2 display · connect a console or handheld dock"),
+        "tooltip.muxi_console.screen": ("2 × 2 × 1 格电脑显示器 · 薄面板与支架", "2 × 2 × 1 computer monitor · thin panel and support"),
         "tooltip.muxi_console.handheld_dock": ("放入掌机后连接大屏，潜行空手使用取出", "Insert a handheld and connect a display; sneak-use with an empty hand to remove"),
         "tooltip.muxi_console.controller": ("使用游戏机加入控制席", "Use a console to take a player seat"),
     }
+    pairs.update({
+        "options.muxi_console.platform":("游戏机平台","Console platform"),
+        "options.muxi_console.gamepad":("游戏手柄","Gamepad"),
+        "options.muxi_console.automatic":("自动","Automatic"),
+        "options.muxi_console.disconnected":("未连接","Disconnected"),
+        "options.muxi_console.gamepad_button":("手柄 %s","Gamepad %s"),
+        "options.muxi_console.reserved":("右键切换模式，Esc退出；这两个输入不能绑定游戏按钮。","Right click switches mode; Esc exits. These inputs are reserved.")})
+    default_names=["B","Y","Select","Start","↑","↓","←","→","A","X","L","R","L2","R2","L3","R3"]
+    specific={
+        "md":["A","X","Mode","Start","↑","↓","←","→","B","Y","Z","C","L2（未用）","R2（未用）","L3（未用）","R3（未用）"],
+        "n64":["A / C↓模式","B / C←模式","Select（未用）","Start","十字↑","十字↓","十字←","十字→","C→","C↑","L","R","Z 扳机","C 按钮模式","L3（未用）","R3（未用）"]}
     for platform, zh, en, _ in PLATFORMS:
         pairs[f"platform.{NS}.{platform}"] = (zh, en)
+        pairs[f"key.categories.{NS}.{platform}"]=(f"木犀游戏机 · {zh}",f"Muxi Console · {en}")
+        names=list(specific.get(platform,default_names))
+        if platform=="fds":names[10]="磁盘换面";names[11]="弹出 / 插入磁盘"
+        for bit,name in enumerate(names):
+            english=name.replace("（未用）"," (unused)").replace("十字","D-pad ").replace("模式"," mode").replace("扳机","trigger").replace("按钮","button").replace("磁盘换面","Flip disk").replace("弹出 / 插入磁盘","Eject / insert disk")
+            pairs[f"key.{NS}.{platform}.button.{bit}"]=(name,english)
+        for direction,(zh_axis,en_axis) in enumerate(zip(
+                ["左摇杆←","左摇杆→","左摇杆↑","左摇杆↓","右摇杆←","右摇杆→","右摇杆↑","右摇杆↓"],
+                ["Left stick ←","Left stick →","Left stick ↑","Left stick ↓","Right stick ←","Right stick →","Right stick ↑","Right stick ↓"])):
+            pairs[f"key.{NS}.{platform}.axis.{direction}"]=(zh_axis,en_axis)
     return {"zh_cn": {key: pair[0] for key, pair in pairs.items()},
             "en_us": {key: pair[1] for key, pair in pairs.items()}}
 
@@ -672,6 +721,11 @@ def generated_files():
     wood=canvas(16,16,"855D3D")
     for y in (2,6,10,14):rect(wood,16,0,y,16,y+1,"A4774C")
     files[f"{ASSETS}/textures/block/hardware/wood_grain.png"] = png(16,16,wood)
+    for platform,_,short,_ in [*PLATFORMS,("generic","","MC","")]:
+        etched=canvas(32,8,"252A2E")
+        text_pixels(etched,32,2,1,short[:3],"87918F")
+        for x in range(18,30,2):rect(etched,32,x,3,x+1,5,"56615F")
+        files[f"{ASSETS}/textures/block/hardware/engraving_{platform}.png"]=png(32,8,etched)
     for index, (platform, _, short, color) in enumerate(PLATFORMS, 1):
         files[f"{ASSETS}/textures/block/common/platform_{platform}.png"] = surface(color)
         files[f"{ASSETS}/textures/item/label_{platform}.png"] = label_texture(short, color, index)
@@ -681,7 +735,11 @@ def generated_files():
     rect(standby, 64, 4, 59, 60, 60, COLORS["edge"])
     for x, y in ((23, 24), (31, 16), (39, 24), (31, 32)):
         rect(standby, 64, x, y, x + 8, y + 8, COLORS["amber"])
-    text_pixels(standby, 64, 17, 47, "MUXI", COLORS["shell"], 2)
+    # A quiet LCD gradient replaces the former oversized logo and gold frame.
+    standby=canvas(64,64,"111922")
+    for y in range(64):
+        shade=17+int((63-y)*.08)
+        rect(standby,64,0,y,64,y+1,f"{shade:02X}{shade+6:02X}{shade+12:02X}")
     files[f"{ASSETS}/textures/block/standby.png"] = png(64, 64, standby)
     # Nine-slice panel corners remain 4 px; clients may also draw panels directly.
     panel = canvas(32, 32, COLORS["ink"])
@@ -704,9 +762,9 @@ def generated_files():
         if name == "screen":
             js(f"{ASSETS}/blockstates/{name}.json", {"variants": {
                 f"facing={direction},part={part}":
-                    {"model":f"{NS}:block/{'screen' if part == 0 else 'screen_'+str(part-1)}","y":angle}
+                    {"model":f"{NS}:block/{'screen' if part == 0 else 'screen_'+str(part-1) if part <= 6 else 'monitor_'+str(part-7)}","y":angle}
                 for direction, angle in (("north",0),("east",90),("south",180),("west",270))
-                for part in range(7)}})
+                for part in range(11)}})
         else:
             js(f"{ASSETS}/blockstates/{name}.json", {"variants": {
             (f"facing={direction},model={cmd}" if name == "desk_console" else f"facing={direction}"):
@@ -991,6 +1049,65 @@ def check_closure(files):
         if {surface["button"] for surface in double_controls if surface["port"] == port} != set(range(12)):
             raise ValueError(f"Two-seat cabinet has incomplete feedback on port {port}")
         checks += 1
+    # Whole button regions identify the actual cap boxes, including their sides,
+    # stepped round ends and D-pad centre. No rectangle may merely approximate a cap.
+    regions=[(entry["geometry"],entry["button_regions"]) for entry in [*catalog["entries"],*catalog["additional_styles"]]]
+    regions += [(f"{NS}:item/template_handheld",catalog["generic_button_regions"]),
+                (f"{NS}:item/controller",catalog["controller_button_regions"])]
+    for model_id,values in regions:
+        elements=resolved(f"{ASSETS}/models/{model_id.split(':',1)[1]}.json")["elements"]
+        for region in values:
+            if not 0<=region["button"]<16 or region["port"] not in (0,1) or any(region["from"][i]>=region["to"][i] for i in range(3)):
+                raise ValueError(f"Invalid complete button region: {model_id}")
+            if not any(all(math.isclose(region[key][i],element[key][i],abs_tol=1e-7) for key in ("from","to") for i in range(3)) for element in elements):
+                raise ValueError(f"Whole button region is not an actual authored cap: {model_id}")
+            checks+=1
+    # Separate blocks must not add different corner AO across one continuous LCD.
+    # Directional face shading remains enabled for the frame, stem and foot.
+    for model_id in ("screen", "monitor_0", "monitor_1", "monitor_2", "monitor_3"):
+        model=resolved(f"{ASSETS}/models/block/{model_id}.json")
+        if model.get("ambientocclusion") is not False or any(element.get("shade",True) is not True for element in model["elements"]):
+            raise ValueError("Computer monitor must disable per-tile ambient occlusion while retaining directional shade")
+        checks+=1
+    # Four real tiles form one continuous 16:9 LCD and a joined thin monitor.
+    monitor_area=0.0;monitor_elements=[]
+    for index in range(4):
+        column,row=index%2,index//2
+        model=resolved(f"{ASSETS}/models/block/monitor_{index}.json")
+        for element in model["elements"]:
+            world=copy.deepcopy(element)
+            for key in ("from","to"):
+                world[key][0]-=16*column;world[key][1]+=16*row
+            monitor_elements.append(world)
+            if element["faces"]["north"]["texture"]=="#display":
+                lo,hi=world["from"],world["to"]
+                monitor_area+=(hi[0]-lo[0])*(hi[1]-lo[1])
+                expected=[max(-14.6,-16*column),max(13.15,16*row),min(14.6,16-16*column),min(29.575,16+16*row)]
+                if any(not math.isclose(a,b,abs_tol=1e-8) for a,b in zip([lo[0],lo[1],hi[0],hi[1]],expected)):
+                    raise ValueError("Monitor LCD tiles leave a gap or overlap")
+                uv=element["faces"]["north"]["uv"]
+                if not math.isclose((uv[2]-uv[0])*(uv[3]-uv[1]),(hi[0]-lo[0])*(hi[1]-lo[1])/(29.2*16.425)*256,rel_tol=1e-10):
+                    raise ValueError("Monitor LCD UVs do not form one continuous picture")
+                checks+=2
+        for direction,angle in (("north",0),("east",90),("south",180),("west",270)):
+            if screen_states[f"facing={direction},part={index+7}"]!={"model":f"{NS}:block/monitor_{index}","y":angle}:
+                raise ValueError("Monitor part states disagree with real 2x2 footprint")
+            checks+=1
+    if not math.isclose(monitor_area,29.2*16.425,rel_tol=1e-10):raise ValueError("Monitor LCD does not fill its active 16:9 plane")
+    for element in monitor_elements:
+        if any(element["from"][i]<bound-1e-8 for i,bound in enumerate((-16,0,0))) or any(element["to"][i]>bound+1e-8 for i,bound in enumerate((16,32,16))):
+            raise ValueError("Monitor geometry escapes its real 2x2x1 envelope")
+        if element["from"][2]<MONITOR_PLANE[4]-1e-7 and min(element["to"][0],14.6)>max(element["from"][0],-14.6)+1e-7 and min(element["to"][1],29.575)>max(element["from"][1],13.15)+1e-7:
+            raise ValueError("Monitor bezel covers the active LCD")
+        checks+=1
+    joined={0};pending=[0]
+    while pending:
+        a=monitor_elements[pending.pop()]
+        for i,b in enumerate(monitor_elements):
+            if i not in joined and all(min(a["to"][k],b["to"][k])>=max(a["from"][k],b["from"][k])-1e-7 for k in range(3)):
+                joined.add(i);pending.append(i)
+    if len(joined)!=len(monitor_elements):raise ValueError("Monitor has floating supports, trim or connectors")
+    checks+=2
     generic = resolved(f"{ASSETS}/models/item/template_handheld.json")["elements"]
     bounds = [min(element["from"][axis] for element in generic) for axis in range(3)] + \
              [max(element["to"][axis] for element in generic) for axis in range(3)]
@@ -1027,7 +1144,7 @@ def preview():
             w, h, raw = decode_png(authored[f"{ASSETS}/textures/{path}.png"])
             sampled[texture] = tuple(sum(raw[channel::4]) // (w*h) for channel in range(3))
         return sampled[texture]
-    tiles = [f"block/desk_console_{p[0]}" for p in PLATFORMS] + ["block/arcade_cabinet_2p"]
+    tiles = [f"block/desk_console_{p[0]}" for p in PLATFORMS] + ["block/arcade_cabinet_2p","item/screen"]
     # Top and north faces visible, like a camera above the front-right corner.
     def project(x, y, z, cx, cy):
         return (cx - (x - 8) * 8 - (z - 8) * 4,

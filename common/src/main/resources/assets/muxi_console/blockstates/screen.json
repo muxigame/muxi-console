@@ -28,6 +28,22 @@
       "model": "muxi_console:block/screen_5",
       "y": 0
     },
+    "facing=north,part=7": {
+      "model": "muxi_console:block/monitor_0",
+      "y": 0
+    },
+    "facing=north,part=8": {
+      "model": "muxi_console:block/monitor_1",
+      "y": 0
+    },
+    "facing=north,part=9": {
+      "model": "muxi_console:block/monitor_2",
+      "y": 0
+    },
+    "facing=north,part=10": {
+      "model": "muxi_console:block/monitor_3",
+      "y": 0
+    },
     "facing=east,part=0": {
       "model": "muxi_console:block/screen",
       "y": 90
@@ -54,6 +70,22 @@
     },
     "facing=east,part=6": {
       "model": "muxi_console:block/screen_5",
+      "y": 90
+    },
+    "facing=east,part=7": {
+      "model": "muxi_console:block/monitor_0",
+      "y": 90
+    },
+    "facing=east,part=8": {
+      "model": "muxi_console:block/monitor_1",
+      "y": 90
+    },
+    "facing=east,part=9": {
+      "model": "muxi_console:block/monitor_2",
+      "y": 90
+    },
+    "facing=east,part=10": {
+      "model": "muxi_console:block/monitor_3",
       "y": 90
     },
     "facing=south,part=0": {
@@ -84,6 +116,22 @@
       "model": "muxi_console:block/screen_5",
       "y": 180
     },
+    "facing=south,part=7": {
+      "model": "muxi_console:block/monitor_0",
+      "y": 180
+    },
+    "facing=south,part=8": {
+      "model": "muxi_console:block/monitor_1",
+      "y": 180
+    },
+    "facing=south,part=9": {
+      "model": "muxi_console:block/monitor_2",
+      "y": 180
+    },
+    "facing=south,part=10": {
+      "model": "muxi_console:block/monitor_3",
+      "y": 180
+    },
     "facing=west,part=0": {
       "model": "muxi_console:block/screen",
       "y": 270
@@ -110,6 +158,22 @@
     },
     "facing=west,part=6": {
       "model": "muxi_console:block/screen_5",
+      "y": 270
+    },
+    "facing=west,part=7": {
+      "model": "muxi_console:block/monitor_0",
+      "y": 270
+    },
+    "facing=west,part=8": {
+      "model": "muxi_console:block/monitor_1",
+      "y": 270
+    },
+    "facing=west,part=9": {
+      "model": "muxi_console:block/monitor_2",
+      "y": 270
+    },
+    "facing=west,part=10": {
+      "model": "muxi_console:block/monitor_3",
       "y": 270
     }
   }

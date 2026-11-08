@@ -24,7 +24,7 @@ public final class DeviceEntity extends BlockEntity {
     public BlockPos screenAnchor(){return screenOrigin==null?worldPosition:screenOrigin;}
     public boolean largeScreen(){return kind()==DeviceBlock.Kind.SCREEN&&screenOrigin!=null&&getBlockState().hasProperty(ScreenBlock.PART)&&getBlockState().getValue(ScreenBlock.PART)>0;}
     public boolean screenPrimary(){return !largeScreen()||worldPosition.equals(screenOrigin);}
-    @Override public void onLoad(){super.onLoad();if(level!=null&&!level.isClientSide&&largeScreen())level.scheduleTick(worldPosition,getBlockState().getBlock(),1);}
+    @Override public void onLoad(){super.onLoad();if(level!=null&&!level.isClientSide&&kind()==DeviceBlock.Kind.SCREEN)level.scheduleTick(worldPosition,getBlockState().getBlock(),1);}
     public void changed(){setChanged();if(level!=null)level.sendBlockUpdated(worldPosition,getBlockState(),getBlockState(),3);}
     protected void saveAdditional(CompoundTag t,HolderLookup.Provider lookup){
         super.saveAdditional(t,lookup);t.putUUID("identity",identity);t.putInt("ports",ports);t.putBoolean("powered",powered);

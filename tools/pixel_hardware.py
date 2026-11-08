@@ -46,7 +46,8 @@ def palette(platform, ns='muxi_console'):
                 'display':f'{ns}:block/hardware/idle_mono' if platform in ('gb','ngp','ws') else f'{ns}:block/hardware/idle_color',
                 'label':f'{ns}:block/hardware/serial',
                 'wood':f'{ns}:block/hardware/wood_grain',
-                'marquee':f'{ns}:block/hardware/marquee'})
+                'marquee':f'{ns}:block/hardware/marquee',
+                'engraving':f'{ns}:block/hardware/engraving_{platform}'})
     return out
 
 
@@ -88,7 +89,8 @@ def control_box(b,surfaces,bit,facing='north',port=0):
             if facing=='north':hi[2]=lo[2]
             elif facing=='up':lo[1]=hi[1]
             else:raise ValueError(facing)
-            surfaces.append({'button':bit,'from':lo,'to':hi,'facing':facing,'port':port})
+            surfaces.append({'button':bit,'from':lo,'to':hi,'facing':facing,'port':port,
+                             '_caps':[{'from':list(start),'to':list(end)}]})
         return element
     return emit
 
@@ -98,16 +100,20 @@ def capsule(b,x0,y0,x1,y1,z,material='button',depth=.65):
     return rounded(b,x0,y0,x1,y1,z,z+depth,material,min((y1-y0)*.35,(x1-x0)*.2))
 
 
-def directional_surfaces(surfaces,cx,cy,z,size,bits=(4,5,6,7),port=0):
+def directional_surfaces(surfaces,cx,cy,z,size,bits=(4,5,6,7),port=0,cap_boxes=None):
     if surfaces is None:return
     r=size/2;arm=size/6
+    if cap_boxes is None:
+        cap_boxes=cross(lambda start,end,material,**faces:{'from':start,'to':end},cx,cy,z,size)
+    # Legacy front patches remain available; complete physical caps also carry all six faces.
     # Only each arm's outer tip lights; the engraved centre remains visible.
     rectangles=((cx-arm,cy+arm,cx+arm,cy+r),
                 (cx-arm,cy-r,cx+arm,cy-arm),
                 (cx+arm,cy-arm,cx+r,cy+arm),
                 (cx-r,cy-arm,cx-arm,cy+arm))
     for bit,(x0,y0,x1,y1) in zip(bits,rectangles):
-        surfaces.append({'button':bit,'from':[x0,y0,z],'to':[x1,y1,z],'facing':'north','port':port})
+        surfaces.append({'button':bit,'from':[x0,y0,z],'to':[x1,y1,z],'facing':'north','port':port,
+                         '_caps':[{'from':list(e['from']),'to':list(e['to'])} for e in cap_boxes]})
 
 
 def slim_depth(elements,pivot,scale=.76):
@@ -115,6 +121,7 @@ def slim_depth(elements,pivot,scale=.76):
     for element in elements:
         for point in ('from','to'):
             element[point][2]=round(pivot+(element[point][2]-pivot)*scale,6)
+        if '_caps' in element:slim_depth(element['_caps'],pivot,scale)
     return elements
 
 
@@ -224,7 +231,8 @@ def handheld(platform,b,planes,surfaces=None):
         # Recessed octagonal click stick, not an oversized cross.
         e+=rounded(b,11.8,5.65,14.35,8.4,5.48,6.23,'dark',.45)
         e+=button(b,13.08,7.03,5.32,.62,'button',.6)
-        directional_surfaces(surfaces,13.08,7.03,5.32,1.0)
+        directional_surfaces(surfaces,13.08,7.03,5.32,1.0,cap_boxes=button(
+            lambda start,end,material,**faces:{'from':start,'to':end},13.08,7.03,5.32,.62,'button',.6))
         e+=action(8,1.85,7.9,5.52,.4,'button')+action(0,3.1,6.5,5.52,.4,'button')
         e += key(3,2.18,10.66,3.12,10.93,6.0)
         e += [b([2.0+i*.45,4.15,5.97],[2.17+i*.45,4.9,6.2],'dark') for i in range(5)]
@@ -249,9 +257,9 @@ def handheld(platform,b,planes,surfaces=None):
     return result
 
 
-def geometry(platform,b,planes,arcade_planes):
+def _geometry(platform,b,planes,arcade_planes):
     if platform in planes:return handheld(platform,b,planes)
-    if platform=='arcade':return arcade(b,False,arcade_planes)
+    if platform=='arcade':return _arcade(b,False,arcade_planes)
     f=deck_feet(b)
     if platform=='nes':
         e=f+[b([1,.4,2],[15,3.6,14],'ink'),b([1,3.6,2],[15,5.4,14],'shell'),
@@ -338,7 +346,7 @@ def geometry(platform,b,planes,arcade_planes):
     raise ValueError(platform)
 
 
-def arcade(b,double,planes,surfaces=None):
+def _arcade(b,double,planes,surfaces=None):
     x0,x1=(.4,15.6) if double else (3,13);y=4.9 if double else 6.3;plane=planes['double' if double else 'single']
     e=[b([x0,0,4],[x1,.7,14],'dark'),b([x0+.35,.7,4.3],[x1-.35,y,13.65],'ink'),
        b([x0,1.0,4],[x0+.72,15.75,14],'accent'),b([x1-.72,1,4],[x1,15.75,14],'accent'),
@@ -354,7 +362,8 @@ def arcade(b,double,planes,surfaces=None):
         material='blue' if index==0 else 'red'
         e += [b([cx+.7,y+.9,2.55],[cx+1.35,y+1.5,3.2],'dark')]
         e+=button(b,cx+1.02,y+1.5,2.45,.52,material,.75)
-        directional_surfaces(surfaces,cx+1.02,y+1.5,2.45,.8,port=index)
+        directional_surfaces(surfaces,cx+1.02,y+1.5,2.45,.8,port=index,cap_boxes=button(
+            lambda start,end,material,**faces:{'from':start,'to':end},cx+1.02,y+1.5,2.45,.52,material,.75))
         for row in range(2):
             for col in range(3):
                 xx=cx-1.6+col*.7;zz=2.5+row*.85
@@ -441,7 +450,7 @@ def generic(kind,b,surfaces=None):
     raise ValueError(kind)
 
 
-def control_surfaces(platform,b,planes,arcade_planes,double=False):
+def _controls(platform,b,planes,arcade_planes,double=False):
     """Exact authored visible cap planes, using public RetroPad button IDs."""
     surfaces=[]
     if platform in planes:handheld(platform,b,planes,surfaces)
@@ -449,3 +458,109 @@ def control_surfaces(platform,b,planes,arcade_planes,double=False):
     elif platform=='controller':generic('controller',b,surfaces)
     elif platform=='arcade':arcade(b,double,arcade_planes,surfaces)
     return surfaces
+
+
+def control_surfaces(platform,b,planes,arcade_planes,double=False):
+    return [{k:v for k,v in surface.items() if not k.startswith('_')}
+            for surface in _controls(platform,b,planes,arcade_planes,double)]
+
+
+def button_regions(platform,b,planes,arcade_planes,double=False):
+    regions=[];seen=set()
+    for surface in _controls(platform,b,planes,arcade_planes,double):
+        for cap in surface['_caps']:
+            key=(surface['button'],surface['port'],*cap['from'],*cap['to'])
+            if key in seen:continue
+            seen.add(key)
+            regions.append({'button':surface['button'],'port':surface['port'],
+                            'from':list(cap['from']),'to':list(cap['to'])})
+    return regions
+
+
+def _back_screw(b,cx,cy,z):
+    return [b([cx-.12,cy-.12,z-.03],[cx+.12,cy+.12,z+.02],'button'),
+            b([cx-.075,cy-.025,z+.018],[cx+.075,cy+.025,z+.027],'metal')]
+
+
+def fine_details(platform,b,e,planes):
+    # Small manufacturing details are geometry, kept clear of live windows and caps.
+    if platform in planes:
+        plane=planes[platform];x0,y0,x1,y1,z=plane
+        e += [b([(x0+x1)/2-.95,y0-.35,z+.029],[(x0+x1)/2+.95,y0-.20,z+.08],
+                'dark',north='engraving')]
+        bounds=[min(v['from'][i] for v in e) for i in range(3)]+[max(v['to'][i] for v in e) for i in range(3)]
+        cx=(bounds[0]+bounds[3])/2;cy=(bounds[1]+bounds[4])/2
+        rear=max(v['to'][2] for v in e if v['from'][0]<=cx<=v['to'][0] and v['from'][1]<=cy<=v['to'][1])
+        e += [b([cx-1.35,cy-.28,rear-.025],[cx+1.35,cy+.28,rear+.025],'edge',south='engraving')]
+        for x,y in ((bounds[0]+.9,bounds[1]+1.2),(bounds[3]-.9,bounds[4]-1.2)):
+            surfaces=[v['to'][2] for v in e if v['from'][0]<=x<=v['to'][0] and v['from'][1]<=y<=v['to'][1]]
+            if surfaces:e+=_back_screw(b,x,y,max(surfaces))
+        return e
+    if platform=='vb':
+        return e+[b([7.0,12.72,6.37],[9.0,12.94,6.43],'shell',north='engraving'),
+                  *_back_screw(b,3.3,11.7,12.2),*_back_screw(b,12.7,11.7,12.2)]
+    if platform=='arcade':
+        # Small cabinet fasteners sit on side rails, not on the lit LCD or controls.
+        for x in (min(v['from'][0] for v in e)+.45,max(v['to'][0] for v in e)-.45):
+            for y in (9.0,14.0):
+                e += [b([x-.11,y-.11,3.97],[x+.11,y+.11,4.05],'metal')]
+        return e
+    x0=min(v['from'][0] for v in e);x1=max(v['to'][0] for v in e)
+    z0=min(v['from'][2] for v in e);z1=max(v['to'][2] for v in e)
+    for x in (x0+1.2,x1-1.2):
+        for z in (z0+1.3,z1-1.3):
+            heights=[v['to'][1] for v in e if v['from'][0]<=x<=v['to'][0] and v['from'][2]<=z<=v['to'][2]]
+            if heights:
+                y=max(heights)
+                e += [b([x-.12,y-.02,z-.12],[x+.12,y+.05,z+.12],'button'),
+                      b([x-.075,y+.048,z-.02],[x+.075,y+.063,z+.02],'metal')]
+    # A modest original assembly label and slotted rear vent replace decorative front plaques.
+    primary=max(e,key=lambda v:(v['to'][0]-v['from'][0])*(v['to'][1]-v['from'][1])*(v['to'][2]-v['from'][2]))
+    lo,hi=primary['from'],primary['to'];cx=(lo[0]+hi[0])/2;cy=(lo[1]+hi[1])/2
+    e += [b([cx-1.3,cy-.23,hi[2]-.02],[cx+1.3,cy+.23,hi[2]+.025],'dark',south='engraving')]
+    for i in range(5):
+        x=lo[0]+.65+i*.24
+        e += [b([x,cy-.33,hi[2]-.02],[x+.09,cy+.33,hi[2]+.02],'dark')]
+    return e
+
+
+def geometry(platform,b,planes,arcade_planes):
+    return fine_details(platform,b,_geometry(platform,b,planes,arcade_planes),planes)
+
+
+def monitor_palette(ns='muxi_console'):
+    out=palette('generic',ns)
+    for role,color in {'ink':'202226','shell':'303238','edge':'48494D','dark':'101215',
+                       'metal':'646B6D','button':'22272A','screen':'101215'}.items():
+        out[role]=f'{ns}:block/hardware/c_{color.lower()}'
+    out['display']=f'{ns}:block/standby'
+    return out
+
+
+def monitor(b,single=False):
+    if single:
+        e=rounded(b,.4,5.7,15.6,15.4,6.2,8.4,'ink',.3)
+        e += [b([1.1,6.65,6.16],[14.9,14.4125,6.27],'screen',north='display'),
+              b([7,.8,8.25],[9,6.2,10.1],'shell'),b([6.3,5.2,8.2],[9.7,8.1,9.2],'shell'),
+              b([4.3,0,2.8],[11.7,.65,13.2],'ink'),b([4.55,.65,3.05],[11.45,1,12.95],'shell'),
+              b([13.5,6.02,6.15],[13.75,6.18,6.3],'led')]
+        for x in (2.0,13.8):e+=_back_screw(b,x,14.0,8.4)
+        for x in range(6):e += [b([4.9+x*.95,12.4,8.38],[5.3+x*.95,12.52,8.46],'dark')]
+        e += [b([9.8,7.2,8.38],[12.7,8.4,8.65],'button'),b([10.1,7.48,8.63],[11.25,7.87,8.7],'dark'),b([11.7,7.48,8.63],[12.4,7.87,8.7],'dark')]
+        return e
+    e=rounded(b,-15.5,12,15.5,31,6.2,8.4,'ink',.45)
+    e += [b([-14.6,13.15,6.16],[14.6,29.575,6.27],'screen',north='display'),
+          b([-1.4,1,8.25],[1.4,12.8,10.2],'shell'),b([-3,11.5,8.2],[3,16,10.0],'shell'),
+          b([-7,0,2.8],[7,.8,13.2],'ink'),b([-6.7,.8,3.1],[6.7,1.4,12.9],'shell'),
+          b([12.9,12.4,6.15],[13.25,12.58,6.3],'led'),
+          b([-15.15,12.35,6.18],[15.15,12.49,6.36],'shell')]
+    for x in (-13.7,13.7):
+        for y in (14.1,29.2):e+=_back_screw(b,x,y,8.4)
+    for x in range(12):e += [b([-5.5+x*.95,25.9,8.38],[-5.12+x*.95,26.06,8.5],'dark')]
+    e += [b([5.3,15.0,8.38],[11.4,17.2,8.65],'button'),b([5.8,15.5,8.63],[8.2,16.1,8.74],'dark'),
+          b([8.8,15.5,8.63],[10.6,16.1,8.74],'dark'),b([-.8,3.8,10.18],[.8,4.6,10.45],'dark')]
+    return e
+
+
+def arcade(b,double,planes,surfaces=None):
+    return fine_details('arcade',b,_arcade(b,double,planes,surfaces),{})

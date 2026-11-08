@@ -22,8 +22,9 @@ public final class ExtendedInputTest {
             for(var platform:Platform.values()){
                 int key=GLFW.GLFW_KEY_F10;profiles.bindAxis(platform,7,key);profiles.bindGamepad(platform,8,15);profiles.bindGamepad(platform,0,16);
                 check(profiles.profile(platform).gamepadButton(12)==-1&&profiles.profile(platform).gamepadButton(13)==-1,"Remapped triggers no longer fire prior action");
-                for(int reserved:new int[]{GLFW.GLFW_KEY_ESCAPE,GLFW.GLFW_KEY_F,GLFW.GLFW_KEY_F8})try{profiles.bindAxis(platform,0,reserved);throw new AssertionError("Reserved key accepted");}catch(IllegalArgumentException expected){checks++;}
+                for(int reserved:new int[]{GLFW.GLFW_KEY_ESCAPE})try{profiles.bindAxis(platform,0,reserved);throw new AssertionError("Reserved key accepted");}catch(IllegalArgumentException expected){checks++;}
             }
+            profiles.bindAxis(Platform.GBA,0,GLFW.GLFW_KEY_F);profiles.bindAxis(Platform.GBA,1,GLFW.GLFW_KEY_F8);check(profiles.profile(Platform.GBA).axisBinding(0)==GLFW.GLFW_KEY_F&&profiles.profile(Platform.GBA).axisBinding(1)==GLFW.GLFW_KEY_F8,"Former focus/release keys are available as gameplay analog bindings");
             profiles.save();InputProfiles loaded=new InputProfiles(root.toFile());check(loaded.loadWarning().isEmpty(),"Extended configuration loads atomically");
             for(var platform:Platform.values()){for(int bit=0;bit<16;bit++)check(loaded.profile(platform).gamepadButton(bit)==profiles.profile(platform).gamepadButton(bit),"Gamepad mapping persisted");for(int direction=0;direction<8;direction++)check(loaded.profile(platform).axisBinding(direction)==profiles.profile(platform).axisBinding(direction),"Keyboard analog mapping persisted");}
             loaded.bindGamepad(Platform.N64,8,3);check(loaded.profile(Platform.GBA).gamepadButton(8)==15,"Independent platform controller mapping");

@@ -9,7 +9,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.inventory.ClickType;
 import net.muxigame.console.client.ConsoleClient;
-import net.muxigame.console.client.input.InputProfiles;
+import net.muxigame.console.client.input.NativeControls;
 import net.muxigame.console.client.ui.GameScreen;
 import net.muxigame.console.domain.Platform;
 import net.muxigame.console.runtime.PortInput;
@@ -55,7 +55,7 @@ final class HeldActions {
                 Platform platform=Platform.fromId(j.get("platform").getAsString());
                 // A first-party frontend source polls the real screen's callback key-state through the real profile mapper.
                 // This is needed for hidden test windows; it is not an OS-input acceptance claim.
-                ConsoleClient.INSTANCE.setInputSource(()->client.screen instanceof GameScreen s?InputProfiles.get().sampleKeys(platform,s.inputKeys()):PortInput.IDLE);
+                ConsoleClient.INSTANCE.setInputSource(()->client.screen instanceof GameScreen?NativeControls.sample(platform):PortInput.IDLE);
             }
             case "hand_world_key"->{
                 String name=j.get("name").getAsString();boolean pressed=j.get("pressed").getAsBoolean();
@@ -77,10 +77,9 @@ final class HeldActions {
         catch(ReflectiveOperationException e){throw new IllegalStateException("Current product public input feedback is required",e);}
     }
     private static JsonObject profile(Minecraft client,JsonObject j){
-        JsonObject out=new JsonObject();Platform platform=j.has("platform")?Platform.fromId(j.get("platform").getAsString()):Platform.GB;var p=InputProfiles.get().profile(platform);
-        out.addProperty("platform",platform.id());out.addProperty("aKey",p.keyBinding(8));out.addProperty("bKey",p.keyBinding(0));out.addProperty("upKey",p.keyBinding(4));out.addProperty("focusKey",InputProfiles.get().focusKey());out.addProperty("file",InputProfiles.get().path().toString());
-        // Independently instantiate the ordinary persisted profile reader. No configuration content is written here.
-        var reader=new InputProfiles(client.gameDirectory);var disk=reader.profile(platform);out.addProperty("diskAKey",disk.keyBinding(8));out.addProperty("diskBKey",disk.keyBinding(0));out.addProperty("diskFocusKey",reader.focusKey());return out;
+        JsonObject out=new JsonObject();Platform platform=j.has("platform")?Platform.fromId(j.get("platform").getAsString()):Platform.GB;
+        out.addProperty("platform",platform.id());out.addProperty("aKey",NativeControls.key(platform,8).getKey().getValue());out.addProperty("bKey",NativeControls.key(platform,0).getKey().getValue());out.addProperty("upKey",NativeControls.key(platform,4).getKey().getValue());out.addProperty("file",client.gameDirectory.toPath().resolve("options.txt").toString());
+        return out;
     }
     JsonObject observe(Minecraft client){
         JsonObject out=new JsonObject();out.add("input",feedback());out.addProperty("pressedWorld",pressedWorld);

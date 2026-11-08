@@ -2,6 +2,8 @@
 
 当前是独立开发候选，未发布。Cartridge仅参考公开功能和体验，不读取或迁入其实现；第一方代码、传输、UI、资产、诊断和QA在本仓自行实现，模拟器核心与依赖另行登记。精确候选及最终MC验收状态见 [STATUS](STATUS.md)，玩家操作见 [指南](USER-GUIDE.md)。
 
+当前monitor-polish-04继续保留下面的21平台范围，更新完整钮帽反馈、MC原生键位、右键双全屏及2×2×1电脑显示器。其97项领域/运行时/核心/worker及元数据保持原字节，旧平台长矩阵不重记为本轮执行；本轮GB/GBA实际交互和模型/屏幕证据见[专项审核](MONITOR-POLISH.md)。
+
 ## 21平台
 
 原公开范围为NES、FDS、SNES、GB、GBC、GBA、MD、N64及可选现代MAME；新增12类为SMS、GG、SG-1000、PCE、Atari2600/7800、Lynx、NGP/NGPC、WonderSwan/Color、Virtual Boy。原19个平台与模型编号保持，FDS=20、Arcade=21；双人机台为额外外观22，不另算平台。

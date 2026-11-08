@@ -26,7 +26,8 @@
     "brass": "muxi_console:block/hardware/c_c4a86e",
     "wood_light": "muxi_console:block/hardware/c_a4774c",
     "lcd": "muxi_console:block/hardware/c_748763",
-    "marquee": "muxi_console:block/hardware/marquee"
+    "marquee": "muxi_console:block/hardware/marquee",
+    "engraving": "muxi_console:block/hardware/engraving_gg"
   },
   "ambientocclusion": true,
   "elements": [

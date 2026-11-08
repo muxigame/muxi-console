@@ -19,7 +19,7 @@ public final class InputProfilesPersistenceTest {
             InputProfiles original = new InputProfiles(temporary.toFile());
             check(original.loadWarning().isEmpty(), "Absent config is a normal first launch");
             for (Platform platform : Platform.values()) {
-                int key = customKey(platform); // Function keys, excluding reserved F8.
+                int key = customKey(platform); // Historical function-key preferences remain importable.
                 original.bind(platform, 0, key);
                 original.setEnabled(platform, platform.ordinal() % 2 == 0);
                 original.profile(platform).setGamepad("diagnostic-guid-" + platform.id(), platform.ordinal() % 16);
@@ -44,35 +44,23 @@ public final class InputProfilesPersistenceTest {
             check(third.profile(Platform.GBA).keyBinding(0) == -1, "Rebinding a physical key releases its previous logical button");
             try { third.bind(Platform.GBA, 2, 256); throw new AssertionError("Reserved Escape accepted"); }
             catch (IllegalArgumentException expected) { checks++; }
-            try { third.bind(Platform.GBA, 2, 70); throw new AssertionError("Reserved F accepted"); }
-            catch (IllegalArgumentException expected) { checks++; }
-            try { third.bind(Platform.GBA, 2, 297); throw new AssertionError("Reserved F8 accepted"); }
-            catch (IllegalArgumentException expected) { checks++; }
+            third.bind(Platform.GBA,2,70);third.bind(Platform.GBA,3,297);
+            check(third.profile(Platform.GBA).keyBinding(2)==70&&third.profile(Platform.GBA).keyBinding(3)==297,"F and F8 are ordinary game bindings after removing view hotkeys");
             third.save(); InputProfiles fourth = new InputProfiles(temporary.toFile());
             check(fourth.profile(Platform.GBA).keyBinding(0) == -1 && fourth.profile(Platform.GBA).keyBinding(1) == 294, "Rebinding and unbound key survive another disk reload");
-            check(fourth.focusKey()==70,"Existing schema-one profiles default to F for view controls");
-            fourth.bind(Platform.NES,8,72); // H
-            fourth.bindAxis(Platform.N64,0,72);
-            check(fourth.bindFocus(72)==2,"Global view assignment releases button and axis conflicts across platforms");
-            check(fourth.profile(Platform.NES).keyBinding(8)==-1&&fourth.profile(Platform.N64).axisBinding(0)==-1,"No view key is also sent as gameplay input");
-            fourth.bind(Platform.NES,8,70); // F is available after moving the view key.
-            check(fourth.sampleKeys(Platform.NES,Set.of(70)).buttons()==1<<8,"Ordinary screen key callback follows custom A binding");
+            check(fourth.profile(Platform.GBA).keyBinding(2)==70&&fourth.profile(Platform.GBA).keyBinding(3)==297,"Legacy F/F8 keyboard values survive migration-source reload");
+            fourth.bind(Platform.NES,8,70);
+            check(fourth.sampleKeys(Platform.NES,Set.of(70)).buttons()==1<<8,"Ordinary frontend callback follows the migrated F game binding");
             check(fourth.sampleKeys(Platform.NES,Set.of()).buttons()==0,"Key release clears the sampled logical button");
             check(fourth.sampleKeys(Platform.NES,Set.of(70,87,83)).buttons()==1<<8,"Opposed callback directions center without dropping action input");
-            for(int reserved:new int[]{-1,256,297})try{fourth.bindFocus(reserved);throw new AssertionError("Unsafe view key accepted");}catch(IllegalArgumentException expected){checks++;}
-            try{fourth.bind(Platform.NES,0,72);throw new AssertionError("View key accepted as game action");}catch(IllegalArgumentException expected){checks++;}
-            fourth.save();InputProfiles withFocus=new InputProfiles(temporary.toFile());
-            check(withFocus.focusKey()==72&&withFocus.loadWarning().isEmpty(),"Custom global view key survives old-schema-compatible disk round-trip");
-            check(withFocus.profile(Platform.NES).keyBinding(8)==70,"Former F key remains a custom game key after reload");
-            withFocus.reset(Platform.NES);check(withFocus.focusKey()==72,"Platform reset preserves global view preference");
-            withFocus.bindFocus(87);withFocus.reset(Platform.NES);
-            check(withFocus.profile(Platform.NES).keyBinding(4)==-1,"Reset cannot reintroduce the view key as a default movement binding");
+            fourth.profile(Platform.NES).setGamepad("*",-1);fourth.setEnabled(Platform.NES,true);fourth.save();
+            InputProfiles automatic=new InputProfiles(temporary.toFile());
+            check(automatic.profile(Platform.NES).enabled()&&automatic.profile(Platform.NES).gamepadGuid().equals("*"),"Native Controls automatic-controller preference survives the ordinary profile file");
             Files.writeString(fourth.path(), "{broken-json");
             InputProfiles recovered = new InputProfiles(temporary.toFile());
             check(!recovered.loadWarning().isEmpty(), "Malformed config reports recovery warning");
             for (Platform platform : Platform.values())
                 check(recovered.profile(platform).keyBinding(0) == (platform==Platform.MD||platform==Platform.N64?74:75) && !recovered.profile(platform).enabled(), platform.id() + " malformed file uses hardware defaults");
-            check(recovered.focusKey()==70,"Malformed config recovers the safe default view key atomically");
         } finally {
             try (var paths = Files.walk(temporary)) {
                 for (Path path : paths.sorted(Comparator.reverseOrder()).toList()) Files.delete(path);

@@ -29,26 +29,27 @@ public final class HandheldRenderer extends BlockEntityWithoutLevelRenderer {
         public BakedModel body(){return originalModel;}
     }
     @Override public void renderByItem(ItemStack item,ItemDisplayContext display,PoseStack pose,MultiBufferSource buffers,int light,int overlay){
-        body(item,pose,buffers,light,overlay);
         if(item.is(ConsoleContent.CONTROLLER.get())){
-            if(display==ItemDisplayContext.FIRST_PERSON_LEFT_HAND||display==ItemDisplayContext.FIRST_PERSON_RIGHT_HAND)HandheldFeedback.draw(pose,buffers,HardwareCatalog.controllerControls(),ConsoleClient.INSTANCE.localInputVisual(),0);
+            var input=display==ItemDisplayContext.FIRST_PERSON_LEFT_HAND||display==ItemDisplayContext.FIRST_PERSON_RIGHT_HAND?ConsoleClient.INSTANCE.localInputVisual():net.muxigame.console.runtime.PortInput.IDLE;
+            body(item,pose,buffers,light,overlay,input);
             return;
         }
+        body(item,pose,buffers,light,overlay,input(item));
         live(item,pose,buffers);
     }
-    private static int live(ItemStack item,PoseStack pose,MultiBufferSource buffers){
+    private static net.muxigame.console.runtime.PortInput input(ItemStack item){return CardData.read(item).map(c->ConsoleClient.INSTANCE.heldInputVisual(c.instanceId())).orElse(net.muxigame.console.runtime.PortInput.IDLE);}
+    private static void live(ItemStack item,PoseStack pose,MultiBufferSource buffers){
         var state=ConsoleClient.INSTANCE.snapshot();var picture=ConsoleClient.INSTANCE.picture();
-        if(!state.ready()||!state.room().startsWith("handheld/"))return 0;
-        var card=CardData.read(item).filter(c->state.room().equals("handheld/"+c.instanceId()));if(card.isEmpty())return 0;
+        if(!state.ready()||!state.room().startsWith("handheld/"))return;
+        var card=CardData.read(item).filter(c->state.room().equals("handheld/"+c.instanceId()));if(card.isEmpty())return;
         if(picture!=null)picture(item,picture,pose,buffers);
-        return HandheldFeedback.draw(pose,buffers,HardwareCatalog.controls(HardwareCatalog.model(item)),ConsoleClient.INSTANCE.heldInputVisual(card.get().instanceId()),0);
     }
     public static int presented(ItemStack item,PoseStack pose,MultiBufferSource buffers,int light){
-        body(item,pose,buffers,light,net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY);return live(item,pose,buffers);
+        int highlighted=body(item,pose,buffers,light,net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY,input(item));live(item,pose,buffers);return highlighted;
     }
-    private static void body(ItemStack item,PoseStack pose,MultiBufferSource buffers,int light,int overlay){
+    private static int body(ItemStack item,PoseStack pose,MultiBufferSource buffers,int light,int overlay,net.muxigame.console.runtime.PortInput input){
         Minecraft mc=Minecraft.getInstance();BakedModel selected=mc.getItemRenderer().getModel(item,mc.level,mc.player,0);BakedModel body=selected instanceof LiveModel live?live.body():selected;
-        mc.getItemRenderer().renderModelLists(body,item,light,overlay,pose,ItemRenderer.getFoilBufferDirect(buffers,RenderType.entityCutoutNoCull(TextureAtlas.LOCATION_BLOCKS),true,item.hasFoil()));
+        return HandheldFeedback.body(body,item,pose,buffers,light,overlay,item.is(ConsoleContent.CONTROLLER.get())?HardwareCatalog.controllerRegions():HardwareCatalog.regions(HardwareCatalog.model(item)),input,0);
     }
     private static void picture(ItemStack item,net.minecraft.resources.ResourceLocation picture,PoseStack pose,MultiBufferSource buffers){
         int id=HardwareCatalog.model(item);List<HardwareCatalog.Plane> planes=id==0?List.of(new HardwareCatalog.Plane(4.3f,5.2f,11.7f,10.75f,5.98f)):HardwareCatalog.screens(id);
@@ -56,8 +57,13 @@ public final class HandheldRenderer extends BlockEntityWithoutLevelRenderer {
     }
     /** Already in authored model coordinates: no BEWLR or hand-presentation recursion, no global picture override. */
     public static void docked(ItemStack item,long console,net.minecraft.resources.ResourceLocation sourcePicture,PoseStack pose,MultiBufferSource buffers,int light,int overlay){
-        body(item,pose,buffers,light,overlay);if(sourcePicture!=null)picture(item,sourcePicture,pose,buffers);
-        HandheldFeedback.draw(pose,buffers,HardwareCatalog.controls(HardwareCatalog.model(item)),ConsoleClient.INSTANCE.deviceInputVisual(console),0);
+        body(item,pose,buffers,light,overlay,ConsoleClient.INSTANCE.deviceInputVisual(console));if(sourcePicture!=null)picture(item,sourcePicture,pose,buffers);
+    }
+
+    public static ItemStack heldForSession(){
+        var mc=Minecraft.getInstance();if(mc.player==null)return ItemStack.EMPTY;String room=ConsoleClient.INSTANCE.snapshot().room();
+        for(var hand:net.minecraft.world.InteractionHand.values()){var item=mc.player.getItemInHand(hand);if(item.is(ConsoleContent.HANDHELD.get())&&CardData.read(item).filter(c->room.equals("handheld/"+c.instanceId())).isPresent())return item;}
+        return ItemStack.EMPTY;
     }
 
 }

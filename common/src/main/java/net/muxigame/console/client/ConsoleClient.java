@@ -162,8 +162,8 @@ public final class ConsoleClient implements ClientActions {
     public boolean handheldSession(){Session s=active;return s!=null&&s.room.startsWith("handheld/");}
     public boolean heldControlsReleased(){return controlsReleased;}
     public boolean heldWorldPlaying(){Session s=active;Held held=heldCartridge();return s!=null&&s.ready&&!s.leaving&&s.room.startsWith("handheld/")&&held!=null&&s.card.equals(held.card.instanceId());}
-    /** F8 gives the world its keys back without giving up the controller seat. */
-    public void releaseControls(){controlsReleased=true;inputSource=null;clearInputVisual();submitInput(PortInput.IDLE);}
+    /** Exiting fullscreen returns input to the world without giving up the controller seat. */
+    public void releaseControls(){net.muxigame.console.client.input.NativeControls.clear();controlsReleased=true;inputSource=null;clearInputVisual();submitInput(PortInput.IDLE);}
     public void resumeControls(){controlsReleased=false;}
     public record InputFeedback(String room,Platform platform,UUID card,boolean focused,boolean controlsReleased,PortInput input,long sentCount){}
     public InputFeedback inputFeedback(){Session s=active;return new InputFeedback(s==null?"":s.room,s==null?null:s.platform,s==null?null:s.card,mc().screen instanceof GameScreen,controlsReleased,localInputVisual(),inputSubmissions);}
@@ -174,8 +174,7 @@ public final class ConsoleClient implements ClientActions {
     public int visualPort(){Session s=active;return s!=null&&s.ready&&!s.leaving&&!controlsReleased&&mc().screen instanceof GameScreen?s.port:-1;}
     public void clearInputVisual(){visualInput=PortInput.IDLE;}
 
-    public void openHeldControls(){Session s=active;if(s!=null&&heldWorldPlaying()){controlsReleased=false;HeldGameScreen screen=new HeldGameScreen(this,s.port);mc().setScreen(screen);screen.focusKeyPressedOnOpen();}}
-    public boolean leaveHeldWorld(){Session s=active;Held held=heldCartridge();if(s==null||!s.room.startsWith("handheld/")||controlsReleased||held==null||!s.card.equals(held.card.instanceId()))return false;leave();return true;}
+    public void openModelFullscreen(){Session s=active;if(s!=null&&s.ready&&!s.leaving){controlsReleased=false;mc().setScreen(new GameScreen(this,s.port));}}
     public void tick(){
         if(mc().player==null||mc().level==null||mc().getConnection()==null){observedHandheld=null;attemptedHandheld=null;suppressedHandheld=null;if(active!=null)stop();return;}
         Held held=heldCartridge();UUID selected=held==null?null:held.card.instanceId();
@@ -194,7 +193,7 @@ public final class ConsoleClient implements ClientActions {
         if(net.muxigame.console.client.input.HeldInputPolicy.captures(mc().screen instanceof GameScreen,controlsReleased,s.leaving)){
             GameScreen game=(GameScreen)mc().screen;
             if(inputSource!=null)input=Objects.requireNonNullElse(inputSource.get(),PortInput.IDLE);
-            else if(mc().isWindowActive())input=InputProfiles.get().sampleKeys(s.platform,game.inputKeys());
+            else if(mc().isWindowActive())input=net.muxigame.console.client.input.NativeControls.sample(s.platform);
             else game.clearInputKeys();
         }
         visualInput=input;
@@ -205,8 +204,8 @@ public final class ConsoleClient implements ClientActions {
     /** Optional frontend integration; null returns to this mod's physical keyboard/gamepad sampler. */
     public void setInputSource(java.util.function.Supplier<PortInput> source){inputSource=source;clearInputVisual();}
     public void device(JsonObject context,String action,int port){JsonObject j=context.deepCopy();j.addProperty("action",action);j.addProperty("port",port);Wire.command("device_action",j);}
-    public void leave(){clearInputVisual();Session s=active;if(s!=null&&s.room.startsWith("handheld/"))suppressedHandheld=s.card;if(s!=null&&mc().getConnection()!=null&&s.ready){if(!s.leaving){s.leaving=true;inputSource=null;status="正在保存并离开…";Wire.command("leave_request",s.context.deepCopy());}return;}if(s!=null&&mc().getConnection()!=null)Wire.command("leave",object());stop();}
-    public void stop(){Session s=active;active=null;inputSource=null;clearInputVisual();displayedFrames=0;frameCrc="";SharedPlayClient.INSTANCE.stop();BrowserLinkClient.INSTANCE.stop();downloads.values().forEach(f->f.cancel(false));downloads.clear();if(s!=null){if(s.checkpoint!=null)s.checkpoint.completeExceptionally(new IOException("会话已停止"));emulator.execute(()->close(s));}}
+    public void leave(){net.muxigame.console.client.input.NativeControls.clear();clearInputVisual();Session s=active;if(s!=null&&s.room.startsWith("handheld/"))suppressedHandheld=s.card;if(s!=null&&mc().getConnection()!=null&&s.ready){if(!s.leaving){s.leaving=true;inputSource=null;status="正在保存并离开…";Wire.command("leave_request",s.context.deepCopy());}return;}if(s!=null&&mc().getConnection()!=null)Wire.command("leave",object());stop();}
+    public void stop(){net.muxigame.console.client.input.NativeControls.clear();Session s=active;active=null;inputSource=null;clearInputVisual();displayedFrames=0;frameCrc="";SharedPlayClient.INSTANCE.stop();BrowserLinkClient.INSTANCE.stop();downloads.values().forEach(f->f.cancel(false));downloads.clear();if(s!=null){if(s.checkpoint!=null)s.checkpoint.completeExceptionally(new IOException("会话已停止"));emulator.execute(()->close(s));}}
     private byte[] downloadState(Session s,JsonObject metadata)throws Exception{
         long size=metadata.get("size").getAsLong();if(size<1||size>32L*1024*1024)throw new IOException("存档大小超出当前范围");ByteArrayOutputStream output=new ByteArrayOutputStream((int)size);
         for(long offset=0;offset<size;){if(active!=s)throw new IOException("存档读取已取消");UUID id=UUID.randomUUID();CompletableFuture<Wire.Message> wait=new CompletableFuture<>();downloads.put(id,wait);JsonObject request=s.context.deepCopy();request.addProperty("request",id.toString());request.addProperty("generation",metadata.get("generation").getAsString());request.addProperty("offset",offset);mc().execute(()->Wire.command("state_read",request));Wire.Message response;

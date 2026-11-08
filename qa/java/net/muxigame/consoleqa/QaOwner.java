@@ -7,7 +7,6 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.util.HexFormat;
 import java.util.Properties;
@@ -19,7 +18,7 @@ public final class QaOwner {
     private final String modId;
     private final String expectedRole;
     private final Properties pins = new Properties();
-    private long previousId = -1;
+    private final ReplyQueue replies=new ReplyQueue();
     private int throttle;
 
     public QaOwner(String modId, String expectedRole) {
@@ -35,40 +34,41 @@ public final class QaOwner {
         if (++throttle % 4 != 0) return;
         Path root;
         JsonObject command;
-        JsonObject result = new JsonObject();
         try {
             root = validatedRoot();
             String role = System.getProperty("qa.local.role", "");
+            // A failed NTFS replace must retry this exact acknowledgement, never the callback.
+            if(replies.busy()){replies.flush(root.resolve("console-qa"),role);return;}
             Path input = root.resolve("console-qa/command-" + role + ".json");
             if (!Files.isRegularFile(input)) return;
             if (Files.size(input) > 32768) throw new IOException("Oversize QA command");
             command = JsonParser.parseString(Files.readString(input)).getAsJsonObject();
             long id = command.get("id").getAsLong();
-            if (id <= previousId) return;
+            if (id <= replies.lastExecuted()) return;
             if (!command.get("runId").getAsString().equals(System.getProperty("qa.local.runId"))) return;
             if (command.get("pid").getAsLong() != ProcessHandle.current().pid()) return;
             String product = modHash("muxi_console"), qa = modHash(modId);
             if (!product.equals(pins.getProperty("product.sha256")) || !product.equals(command.get("productSha256").getAsString())
                     || !qa.equals(command.get("qaSha256").getAsString())) throw new IOException("Actual loaded product/QA hash differs from the build pins");
-            previousId = id;
+            JsonObject result = new JsonObject();
             result.addProperty("id", id); result.addProperty("runId", System.getProperty("qa.local.runId"));
             result.addProperty("role", role); result.addProperty("pid", ProcessHandle.current().pid());
             result.addProperty("productSha256", product); result.addProperty("qaSha256", qa);
             result.addProperty("physicalOSInput", false);
-            try {
-                result.add("result", execute.apply(command));
-                result.addProperty("ok", true);
-            } catch (Throwable failure) {
-                result.addProperty("ok", false); result.addProperty("error", failure.toString());
-            }
-            Path directory = root.resolve("console-qa"); Files.createDirectories(directory);
-            Path temporary = directory.resolve("reply-" + role + ".tmp");
-            Files.writeString(temporary, result.toString(), StandardCharsets.UTF_8);
-            Files.move(temporary, directory.resolve("reply-" + role + ".json"), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            replies.execute(id,()->{
+                try {result.add("result",execute.apply(command));result.addProperty("ok",true);}
+                catch(Throwable failure){result.addProperty("ok",false);result.addProperty("error",failure.toString());}
+                return result.toString().getBytes(StandardCharsets.UTF_8);
+            });
+            replies.flush(root.resolve("console-qa"),role);
         } catch (IOException | RuntimeException error) {
             // An unowned or malformed command has no authority to write outside its validated run.
             System.err.println("Muxi Console QA refused: " + error.getMessage());
         }
+    }
+
+    public JsonObject replyStatus(){
+        var state=replies.state();JsonObject out=new JsonObject();out.addProperty("executedId",state.executedId());out.addProperty("writtenId",state.writtenId());out.addProperty("pendingId",state.pendingId());out.addProperty("executions",state.executions());out.addProperty("writeAttempts",state.writeAttempts());out.addProperty("retryFailures",state.retryFailures());return out;
     }
 
     public Path validatedRoot() throws IOException {
