@@ -1,6 +1,16 @@
 # 独立实现状态
 
-## 当前掌机、底座与薄大屏候选
+## 当前像素设备外观候选
+
+[候选pixel-hardware-01](../build/pixel-hardware-01/muxi-console-0.1.0-dev.1+mc1.21.1.jar)，121450653字节，SHA256 `d46d73b4fff988f20ce85a7d71904e868939489279c429c0fbdbc5b6e3c6f697`。从 `dev@f844682` 起点重做22机体、21媒体、通用0和控制器/刻录机/底座；采用各年代壳色、上下壳接缝、阶梯圆角、插槽/接口及正确控制布局，保留原CMD/控制能力。大屏按用户随后补充不再修改。
+
+353项资源/22464闭包检查、原14组2186项纯检查通过。[JAR比较](../build/pixel-hardware-01/compared-to-dock-screen01.json)仅50项资源改变、168个自制小PNG新增、无移除，全部class/worker/core与dock-screen-01逐字节相同；25项实际屏幕模型/纹理依赖闭包及display_layout原样，另43项广义屏幕/公共资源比较不变。
+
+统一client-2/run `muxi-console-pixel-hardware-01`，runId `851bb6c655e14edaa6046616f6695ce6`，完成本候选53张MC原图：22机体、20主副手、总览、媒体/配件两原图与两正面补图、GB/GBA及底座6张活动图。已逐张核对外观；媒体/控制器初始镜头拍到背面，因此另拍前面，未覆盖旧原图。GB/GBA正常刻录、输入/内屏对齐、底座同卡恢复/低位旋转、保存与整物返回的13项窄流程通过，3worker自然关闭，双端worker为空。三MC JVM exit0、native审计空，自动清理943872576字节payload，编号槽位随后合法复用。
+
+[当前图库](../build/pixel-realistic-review/index.html)与[逐项完成审核](PIXEL-HARDWARE-REVIEW.md)绑定同一SHA及原始JSON。MC启动有OpenAL设备失败且客户端保留一条来源操作未记录的通用lastError；不归因为同因，不宣称零历史错误，不计实体设备听感。该限制不代替已实际查看的模型和动态对齐证据。仍是Windows x86-64/MC1.21.1/NeoForge21.1.250/Java21未发布候选；许可与其他未验边界沿用下文。以下为旧候选的冻结分轮证据。
+
+## 掌机、底座与薄大屏候选（前一轮）
 
 按用户新增要求完成[候选dock-screen-01](../build/dock-screen-01/muxi-console-0.1.0-dev.1+mc1.21.1.jar)，121382805字节，SHA256 `b9d33b38d2c8cf0045b79d3ef9be38922a63f8fb373ae9030ac878e5212d71fb`。71个第一方Java源、14组2186项纯检查、185项原创资源/12861项资源检查通过。独立只读审查未发现阻止原生验收的实质问题；[逐条打包比较](../build/dock-screen-01/compared-to-platform10.json)确认58项运行时、核心及其清单字节与原候选10相同，没有移除JAR条目，不重记21平台运行测试为本轮重跑。
 

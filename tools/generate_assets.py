@@ -18,6 +18,8 @@ from pathlib import Path
 import struct
 import zlib
 
+import pixel_hardware as hardware
+
 ROOT = Path(__file__).resolve().parents[1]
 RESOURCES = ROOT / "common/src/main/resources"
 NS = "muxi_console"
@@ -263,8 +265,8 @@ HANDHELD_PLANES = {
     "lynx": (4.0, 5.4, 12.0, 10.5, 5.40),
     "ngp": (5.0, 5.7, 11.0, 11.4, 5.80),
     "ngpc": (4.85, 5.5, 11.15, 11.485, 5.60),
-    "ws": (5.4, 5.2, 12.4, 9.7, 5.70),
-    "wsc": (4.9, 5.0, 12.25, 9.725, 5.45),
+    "ws": (3.5, 5.2, 10.5, 9.7, 5.70),
+    "wsc": (3.25, 5.0, 10.6, 9.725, 5.45),
 }
 DESKTOP_PORTS = {"nes": 4, "snes": 4, "md": 4, "n64": 4, "sms": 2,
                  "sg1000": 2, "pce": 4, "a2600": 2, "a7800": 2, "fds": 4,"arcade":2}
@@ -277,19 +279,19 @@ SILHOUETTES = {
     "gbc": "narrow portrait body with crowned top and terraced right heel",
     "gba": "wide bridge body, projecting side grips and shoulder paddles",
     "md": "octagonal deck with concentric stepped cartridge ring",
-    "n64": "three-lobe deck, raised rear cartridge rail and four front sockets",
+    "n64": "low rounded rectangular console with top cartridge bay and four front sockets",
     "sms": "low wedge deck with long red rail and recessed media bay",
     "gg": "thick landscape body, tall screen bezel and stacked right buttons",
-    "sg1000": "ivory typewriter deck with raised back rail and side cartridge tower",
+    "sg1000": "ivory low console with red power rail, central top cartridge slot and paired front ports",
     "pce": "compact near-square deck with offset card mouth and rear fin",
     "a2600": "broad ribbed wedge with wooden front band and six switch towers",
     "a7800": "slim terraced deck with trapezoid top and central forward cartridge",
-    "lynx": "long landscape slab with large end caps and side utility column",
-    "ngp": "square landscape pocket body with circular stepped thumb disc",
-    "ngpc": "scalloped pocket body with raised screen crown and two-tone heel",
-    "ws": "asymmetric landscape body with two distinct left directional clusters",
-    "wsc": "slender rounded landscape body with vertical side cluster and lower keys",
-    "vb": "binocular visor with twin dark eyepieces on a splayed tabletop tripod",
+    "lynx": "wide charcoal Lynx II style handheld with stepped grips, repeated action buttons and utility column",
+    "ngp": "wide gray pocket body with recessed click stick, two action buttons and compact screen bezel",
+    "ngpc": "wide blue pocket body with recessed octagonal click stick and two raised action buttons",
+    "ws": "asymmetric ivory handheld with two separated four-key directional groups and right-side screen",
+    "wsc": "slender blue-gray handheld with two separated four-key directional groups and right-side screen",
+    "vb": "wide red visor with a joined black eye mask and hinged tabletop tripod",
     "arcade": "upright single-seat cabinet with projecting control ledge and tall marquee",
 }
 
@@ -322,275 +324,15 @@ def top_label(x0, y, z0, x1, z1):
 
 
 def platform_geometry(platform):
-    """Twenty-one editable silhouettes; no external image or geometry input."""
-    b = box
-    if platform == "nes":
-        return feet() + [b([1,.5,2],[15,4.2,14],"ink"),
-            b([1.2,4.2,2.3],[14.8,5.0,13.7],"shell"),
-            b([1.2,5,8.8],[14.8,6.1,13.7],"edge"),
-            b([2.2,3.3,1.88],[12.8,4.65,2.25],"dark"),
-            b([2.5,3.5,1.80],[12.5,4.45,1.98],"shell"),
-            b([2.8,1.25,1.80],[4.1,2.25,2.08],"accent"),
-            b([4.5,1.25,1.80],[5.8,2.25,2.08],"button"),
-            top_label(2,5.01,3.5,7.3,7.5)] + ports(4,7,14,y=1.25)
-    if platform == "fds":
-        return feet() + [b([1,.5,2],[15,3.4,14],"accent"),
-            b([1.4,3.4,2.3],[14.6,4.0,13.7],"shell"),
-            b([2.3,4,4.2],[13.7,7.1,12.9],"ink"),
-            b([2.6,7.1,4.5],[13.4,7.65,12.6],"shell"),
-            b([2.3,1.9,1.8],[11.5,2.45,2.2],"dark"),
-            b([11.9,1.45,1.68],[13.5,2.8,2.15],"button"),
-            b([3.5,6.1,4.0],[12.5,6.5,4.35],"dark"),
-            top_label(4,7.66,6.1,10.6,10.8),
-            b([2,3.98,2.6],[6.1,4.12,3.8],"dark")]
-    if platform == "snes":
-        return feet() + [b([1,.5,2.5],[15,2.9,13.5],"ink"),
-            b([1.5,2.9,3],[14.5,4.1,13],"shell"),
-            b([2.2,4.1,3.5],[13.8,4.8,12.5],"shell"),
-            b([4.2,4.8,7.0],[11.8,6.1,11.9],"edge"),
-            b([4.9,6.1,8.6],[11.1,6.3,9.5],"dark"),
-            b([2.5,4.8,5.3],[3.8,5.25,8.2],"accent"),
-            b([12.2,4.8,5.3],[13.5,5.25,8.2],"accent"),
-            top_label(5.3,4.81,3.8,10.7,6.4)] + ports(4)
-    if platform in ("gb", "gbc"):
-        if platform == "gb":
-            body = [b([3.6,.8,6.3],[12.4,15.2,8.8],"ink"),
-                b([4,.9,6.05],[12,14.9,6.5],"shell"),
-                b([11.6,1.5,6],[12.4,4.7,8.4],"edge"),
-                b([6.6,3.0,5.8],[7.9,3.4,6.2],"edge"),
-                b([8.3,3.0,5.8],[9.6,3.4,6.2],"edge")]
-            body += dpad(4.35,4.3,5.5,2.2)
-            body += [b([9.2,4.7,5.45],[10.3,5.8,6.2],"accent"),
-                b([10.65,5.6,5.45],[11.75,6.7,6.2],"accent")]
-            body += [b([9.5+i*.55,1.8,5.86],[9.7+i*.55,2.6,6.1],"dark") for i in range(4)]
-        else:
-            body = [b([4.0,1.1,6.1],[12,14.6,8.5],"ink"),
-                b([4.5,14.6,6.2],[11.5,15.2,8.35],"accent"),
-                b([4.3,1.4,5.9],[11.7,14.6,6.3],"shell"),
-                b([4.8,.6,6.25],[10.8,1.4,8.1],"edge"),
-                b([10.8,1.4,6.1],[11.8,2.2,8.3],"accent"),
-                b([6.9,3.0,5.65],[9.1,3.5,6.1],"button")]
-            body += dpad(4.8,4.35,5.35,2.05)
-            body += [b([9.3,4.6,5.3],[10.3,5.6,5.95],"accent"),
-                b([10.65,5.4,5.3],[11.65,6.4,5.95],"accent")]
-            body += [b([9.1,1.8+i*.35,5.72],[10.8,1.95+i*.35,6.05],"dark") for i in range(3)]
-        return body + lens_panel(HANDHELD_PLANES[platform])
-    if platform == "gba":
-        return [b([1.7,3.7,6.0],[14.3,11.1,8.5],"ink"),
-            b([.3,4.4,6],[3.8,10.6,8.7],"edge"),
-            b([12.2,4.4,6],[15.7,10.6,8.7],"edge"),
-            b([1.3,4.2,5.8],[14.7,10.7,6.2],"shell"),
-            b([1.4,10.6,6.2],[4.1,11.6,8.1],"accent"),
-            b([11.9,10.6,6.2],[14.6,11.6,8.1],"accent"),
-            b([6.0,4.05,5.55],[7.2,4.5,6.1],"button"),
-            b([8.1,4.05,5.55],[9.3,4.5,6.1],"button"),
-            b([12.7,5.7,5.25],[13.7,6.7,6.1],"accent"),
-            b([13.9,7.1,5.25],[14.9,8.1,6.1],"accent")
-            ] + dpad(.95,6.3,5.25,2.35) + lens_panel(HANDHELD_PLANES[platform])
-    if platform == "md":
-        return feet() + [b([2,.5,2],[14,3.5,14],"ink"),
-            b([.8,.7,4],[15.2,3.4,12],"ink"),
-            b([2.5,3.5,3.2],[13.5,4.1,12.8],"dark"),
-            b([4,4.1,5.2],[12,4.7,12.4],"edge"),
-            b([3.3,4.1,6.2],[12.7,4.7,11.4],"edge"),
-            b([4.7,4.7,6],[11.3,5.1,11.6],"ink"),
-            b([5.2,5.1,8.4],[10.8,5.35,9.4],"dark"),
-            b([2.1,3.5,4.0],[3.5,3.95,5.5],"accent"),
-            b([12.5,3.5,4],[13.8,3.95,5.5],"button"),
-            top_label(5.2,4.12,3.3,10.8,5.0)] + ports(4)
-    if platform == "n64":
-        return feet(z0=2.5) + [b([3,.5,3.5],[13,4.0,14],"ink"),
-            b([.8,.5,2],[5,3.6,11.5],"ink"),
-            b([11,.5,2],[15.2,3.6,11.5],"ink"),
-            b([5,.5,1.4],[11,3.2,12],"edge"),
-            b([2.5,4,7.5],[13.5,5.8,12.4],"shell"),
-            b([4.6,5.8,8.6],[11.4,6.1,10.1],"dark"),
-            b([2.2,3.65,4.6],[4.2,4.2,6.8],"accent"),
-            b([11.8,3.65,4.6],[13.8,4.2,6.8],"button"),
-            top_label(5.2,3.21,2.5,10.8,5.5)] + ports(4,2,14,y=1.2,z=1.32)
-    if platform == "sms":
-        return feet(z0=2.5) + [b([1,.5,2],[15,2.7,14],"ink"),
-            b([1.5,2.7,4.2],[14.5,3.8,14],"dark"),
-            b([2,3.8,7.4],[14,4.8,13.5],"ink"),
-            b([1.4,2.7,2.5],[14.6,3.05,3.7],"accent"),
-            b([4.8,4.8,9.2],[11.2,5.0,10.25],"dark"),
-            b([10.7,3.8,5.0],[12.2,4.25,6.4],"button"),
-            b([12.5,3.8,5.0],[14,4.25,6.4],"accent"),
-            top_label(2.3,3.81,4.8,7.8,6.9)] + ports(2,4,12,y=1.25)
-    if platform == "sg1000":
-        return feet() + [b([1,.5,2],[15,2.8,14],"edge"),
-            b([1.2,2.8,2.2],[14.8,4.1,13.8],"light"),
-            b([1.6,4.1,10.7],[14.4,5.2,13.5],"ink"),
-            b([10.3,4.1,5.3],[13.9,6.2,10.0],"shell"),
-            b([10.8,6.2,6.3],[13.4,6.4,9.1],"dark"),
-            b([2.2,4.1,3.1],[5.2,4.65,4.7],"accent"),
-            top_label(2.2,4.12,5.5,8.5,9.5)] + ports(2,5.8,13.5,y=1.4)
-    if platform == "pce":
-        return feet(3,13,3,13) + [b([3,.5,3],[13,2.7,13],"ink"),
-            b([3.2,2.7,3.2],[12.8,3.6,12.8],"light"),
-            b([4.4,3.6,10.5],[11.7,4.7,12.2],"edge"),
-            b([3.8,1.8,2.88],[11.5,2.25,3.2],"dark"),
-            b([3.9,3.6,4],[5.1,4.05,5.2],"accent"),
-            top_label(5.3,3.61,5,11.8,9.7),
-            b([11.8,3.6,4.1],[12.4,4,5.7],"amber")]
-    if platform == "a2600":
-        return feet(1.5,14.5,3,13) + [b([.6,.5,2],[15.4,3.3,14],"ink"),
-            b([.6,.8,1.85],[15.4,2.75,2.2],"wood"),
-            b([1,3.3,5],[15,4.5,13.4],"dark"),
-            b([1.6,4.5,8.6],[14.4,5.3,13],"ink"),
-            b([5.6,4.5,5.6],[10.4,5.6,8.0],"edge"),
-            b([6,5.6,6.2],[10,5.85,7.3],"dark"),
-            top_label(5.2,3.31,2.8,10.8,4.6)] + [
-            b([1.7+i*1.03,5.3,9.4],[2.05+i*1.03,5.65,12.4],"button") for i in range(13)
-            ] + [b([1.3+i*2.25,3.3,3.2],[1.95+i*2.25,4.4,4.1],"metal") for i in range(6)]
-    if platform == "a7800":
-        return feet() + [b([1.3,.5,2],[14.7,2.1,14],"ink"),
-            b([2,2.1,3],[14,3,13.5],"metal"),
-            b([2.8,3,5.2],[13.2,3.8,13],"ink"),
-            b([3.6,3.8,7.1],[12.4,4.4,12.6],"dark"),
-            b([5.2,3.8,5.2],[10.8,5,8.3],"edge"),
-            b([5.8,5,6.2],[10.2,5.25,7.25],"dark"),
-            b([3,3,3.5],[4.2,3.4,4.6],"accent"),
-            b([11.8,3,3.5],[13,3.4,4.6],"button"),
-            top_label(5.1,3.01,3.3,10.9,4.8)] + ports(2,4,12,y=1)
-    if platform in ("gg", "lynx"):
-        if platform == "gg":
-            body = [b([1,3.3,6.2],[15,12,9.2],"ink"),
-                b([.3,4.2,6.4],[2.2,11.1,9],"edge"),
-                b([13.8,4.2,6.4],[15.7,11.1,9],"edge"),
-                b([1.6,3.9,6.0],[14.4,11.6,6.4],"shell"),
-                b([12.2,5.4,5.4],[13.4,6.6,6.2],"accent"),
-                b([13.2,7.1,5.4],[14.4,8.3,6.2],"accent"),
-                b([12.8,9.5,5.65],[14.1,10,6.1],"button")]
-            body += dpad(1.6,6.1,5.5,2.35)
-            body += [b([5+i*.6,4.1,5.8],[5.2+i*.6,4.65,6.1],"dark") for i in range(10)]
-        else:
-            body = [b([.2,3.9,6.0],[15.8,11.8,9.3],"ink"),
-                b([.1,4.4,5.9],[3.2,11.2,9.5],"edge"),
-                b([12.8,4.4,5.9],[15.9,11.2,9.5],"edge"),
-                b([3.2,4.2,5.75],[12.8,11.5,6.2],"shell"),
-                b([13.1,5.1,5.25],[14.1,6.15,6.0],"accent"),
-                b([14.4,6.5,5.25],[15.4,7.55,6],"accent")]
-            body += dpad(.6,6.6,5.3,2.2)
-            body += [b([13.3,8.5+i*.8,5.5],[14.8,8.85+i*.8,6.1],"button") for i in range(3)]
-        return body + lens_panel(HANDHELD_PLANES[platform])
-    if platform in ("ngp", "ngpc"):
-        color = platform == "ngpc"
-        body = [b([1.9,2.8 if color else 3.0,6.2],[14.1,12.6,8.7],"ink"),
-            b([1.1,4.3,6.3],[14.9,11.3,8.5],"edge"),
-            b([2.2,3.5,5.9 if color else 6.1],[13.8,12.2,6.5],"shell"),
-            b([2.6,3,6.1],[13.4,3.6,8.4],"accent" if color else "edge"),
-            b([1.7,6.3,5.4],[4.4,8.8,6.1],"dark"),
-            b([2.2,5.9,5.35],[3.9,9.2,6.1],"dark"),
-            b([2.4,6.6,5.0],[3.7,8.5,5.8],"button"),
-            b([12.0,5.8,5.35],[13.1,6.9,6.1],"accent"),
-            b([13.0,7.3,5.35],[14.1,8.4,6.1],"accent"),
-            b([6,3.9,5.6],[7.3,4.3,6.2],"button"),
-            b([8.1,3.9,5.6],[9.4,4.3,6.2],"button")]
-        if color:
-            body += [b([4.7,12.6,6.3],[11.3,13.3,8.3],"accent"),
-                     b([.8,5.3,6.5],[1.7,10.6,8.1],"accent")]
-        else:
-            body += [b([5.5,12.6,6.7],[10.5,12.95,8.1],"dark")]
-        return body + lens_panel(HANDHELD_PLANES[platform])
-    if platform in ("ws", "wsc"):
-        color = platform == "wsc"
-        body = [b([1,3.7,6.1],[15,11.6,8.35],"ink"),
-            b([.5,4.5,6.25],[15.5,10.9,8.2],"edge"),
-            b([1.3,4.0,5.8 if color else 6.0],[14.7,11.3,6.4],"shell"),
-            b([13,5.5,5.3],[14,6.5,6.1],"accent"),
-            b([14.1,6.8,5.3],[15.1,7.8,6.1],"accent"),
-            b([7.4,4.2,5.5],[8.5,4.55,6.1],"button")]
-        body += dpad(1.6,5.2,5.35,2.15) + dpad(1.6,8.1,5.35,2.15)
-        if color:
-            body += [b([4.5,11.6,6.3],[12.6,12.2,8.05],"accent"),
-                     b([10.2,4.15,5.5],[11.3,4.5,6],"button"),
-                     b([1.7,3.1,6.4],[4.5,3.7,8.1],"edge")]
-        else:
-            body += [b([3.8,10.6,5.75],[4.6,11.5,6.3],"accent"),
-                     b([12.6,9.2,5.6],[14.3,9.55,6.1],"button")]
-        return body + lens_panel(HANDHELD_PLANES[platform])
-    if platform == "vb":
-        return [b([2.1,8.3,5.8],[13.9,12.4,12.2],"accent"),
-            b([3.0,12.4,6.4],[13,13.2,11.5],"ink"),
-            b([1.5,9.1,6.4],[2.5,11.5,11.5],"edge"),
-            b([13.5,9.1,6.4],[14.5,11.5,11.5],"edge"),
-            b([2.8,8.6,4.6],[6.8,12.0,6.1],"dark"),
-            b([9.2,8.6,4.6],[13.2,12.0,6.1],"dark"),
-            b([3.4,9.1,4.52],[6.2,11.5,4.7],"lens"),
-            b([9.8,9.1,4.52],[12.6,11.5,4.7],"lens"),
-            b([7.1,4.2,8.1],[8.9,8.4,9.5],"metal"),
-            b([5.5,3.3,7.2],[10.5,4.5,10.5],"edge"),
-            b([4.3,1.5,5.1],[6.1,3.5,8.5],"metal"),
-            b([9.9,1.5,5.1],[11.7,3.5,8.5],"metal"),
-            b([3.5,.5,3.5],[6.1,1.6,7.3],"ink"),
-            b([9.9,.5,3.5],[12.5,1.6,7.3],"ink"),
-            b([7.1,.5,10],[8.9,3.5,13.8],"ink"),
-            top_label(5,13.21,7.3,11,10.8)]
-    if platform == "arcade":
-        return arcade_geometry(False)
-    raise ValueError(f"No independent geometry for {platform}")
+    return hardware.geometry(platform, box, HANDHELD_PLANES, ARCADE_PLANES)
 
 
 def arcade_geometry(double=False):
-    b = box
-    x0,x1,z = (.4,15.6,4.35) if double else (3,13,4.75)
-    y = 5.8 if double else 6.3
-    plane = ARCADE_PLANES["double" if double else "single"]
-    elements = [b([x0,0,4],[x1,1.0,14],"dark"),
-        b([x0+.3,1.0,4.3],[x1-.3,y,13.7],"ink"),
-        b([x0,1.2,4],[x0+.8,15.8,14],"accent"),
-        b([x1-.8,1.2,4],[x1,15.8,14],"accent"),
-        b([x0+.8,y,z+.3],[x1-.8,15.5,13.7],"ink"),
-        b([x0-.15,y,1.8],[x1+.15,y+.65,5.5],"edge"),
-        b([x0+.1,y+.65,1.95],[x1-.1,y+.9,5.1],"shell"),
-        b([x0+.65,14.5,3.9],[x1-.65,15.8,5.2],"dark",north="label"),
-        b([x0+.8,2.1,4.05],[x1-.8,2.35,4.35],"accent"),
-        b([7.25,3.0,4.05],[8.75,4.3,4.3],"metal"),
-        b([7.55,3.65,3.99],[8.45,3.88,4.2],"dark")]
-    # No branded artwork; ribs and modular side plaques are authored cuboids.
-    elements += [b([x0-.02,3.5+i*2.5,7],[x0+.1,4.5+i*2.5,11],"shell") for i in range(4)]
-    centers = (4.2,11.8) if double else (8,)
-    for cx in centers:
-        elements += [b([cx-1.35,y+.9,2.65],[cx-.65,y+1.45,3.35],"dark"),
-            b([cx-1.55,y+1.45,2.45],[cx-.45,y+1.9,3.55],"accent"),
-            b([cx+.25,y+.9,2.35],[cx+.95,y+1.2,3.05],"accent"),
-            b([cx+1.2,y+.9,3.35],[cx+1.9,y+1.2,4.05],"button")]
-    return elements + lens_panel(plane)
+    return hardware.arcade(box, double, ARCADE_PLANES)
 
 
 def media_geometry(platform, index):
-    """Platform-specific shell proportions, grooves and connectors; FDS is a disk."""
-    b = box
-    if platform == "fds":
-        return [b([3,2.5,7.1],[13,13,8.5],"accent"),
-            b([3,11.9,6.95],[12,13.3,8.5],"accent"),
-            b([3.8,8.3,6.92],[12.2,12.3,7.2],"shell",north="label"),
-            b([6.5,4.6,6.85],[9.5,7.6,7.25],"dark"),
-            b([7.25,5.35,6.79],[8.75,6.85,7.2],"metal"),
-            b([9.9,2.7,6.85],[12.2,7.3,7.2],"dark"),
-            b([3.3,3.5,6.9],[4.0,4.2,7.2],"shell")]
-    sizes = {"nes":(9,12,2.6),"snes":(11.5,8.5,2.8),"gb":(8,8.8,1.7),
-        "gbc":(8.1,9.2,1.8),"gba":(9.2,5.8,1.5),"md":(10.4,9,2.6),
-        "n64":(12,8.2,2.8),"sms":(8.4,10,2),"gg":(7.8,8.5,2.4),
-        "sg1000":(7.5,11.5,2.7),"pce":(10.8,8.0,.65),"a2600":(8.8,10.5,3.2),
-        "a7800":(9.2,9.2,3),"lynx":(8.8,6.5,1.0),"ngp":(7.4,7,1.7),
-        "ngpc":(7.8,7.3,1.7),"ws":(7.8,6.4,1.4),"wsc":(8.1,6.1,1.4),"vb":(9.0,6.8,1.7),"arcade":(10,7.5,1.2)}
-    width,height,depth = sizes[platform]
-    x0,x1,y0,y1,z0,z1 = 8-width/2,8+width/2,8-height/2,8+height/2,8-depth/2,8+depth/2
-    elements = [b([x0,y0,z0],[x1,y1-.6,z1],"ink"),
-        b([x0+.35,y1-.6,z0],[x1-.8,y1,z1],"accent"),
-        b([x0+.55,y0+1.8,z0-.16],[x1-.55,y1-1.05,z0+.08],"shell",north="label")]
-    if platform in ("pce", "lynx"):
-        elements += [b([x0+.4+i*.58,y0-.45,z0],[x0+.7+i*.58,y0+.45,z1],"connector") for i in range(15)]
-    else:
-        elements += [b([x0+1,y0-.55,z0+.2],[x1-1,y0+.3,z1-.2],"connector")]
-        # Grooves intentionally differ as part of the shell, independent of hue.
-        groove_count = 2 + index % 4
-        elements += [b([x0+.2,y0+1+i*.5,z0-.18],[x0+.7,y0+1.2+i*.5,z0+.1],"edge") for i in range(groove_count)]
-    if platform in ("gbc", "n64", "ngpc", "wsc"):
-        elements += [b([x0+.8,y1,z0+.15],[x1-1.2,y1+.35,z1-.15],"edge")]
-    return elements
+    return hardware.media(platform, index, box)
 
 
 def model_catalog():
@@ -616,7 +358,7 @@ def model_catalog():
                 {"from":[9.8,9.4833333333,4.48],"to":[12.6,11.1166666667,4.48],"facing":"north","uv":[0,0,1,1],"eye":"right"}]
             entries[-1]["preview_mode"] = "duplicated-mono"
         if platform == "arcade":
-            entries[-1]["control_positions"] = [[8,7.0,3.3]]
+            entries[-1]["control_positions"] = [[8,7.2,3.3]]
             entries[-1]["cabinet_seats"] = 1
     return {"schema":1,"namespace":NS,"coordinate_units":16,"front":"north",
         "screen_plane":{"from":[1.5,3.0,6.90],"to":[14.5,12.75,6.90],"aspect":[4,3]},
@@ -626,13 +368,13 @@ def model_catalog():
             "bounds":{"min":[-32,0,6.94],"max":[16,32,9]},
             "screen_plane":{"from":[-31.25,.5,6.94],"to":[15.25,31.5,6.94],"aspect":[3,2]}},
         "dock_layout":{"geometry":f"{NS}:block/handheld_dock",
-            "bounds":{"min":[1,0,1.95],"max":[15,3,14]},"slot_top_y":3,
+            "bounds":{"min":[1,0,2],"max":[15,3,14]},"slot_top_y":3,
             "display_min_y":4,"display_motion":"rotation_only","display_source":"stored_handheld_item"},
         "entries":entries,"additional_styles":[{"platform":"arcade","cmd":22,"style":"double",
             "geometry":f"{NS}:block/arcade_cabinet_2p","item":f"{NS}:item/desk_console_arcade_2p",
-            "bounds":{"min":[.25,0,1.8],"max":[15.75,15.8,14]},"cabinet_seats":2,
+            "bounds":{"min":[.25,0,1.8],"max":[15.75,15.75,14]},"cabinet_seats":2,
             "controller_ports":2,"screen_plane":{"from":[3.2,7,4.30],"to":[12.8,14.2,4.30],"facing":"north"},
-            "control_positions":[[4.2,6.5,2.9],[11.8,6.5,2.9]],
+            "control_positions":[[11.8,5.8,2.9],[4.2,5.8,2.9]],
             "review":{"row":4,"column":1,"station":[4,64,28],"image":"22-arcade-2p.png"}}]}
 
 
@@ -768,6 +510,18 @@ def models():
         box([7, 6.3, 5.6], [9, 6.9, 6.1], "button"),
         box([7.3, 9.4, 6.6], [8.7, 10.6, 8], "dark"),
     ], kind="item")
+    # Registered generic-zero and accessory models use the same authored
+    # equipment language; TV geometry and all of its textures stay untouched.
+    for path, shape in (("block/desk_console", "desktop"),
+                        ("block/handheld_dock", "dock"),
+                        ("block/cartridge_writer", "writer"),
+                        ("item/template_handheld", "handheld"),
+                        ("item/template_cartridge", "cartridge"),
+                        ("item/controller", "controller")):
+        previous_display = result[path]["display"]
+        result[path] = base_model(hardware.generic(shape, box), hardware.palette("generic", NS),
+                                  kind="item" if path.startswith("item/") else "block")
+        result[path]["display"] = previous_display
     for name in BLOCKS:
         result[f"item/{name}"] = {"parent": f"{NS}:block/{name}"}
     # The inventory item represents the complete thin panel, not one tiled
@@ -784,9 +538,9 @@ def models():
         result[f"item/{name}"]["overrides"] = []
         for index, (platform, _, _, _) in enumerate(PLATFORMS, 1):
             variant = f"item/{name}_{platform}"
-            textures = {
-                "accent": f"{NS}:block/common/platform_{platform}",
-                "label": f"{NS}:item/label_{platform}"}
+            textures = hardware.palette(platform, NS)
+            if name == "cartridge":
+                textures["label"] = f"{NS}:item/label_{platform}"
             if name == "cartridge":
                 result[variant] = base_model(media_geometry(platform,index),textures,kind="item")
             else:
@@ -799,8 +553,7 @@ def models():
                     result[variant]["display"]["firstperson_lefthand"] = {"rotation":[0,180,0],"translation":[-2,6,-1],"scale":[.42,.42,.42]}
             result[f"item/{name}"]["overrides"].append({
                 "predicate": {"custom_model_data": index}, "model": f"{NS}:{variant}"})
-    result["block/arcade_cabinet_2p"] = base_model(arcade_geometry(True),{
-        "accent":f"{NS}:block/common/platform_arcade","label":f"{NS}:item/label_arcade"})
+    result["block/arcade_cabinet_2p"] = base_model(arcade_geometry(True),hardware.palette("arcade",NS))
     result["item/desk_console_arcade_2p"] = {"parent":f"{NS}:block/arcade_cabinet_2p"}
     result["item/arcade_cabinet_2p"] = {"parent":f"{NS}:block/arcade_cabinet_2p"}
     result["item/desk_console"]["overrides"].append({"predicate":{"custom_model_data":22},"model":f"{NS}:item/desk_console_arcade_2p"})
@@ -889,6 +642,31 @@ def generated_files():
 
     for name, color in COLORS.items():
         files[f"{ASSETS}/textures/block/common/{name}.png"] = surface(color)
+    # New private hardware swatches must not recolor any existing TV material.
+    for color in hardware.colors():
+        files[f"{ASSETS}/textures/block/hardware/c_{color.lower()}.png"] = surface(color)
+    idle_mono = canvas(16, 16, "748763")
+    idle_color = canvas(16, 16, "111922")
+    for y in range(1, 16, 2):
+        rect(idle_mono, 16, 0, y, 16, y + 1, "718360")
+        rect(idle_color, 16, 0, y, 16, y + 1, "121C25")
+    files[f"{ASSETS}/textures/block/hardware/idle_mono.png"] = png(16,16,idle_mono)
+    files[f"{ASSETS}/textures/block/hardware/idle_color.png"] = png(16,16,idle_color)
+    serial = canvas(32, 32, "DFDED0")
+    rect(serial,32,2,2,30,5,"A4A8A6")
+    rect(serial,32,4,9,28,10,"535D61")
+    rect(serial,32,4,13,21,14,"737A77")
+    for x in range(4,28,3):rect(serial,32,x,21,x+1,28,"62696A")
+    files[f"{ASSETS}/textures/block/hardware/serial.png"] = png(32,32,serial)
+    marquee = canvas(32,16,"19212E")
+    for x in range(1,31):
+        y=2+(x//5)%3
+        rect(marquee,32,x,y,x+1,y+3,"D8B95F")
+        rect(marquee,32,x,13-y,x+1,16-y,"649DA5")
+    files[f"{ASSETS}/textures/block/hardware/marquee.png"] = png(32,16,marquee)
+    wood=canvas(16,16,"855D3D")
+    for y in (2,6,10,14):rect(wood,16,0,y,16,y+1,"A4774C")
+    files[f"{ASSETS}/textures/block/hardware/wood_grain.png"] = png(16,16,wood)
     for index, (platform, _, short, color) in enumerate(PLATFORMS, 1):
         files[f"{ASSETS}/textures/block/common/platform_{platform}.png"] = surface(color)
         files[f"{ASSETS}/textures/item/label_{platform}.png"] = label_texture(short, color, index)
@@ -1119,6 +897,52 @@ def check_closure(files):
     if dock_geometry == [(e["from"],e["to"]) for e in resolved(f"{ASSETS}/models/block/desk_console.json")["elements"]]:
         raise ValueError("Handheld dock must have its own low geometry")
     checks += 3
+    # Serialized hardware must be physically joined. This catches caps, rear
+    # covers and bezels separated from their shell by even a tiny air gap.
+    joined_paths = [f"block/desk_console_{p[0]}" for p in PLATFORMS]
+    joined_paths += ["block/arcade_cabinet_2p", "block/desk_console", "block/handheld_dock",
+                     "block/cartridge_writer", "item/template_handheld", "item/controller",
+                     "item/template_cartridge"]
+    joined_paths += [f"item/cartridge_{p[0]}" for p in PLATFORMS]
+    for model_id in joined_paths:
+        elements = resolved(f"{ASSETS}/models/{model_id}.json")["elements"]
+        joined, pending = {0}, [0]
+        while pending:
+            current = pending.pop()
+            for other in range(len(elements)):
+                if other in joined:
+                    continue
+                if all(min(elements[current]["to"][axis], elements[other]["to"][axis]) >=
+                       max(elements[current]["from"][axis], elements[other]["from"][axis]) - 1e-7
+                       for axis in range(3)):
+                    joined.add(other)
+                    pending.append(other)
+        if len(joined) != len(elements):
+            raise ValueError(f"Hardware has disconnected geometry: {model_id}")
+        checks += 1
+    # The full live viewport must be free of opaque controls and case panels.
+    # Check the actual authored coordinates, not a label describing the layout.
+    for entry in [*model_catalog()["entries"], *model_catalog()["additional_styles"]]:
+        model_id = entry["geometry"].split(":", 1)[1]
+        elements = resolved(f"{ASSETS}/models/{model_id}.json")["elements"]
+        planes = entry.get("screen_planes", [entry.get("screen_plane")])
+        for plane in planes:
+            if not plane:
+                continue
+            x0, y0, z = plane["from"]
+            x1, y1, _ = plane["to"]
+            for element in elements:
+                if element["from"][2] < z - 1e-6 and \
+                        min(element["to"][0], x1) > max(element["from"][0], x0) + 1e-6 and \
+                        min(element["to"][1], y1) > max(element["from"][1], y0) + 1e-6:
+                    raise ValueError(f"Opaque hardware covers the live viewport: {model_id}")
+            checks += 1
+    generic = resolved(f"{ASSETS}/models/item/template_handheld.json")["elements"]
+    bounds = [min(element["from"][axis] for element in generic) for axis in range(3)] + \
+             [max(element["to"][axis] for element in generic) for axis in range(3)]
+    if bounds != [0, 3, 5.8, 16, 12.4, 8.5]:
+        raise ValueError("Generic-zero handheld must retain its renderer bounds contract")
+    checks += 1
     return checks
 
 
@@ -1137,12 +961,24 @@ def preview():
     pixels = canvas(width, height, "F2EFE5")
     depth = [-math.inf] * (width * height)
     mesh = models()
+    authored = generated_files()
+    sampled = {}
+
+    def face_color(model, material):
+        texture = model["textures"][material]
+        while texture.startswith("#"):
+            texture = model["textures"][texture[1:]]
+        if texture not in sampled:
+            _, path = texture.split(":", 1)
+            w, h, raw = decode_png(authored[f"{ASSETS}/textures/{path}.png"])
+            sampled[texture] = tuple(sum(raw[channel::4]) // (w*h) for channel in range(3))
+        return sampled[texture]
     tiles = [f"block/desk_console_{p[0]}" for p in PLATFORMS] + ["block/arcade_cabinet_2p"]
     # Top and north faces visible, like a camera above the front-right corner.
     def project(x, y, z, cx, cy):
-        return (cx + (x - 8) * 8 + (z - 8) * 4,
-                cy - (y - 7) * 8 - (z - 8) * 2.4 - (x - 8) * 1.2,
-                y - z + x * 0.5)
+        return (cx - (x - 8) * 8 - (z - 8) * 4,
+                cy - (y - 7) * 8 - (z - 8) * 4.8 + (x - 8) * 2.4,
+                x + y * 1.5 - z * 2)
 
     def triangle(vertices, color):
         a, b, c = vertices
@@ -1176,10 +1012,8 @@ def preview():
             }
             for face, vertices in face_vertices.items():
                 material = element["faces"][face]["texture"][1:]
-                color = COLORS.get(material, COLORS["amber"] if material == "accent" else
-                                   COLORS["shell"] if material == "label" else COLORS["screen"])
                 shade = {"up": 1.1, "north": 0.95, "east": 0.72}[face]
-                rgb = tuple(min(255, int(v * shade)) for v in rgba(color)[:3]) + (255,)
+                rgb = tuple(min(255, int(v * shade)) for v in face_color(mesh[name],material)) + (255,)
                 pts = [project(*vertex, cx, cy) for vertex in vertices]
                 triangle(pts[:3], rgb)
                 triangle([pts[0], pts[2], pts[3]], rgb)

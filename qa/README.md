@@ -12,6 +12,20 @@
 
 本目录实现和编译通过不等于场景已通过。`scenarioComplete` 只根据本轮真实结果设置；截图仍须人工/图像查看验收，`visualAcceptance` 与 `physicalOSInput` 始终 false。文件拖入、Checkbox/Button、InputSource 均是正常前端回调测试，不冒称实体鼠标、实体键盘或真实手柄操作。
 
+## 年代硬件像素模型专项
+
+候选模型全部变化时，新建统一run和当前候选QA，不复用旧模型图：`python -B qa/build.py --name <新名称> --product <本仓候选JAR> --pixel-review`。该显式选项仅向分侧QA包加入已验证的本仓原创 `build/platform-smoke/regression.gba`（65536字节），绑定既有 `gba-result.json` 的内容哈希与exit0、原生成源及 `GbaSmoke.java` 哈希；不重新生成ROM或重跑核心长矩阵。GB仍使用本仓32768字节原创诊断。产品包不加入这些测试ROM。
+
+root统一runner启动并提供实际路径后，先按既有 `--check` 核owner/PID代际/lease/产品及分侧QA哈希，再执行 `python -B qa/pixel_review.py --run <实际编号run> --build build/qa/<名称>/qa-build.json --phase models --pause-after-first`。入口先采NES世界与GB主手两张未经编辑的原始帧，暂停供人工检查轮廓、取景及左右操作区，再继续22款机体、9掌机/VB的20张主副手、总览及21媒体集体台/配件台，共45张。`pixel-model-review-result.json` 只记录当前候选结果，模型准备物品不含已发行卡带元数据；手持道具入口拒绝替换真实带卡掌机。
+
+随后 `--phase live` 只做新几何必要的窄spotcheck：正常刻录GB并装入GB外壳，保留这台已装卡GB，再刻GBA并装入另一台GBA，分别采真实主副手画面、正常保存。GBA再正常装入底座恢复同卡状态，合法距离内拍两个低位旋转角度、正常保存与完整取回，共6张动态原图。不重做大屏四向放拆、浏览器或21核心矩阵。所有照片仍须人工审核屏幕开口、控制区左右和底座高度；实际键鼠或手柄未由前端回调代测。
+
+媒体与控制器的普通固定展示实体面向南，station北侧镜头拍到的是背面。静态45张完成后、live前，分别运行 `qa/pixel_media_front.py --run <实际编号run> --build build/qa/<名称>/qa-build.json --group media` 及 `--group accessories`。它复用统一runner既有owned vanilla execute将真实玩家相机移到展示台南侧，仅补拍两张正面原图及独立JSON；不改模型、实体旋转或已有照片，不造卡带。入口拒绝在已经发卡或live完成后改变该静态相机。
+
+`python -B qa/pixel_gallery.py --run <实际编号run> --build build/qa/<名称>/qa-build.json --require-live` 生成 `build/pixel-realistic-review/index.html`，仅收本run同候选的53张原生图和四份独立结果，不导入旧22机型原图或软件preview。图集核原始路径、SHA、分辨率及PNG解码，分组展示机体、主副手、21媒体/配件正反面和实际运行；不复制、裁切、合成图片，也不会自动将人工图审状态改为通过。
+
+`--phase all` 按模型、两张正面补图、live顺序调用相同入口；实际分阶段审核仍建议显式分开执行。若最终快照保留历史错误提示，应另写简短 `pixel-review-observation.json`，记录原reply身份/哈希和原值，不改写完成结果、不清空历史；图库会链接该说明。模型/输入/保存断言不能扩展为音频或零历史错误结论。
+
 掌机、底座与薄大屏的新世界专项：根统一runner准备精确候选后，先执行上述 `--check`，再执行 `python -B qa/dock_review.py --run <实际编号run> --build build/qa/<QA名称>/qa-build.json`。工具复用同一Driver的owner/PID代际/租约/双侧JAR哈希检查，不启动或停止Minecraft。普通fixture只提供空GBA外壳、屏/底座/工具，GB卡带仍由真实刻录界面确认授权后上传生成；不直接构造卡带或存档。
 
 该专项按正常生存放置/挖掘/拾取检查屏幕受阻不消耗、四朝向的真实六格占位和拆从片单件掉落；再检查拿起自动世界播放、前端输入、物品右键同worker全屏、F透明操作、Esc保存抑制重开、收热栏保存、底座安装唯一性/完整NBT往返、同卡恢复和正常取回。`dock-review-result.json` 保留分项状态与原始PNG链接；8张照片覆盖实际手持/全屏、底座两时刻低位旋转，以及3×2屏幕前/侧/背。JSON完成和文件存在仍不能代替人工看图，也不证明实体键鼠、物理手柄或完整整合包共存。

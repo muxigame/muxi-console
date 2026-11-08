@@ -1,34 +1,45 @@
 {
   "textures": {
-    "particle": "muxi_console:block/common/ink",
-    "ink": "muxi_console:block/common/ink",
-    "shell": "muxi_console:block/common/shell",
-    "edge": "muxi_console:block/common/edge",
-    "dark": "muxi_console:block/common/dark",
-    "metal": "muxi_console:block/common/metal",
-    "amber": "muxi_console:block/common/amber",
-    "button": "muxi_console:block/common/button",
-    "connector": "muxi_console:block/common/connector",
-    "screen": "muxi_console:block/common/screen",
-    "wood": "muxi_console:block/common/wood",
-    "light": "muxi_console:block/common/light",
-    "lens": "muxi_console:block/common/lens",
-    "accent": "muxi_console:block/common/platform_a2600",
+    "particle": "muxi_console:block/hardware/c_25211e",
+    "ink": "muxi_console:block/hardware/c_25211e",
+    "shell": "muxi_console:block/hardware/c_38332e",
+    "edge": "muxi_console:block/hardware/c_1c1a19",
+    "dark": "muxi_console:block/hardware/c_0b0b0c",
+    "metal": "muxi_console:block/hardware/c_a0a09b",
+    "amber": "muxi_console:block/hardware/c_bb354b",
+    "button": "muxi_console:block/hardware/c_3e3f3c",
+    "connector": "muxi_console:block/hardware/c_c4a86e",
+    "screen": "muxi_console:block/hardware/c_0b0b0c",
+    "wood": "muxi_console:block/hardware/wood_grain",
+    "light": "muxi_console:block/hardware/c_e2e2db",
+    "lens": "muxi_console:block/hardware/c_411d2b",
+    "accent": "muxi_console:block/hardware/c_c18a4e",
     "label": "muxi_console:item/label_a2600",
-    "display": "muxi_console:block/standby"
+    "display": "muxi_console:block/hardware/idle_color",
+    "red": "muxi_console:block/hardware/c_bb354b",
+    "blue": "muxi_console:block/hardware/c_3c76af",
+    "yellow": "muxi_console:block/hardware/c_d6b949",
+    "green": "muxi_console:block/hardware/c_54a67e",
+    "white": "muxi_console:block/hardware/c_e2e2db",
+    "rubber": "muxi_console:block/hardware/c_171c21",
+    "led": "muxi_console:block/hardware/c_88b477",
+    "brass": "muxi_console:block/hardware/c_c4a86e",
+    "wood_light": "muxi_console:block/hardware/c_a4774c",
+    "lcd": "muxi_console:block/hardware/c_748763",
+    "marquee": "muxi_console:block/hardware/marquee"
   },
   "ambientocclusion": true,
   "elements": [
     {
       "from": [
-        3.5999999999999996,
-        2.75,
-        6.4
+        3.7,
+        3.1500000000000004,
+        6.65
       ],
       "to": [
+        12.3,
         12.4,
-        12.65,
-        9.6
+        9.35
       ],
       "faces": {
         "down": {
@@ -89,14 +100,14 @@
     },
     {
       "from": [
-        3.9499999999999997,
-        12.65,
-        6.4
+        4.1000000000000005,
+        12.4,
+        6.65
       ],
       "to": [
-        11.6,
-        13.25,
-        9.6
+        11.9,
+        12.85,
+        9.35
       ],
       "faces": {
         "down": {
@@ -106,7 +117,7 @@
             16,
             16
           ],
-          "texture": "#accent"
+          "texture": "#ink"
         },
         "up": {
           "uv": [
@@ -115,7 +126,7 @@
             16,
             16
           ],
-          "texture": "#accent"
+          "texture": "#ink"
         },
         "north": {
           "uv": [
@@ -124,7 +135,7 @@
             16,
             16
           ],
-          "texture": "#accent"
+          "texture": "#ink"
         },
         "south": {
           "uv": [
@@ -133,7 +144,7 @@
             16,
             16
           ],
-          "texture": "#accent"
+          "texture": "#ink"
         },
         "west": {
           "uv": [
@@ -142,7 +153,7 @@
             16,
             16
           ],
-          "texture": "#accent"
+          "texture": "#ink"
         },
         "east": {
           "uv": [
@@ -151,20 +162,20 @@
             16,
             16
           ],
-          "texture": "#accent"
+          "texture": "#ink"
         }
       }
     },
     {
       "from": [
-        4.1499999999999995,
-        4.55,
-        6.24
+        4.3500000000000005,
+        4.75,
+        6.57
       ],
       "to": [
-        11.85,
-        12.2,
-        6.48
+        11.65,
+        12.0,
+        6.680000000000001
       ],
       "faces": {
         "down": {
@@ -174,7 +185,7 @@
             16,
             16
           ],
-          "texture": "#shell"
+          "texture": "#white"
         },
         "up": {
           "uv": [
@@ -183,7 +194,7 @@
             16,
             16
           ],
-          "texture": "#shell"
+          "texture": "#white"
         },
         "north": {
           "uv": [
@@ -201,7 +212,7 @@
             16,
             16
           ],
-          "texture": "#shell"
+          "texture": "#white"
         },
         "west": {
           "uv": [
@@ -210,7 +221,7 @@
             16,
             16
           ],
-          "texture": "#shell"
+          "texture": "#white"
         },
         "east": {
           "uv": [
@@ -219,20 +230,20 @@
             16,
             16
           ],
-          "texture": "#shell"
+          "texture": "#white"
         }
       }
     },
     {
       "from": [
-        4.6,
-        2.2,
-        6.6000000000000005
+        4.5,
+        2.7,
+        6.800000000000001
       ],
       "to": [
-        11.4,
-        3.05,
-        9.4
+        11.5,
+        3.4300000000000006,
+        9.2
       ],
       "faces": {
         "down": {
@@ -242,7 +253,7 @@
             16,
             16
           ],
-          "texture": "#connector"
+          "texture": "#brass"
         },
         "up": {
           "uv": [
@@ -251,7 +262,7 @@
             16,
             16
           ],
-          "texture": "#connector"
+          "texture": "#brass"
         },
         "north": {
           "uv": [
@@ -260,7 +271,7 @@
             16,
             16
           ],
-          "texture": "#connector"
+          "texture": "#brass"
         },
         "south": {
           "uv": [
@@ -269,7 +280,7 @@
             16,
             16
           ],
-          "texture": "#connector"
+          "texture": "#brass"
         },
         "west": {
           "uv": [
@@ -278,7 +289,7 @@
             16,
             16
           ],
-          "texture": "#connector"
+          "texture": "#brass"
         },
         "east": {
           "uv": [
@@ -287,20 +298,20 @@
             16,
             16
           ],
-          "texture": "#connector"
+          "texture": "#brass"
         }
       }
     },
     {
       "from": [
-        3.8,
-        3.75,
-        6.220000000000001
-      ],
-      "to": [
-        4.3,
+        3.9000000000000004,
         3.95,
-        6.5
+        6.53
+      ],
+      "to": [
+        4.3,
+        4.15,
+        6.73
       ],
       "faces": {
         "down": {
@@ -361,14 +372,14 @@
     },
     {
       "from": [
-        3.8,
-        4.25,
-        6.220000000000001
+        3.9000000000000004,
+        4.45,
+        6.53
       ],
       "to": [
         4.3,
-        4.45,
-        6.5
+        4.65,
+        6.73
       ],
       "faces": {
         "down": {

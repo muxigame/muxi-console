@@ -70,7 +70,7 @@
       "min": [
         1,
         0,
-        1.95
+        2
       ],
       "max": [
         15,
@@ -100,11 +100,11 @@
         "min": [
           1,
           0,
-          1.8
+          1.71
         ],
         "max": [
           15,
-          6.1,
+          6.22,
           14
         ]
       },
@@ -142,12 +142,12 @@
         "min": [
           1,
           0,
-          1.92
+          2.36
         ],
         "max": [
           15,
-          6.3,
-          13.5
+          6.1,
+          13.4
         ]
       },
       "screen_plane": null,
@@ -182,14 +182,14 @@
       "silhouette": "tall portrait body, upper square screen, lower cross and offset keys",
       "bounds": {
         "min": [
-          3.6,
+          3.8,
           0.8,
-          5.45
+          5.43
         ],
         "max": [
-          12.4,
-          15.2,
-          8.8
+          12.2,
+          15.37,
+          9.01
         ]
       },
       "screen_plane": {
@@ -236,14 +236,14 @@
       "silhouette": "narrow portrait body with crowned top and terraced right heel",
       "bounds": {
         "min": [
-          4.0,
-          0.6,
-          5.3
+          3.95,
+          0.9,
+          5.29
         ],
         "max": [
-          12,
-          15.2,
-          8.5
+          12.05,
+          15.25,
+          8.72
         ]
       },
       "screen_plane": {
@@ -291,13 +291,13 @@
       "bounds": {
         "min": [
           0.3,
-          3.7,
-          5.25
+          3.65,
+          5.195
         ],
         "max": [
           15.7,
-          11.6,
-          8.7
+          11.75,
+          8.75
         ]
       },
       "screen_plane": {
@@ -344,14 +344,14 @@
       "silhouette": "octagonal deck with concentric stepped cartridge ring",
       "bounds": {
         "min": [
-          0.8,
+          0.7,
           0,
-          1.92
+          2.01
         ],
         "max": [
-          15.2,
-          5.35,
-          14
+          15.3,
+          4.82,
+          13.8
         ]
       },
       "screen_plane": null,
@@ -383,17 +383,17 @@
       "media": "muxi_console:item/cartridge_n64",
       "media_kind": "cartridge",
       "controller_ports": 4,
-      "silhouette": "three-lobe deck, raised rear cartridge rail and four front sockets",
+      "silhouette": "low rounded rectangular console with top cartridge bay and four front sockets",
       "bounds": {
         "min": [
           0.8,
           0,
-          1.32
+          2.12
         ],
         "max": [
           15.2,
-          6.1,
-          14
+          5.72,
+          13.7
         ]
       },
       "screen_plane": null,
@@ -430,11 +430,11 @@
         "min": [
           1,
           0,
-          1.92
+          1.79
         ],
         "max": [
           15,
-          5.0,
+          5.07,
           14
         ]
       },
@@ -471,13 +471,13 @@
       "bounds": {
         "min": [
           0.3,
-          3.3,
-          5.4
+          3.75,
+          5.36
         ],
         "max": [
           15.7,
-          12,
-          9.2
+          11.85,
+          9.32
         ]
       },
       "screen_plane": {
@@ -521,16 +521,16 @@
       "media": "muxi_console:item/cartridge_sg1000",
       "media_kind": "cartridge",
       "controller_ports": 2,
-      "silhouette": "ivory typewriter deck with raised back rail and side cartridge tower",
+      "silhouette": "ivory low console with red power rail, central top cartridge slot and paired front ports",
       "bounds": {
         "min": [
           1,
           0,
-          1.92
+          1.82
         ],
         "max": [
           15,
-          6.4,
+          5.12,
           14
         ]
       },
@@ -568,12 +568,12 @@
         "min": [
           3,
           0,
-          2.88
+          2.78
         ],
         "max": [
-          13.0,
-          4.7,
-          13.0
+          13,
+          4.18,
+          13
         ]
       },
       "screen_plane": null,
@@ -614,7 +614,7 @@
         ],
         "max": [
           15.4,
-          5.85,
+          5.1,
           14
         ]
       },
@@ -650,14 +650,14 @@
       "silhouette": "slim terraced deck with trapezoid top and central forward cartridge",
       "bounds": {
         "min": [
-          1.3,
+          1,
           0,
-          1.92
+          2.04
         ],
         "max": [
-          14.7,
-          5.25,
-          14
+          15,
+          4.86,
+          13.8
         ]
       },
       "screen_plane": null,
@@ -689,17 +689,17 @@
       "media": "muxi_console:item/cartridge_lynx",
       "media_kind": "card",
       "controller_ports": 1,
-      "silhouette": "long landscape slab with large end caps and side utility column",
+      "silhouette": "wide charcoal Lynx II style handheld with stepped grips, repeated action buttons and utility column",
       "bounds": {
         "min": [
           0.1,
-          3.9,
-          5.25
+          3.75,
+          5.2
         ],
         "max": [
           15.9,
-          11.8,
-          9.5
+          11.85,
+          9.32
         ]
       },
       "screen_plane": {
@@ -743,17 +743,17 @@
       "media": "muxi_console:item/cartridge_ngp",
       "media_kind": "cartridge",
       "controller_ports": 1,
-      "silhouette": "square landscape pocket body with circular stepped thumb disc",
+      "silhouette": "wide gray pocket body with recessed click stick, two action buttons and compact screen bezel",
       "bounds": {
         "min": [
-          1.1,
-          3.0,
-          5.0
+          0.35,
+          3.15,
+          5.1
         ],
         "max": [
-          14.9,
-          12.95,
-          8.7
+          15.65,
+          12.7,
+          8.97
         ]
       },
       "screen_plane": {
@@ -797,17 +797,17 @@
       "media": "muxi_console:item/cartridge_ngpc",
       "media_kind": "cartridge",
       "controller_ports": 1,
-      "silhouette": "scalloped pocket body with raised screen crown and two-tone heel",
+      "silhouette": "wide blue pocket body with recessed octagonal click stick and two raised action buttons",
       "bounds": {
         "min": [
-          0.8,
-          2.8,
-          5.0
+          0.35,
+          3.15,
+          5.1
         ],
         "max": [
-          14.9,
-          13.3,
-          8.7
+          15.65,
+          12.75,
+          8.97
         ]
       },
       "screen_plane": {
@@ -851,27 +851,27 @@
       "media": "muxi_console:item/cartridge_ws",
       "media_kind": "cartridge",
       "controller_ports": 1,
-      "silhouette": "asymmetric landscape body with two distinct left directional clusters",
+      "silhouette": "asymmetric ivory handheld with two separated four-key directional groups and right-side screen",
       "bounds": {
         "min": [
-          0.5,
-          3.7,
-          5.3
+          0.45,
+          3.25,
+          5.25
         ],
         "max": [
-          15.5,
-          11.6,
-          8.35
+          15.55,
+          12.0,
+          8.56
         ]
       },
       "screen_plane": {
         "from": [
-          5.4,
+          3.5,
           5.2,
           5.7
         ],
         "to": [
-          12.4,
+          10.5,
           9.7,
           5.7
         ],
@@ -905,27 +905,27 @@
       "media": "muxi_console:item/cartridge_wsc",
       "media_kind": "cartridge",
       "controller_ports": 1,
-      "silhouette": "slender rounded landscape body with vertical side cluster and lower keys",
+      "silhouette": "slender blue-gray handheld with two separated four-key directional groups and right-side screen",
       "bounds": {
         "min": [
-          0.5,
-          3.1,
-          5.3
+          0.45,
+          3.25,
+          5.25
         ],
         "max": [
-          15.5,
-          12.2,
-          8.35
+          15.55,
+          12.3,
+          8.56
         ]
       },
       "screen_plane": {
         "from": [
-          4.9,
+          3.25,
           5.0,
           5.45
         ],
         "to": [
-          12.25,
+          10.6,
           9.725,
           5.45
         ],
@@ -959,17 +959,17 @@
       "media": "muxi_console:item/cartridge_vb",
       "media_kind": "cartridge",
       "controller_ports": 1,
-      "silhouette": "binocular visor with twin dark eyepieces on a splayed tabletop tripod",
+      "silhouette": "wide red visor with a joined black eye mask and hinged tabletop tripod",
       "bounds": {
         "min": [
-          1.5,
-          0.5,
-          3.5
+          1.35,
+          0.6,
+          3.7
         ],
         "max": [
-          14.5,
-          13.280000000000001,
-          13.8
+          14.65,
+          13.2,
+          13.5
         ]
       },
       "screen_plane": null,
@@ -1049,11 +1049,11 @@
         "min": [
           1,
           0,
-          1.68
+          1.76
         ],
         "max": [
           15,
-          7.73,
+          7.4,
           14
         ]
       },
@@ -1095,7 +1095,7 @@
         ],
         "max": [
           13.15,
-          15.8,
+          15.75,
           14
         ]
       },
@@ -1131,7 +1131,7 @@
       "control_positions": [
         [
           8,
-          7.0,
+          7.2,
           3.3
         ]
       ],
@@ -1153,7 +1153,7 @@
         ],
         "max": [
           15.75,
-          15.8,
+          15.75,
           14
         ]
       },
@@ -1174,13 +1174,13 @@
       },
       "control_positions": [
         [
-          4.2,
-          6.5,
+          11.8,
+          5.8,
           2.9
         ],
         [
-          11.8,
-          6.5,
+          4.2,
+          5.8,
           2.9
         ]
       ],

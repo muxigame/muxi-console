@@ -4,7 +4,7 @@
 
 目标：Minecraft 1.21.1、NeoForge 21.1.250、Java 21；modId `muxi_console`，Java 包 `net.muxigame.console`。第一方代码和资产自行实现，底层模拟器作为单独登记的第三方组件选择，许可与来源分开记录。当前尚未指定公开发行许可，未发布或改变生产。
 
-当前为[掌机、底座与薄屏候选](build/dock-screen-01/muxi-console-0.1.0-dev.1+mc1.21.1.jar)：保留21类平台、22款原创机体，新增拿起即玩的掌机、低位旋转底座和默认3×2薄屏；2186项纯Java检查与12861项资源检查通过。真实Minecraft已验证手持/全屏共用同一局、收起保存、底座装取与同卡恢复、四向多格屏放拆；精确SHA与原图见[开发状态](docs/STATUS.md)和[本轮图库](build/dock-review/index.html)。此前刻录、卡带转交、普通双核心同步、N64/MAME共享及WebDisplays/MCEF结果仍分轮保留；[完整范围](docs/PLATFORM-COMPLETION.md)和[原22机型图库](build/model-review/index.html)不代表全部游戏兼容。
+当前为[像素设备外观候选](build/pixel-hardware-01/muxi-console-0.1.0-dev.1+mc1.21.1.jar)：22款机体、21媒体及配件改为更贴近真实年代设备的像素几何/壳色，修正掌机左右控制布局。353项资源/22464检查、原2186项纯Java检查通过；[本轮53张实机原图](build/pixel-realistic-review/index.html)覆盖逐款机体、主副手、配件正面和GB/GBA/底座活动画面对齐。[逐项审核](docs/PIXEL-HARDWARE-REVIEW.md)说明实际范围；运行代码和大屏资源与上一候选相同。此前21平台、多人、上传卡带、手持/全屏、底座、薄屏及WebDisplays/MCEF结果仍分轮保留，见[开发状态](docs/STATUS.md)和[完整范围](docs/PLATFORM-COMPLETION.md)，不代表全部游戏兼容。
 
 功能目标：玩家上传自己有权使用的 ROM，服务器校验和存储，刻录成可转交的实体卡带；原创主机、掌机、电视、控制器与刻录机；多人控制、键位绑定和 GLFW 手柄。游戏内权利声明默认 false，换文件重置；投诉与客服在云平台，不增加游戏内客服表单。已取得的本地 ROM 缓存不能远程撤回。
 
@@ -13,7 +13,7 @@
 - `domain/`：平台和 ROM、内容存储、上传状态机、持卡/控制权限、输入时间线，不依赖 MC。
 - `runtime/`：独立 Java/JNA 子进程调用公开 libretro ABI，MC 进程不装载核心；使用我们自己的请求/响应协议。
 - `mc/`、`client/`：NeoForge 注册、网络、物品、方块、会话、原创 GUI、动态画面、音频与输入。
-- `assets/` 和资源生成工具：原创模块化工业外观，用色条和符号区分平台，不复刻真实厂商或参考模组外形。
+- `assets/` 和资源生成工具：独立编写真实年代设备感的像素几何与材质；公开实物仅作比例/部件参考，不导入第三方模型、纹理、logo或游戏封面。
 
 产品源码只在本真实仓开发。构建依赖从总仓共享 SDK 只读解析；Minecraft 只通过总仓 `scripts/ops/test_environment.py` 分配统一测试环境。没有测试通过之前不声称兼容，没有生产授权不发布。
 

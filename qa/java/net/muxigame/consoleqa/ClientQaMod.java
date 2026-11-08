@@ -123,7 +123,7 @@ public final class ClientQaMod {
                 case "writer_drop" -> {
                     if (!(client.screen instanceof WriterScreen writer)) throw new IllegalStateException("The real writer screen must be open");
                     String rom=command.has("rom")?command.get("rom").getAsString():"nes";
-                    writer.onFilesDrop(List.of(switch(rom){case "gb"->gbDiagnostic();case "n64"->extraDiagnostic("original-vi.z64");case "arcade"->extraDiagnostic("pong.zip");default->diagnostic();}));
+                    writer.onFilesDrop(List.of(switch(rom){case "gb"->gbDiagnostic();case "gba"->extraDiagnostic("original-arm.gba");case "n64"->extraDiagnostic("original-vi.z64");case "arcade"->extraDiagnostic("pong.zip");default->diagnostic();}));
                 }
                 case "writer_confirm" -> {
                     if (!(client.screen instanceof WriterScreen)) throw new IllegalStateException("Writer screen required");
@@ -179,6 +179,15 @@ public final class ClientQaMod {
                         client.getConnection().send(new ServerboundPlayerCommandPacket(client.player, ServerboundPlayerCommandPacket.Action.RELEASE_SHIFT_KEY));
                     }
                 }
+                case "pixel_handheld_use" -> {
+                    if(client.screen!=null)throw new IllegalStateException("Use the real handheld from the world");
+                    int slot=command.get("slot").getAsInt();if(slot!=2&&slot!=7)throw new IllegalArgumentException("The two ordinary pixel fixture handhelds only");
+                    client.player.getInventory().selected=slot;client.getConnection().send(new ServerboundSetCarriedItemPacket(slot));
+                    boolean loading=command.has("load")&&command.get("load").getAsBoolean();
+                    client.player.setShiftKeyDown(loading);client.getConnection().send(new ServerboundPlayerCommandPacket(client.player,loading?ServerboundPlayerCommandPacket.Action.PRESS_SHIFT_KEY:ServerboundPlayerCommandPacket.Action.RELEASE_SHIFT_KEY));
+                    client.gameMode.useItem(client.player,InteractionHand.MAIN_HAND);
+                    if(loading){client.player.setShiftKeyDown(false);client.getConnection().send(new ServerboundPlayerCommandPacket(client.player,ServerboundPlayerCommandPacket.Action.RELEASE_SHIFT_KEY));}
+                }
                 case "leave" -> { ConsoleClient.INSTANCE.setInputSource(null); ConsoleClient.INSTANCE.leave(); }
                 case "screenshot" -> {
                     String name = command.get("name").getAsString(); if (!name.matches("[a-z0-9-]{1,64}")) throw new IllegalArgumentException("Simple screenshot name required");
@@ -208,7 +217,7 @@ public final class ClientQaMod {
         return gbDiagnostic;
     }
     private Path extraDiagnostic(String name)throws IOException{
-        if(!name.equals("original-vi.z64")&&!name.equals("pong.zip"))throw new IOException("Known authored diagnostics only");Path directory=owner.validatedRoot().resolve(System.getProperty("qa.local.role")).resolve("console-qa");Files.createDirectories(directory);Path target=directory.resolve(name);if(!Files.exists(target))try(var input=ClientQaMod.class.getResourceAsStream("/diagnostics/"+name)){if(input==null)throw new IOException("Missing original diagnostic");Files.copy(input,target);}return target;
+        if(!name.equals("original-vi.z64")&&!name.equals("original-arm.gba")&&!name.equals("pong.zip"))throw new IOException("Known authored diagnostics only");Path directory=owner.validatedRoot().resolve(System.getProperty("qa.local.role")).resolve("console-qa");Files.createDirectories(directory);Path target=directory.resolve(name);if(!Files.exists(target))try(var input=ClientQaMod.class.getResourceAsStream("/diagnostics/"+name)){if(input==null)throw new IOException("Missing original diagnostic");Files.copy(input,target);}return target;
     }
     private static void UUIDCheck(String value){java.util.UUID.fromString(value);}
     private static JsonObject publicRecord(Object value)throws ReflectiveOperationException{

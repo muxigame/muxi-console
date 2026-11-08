@@ -96,6 +96,7 @@ final class ReviewScene {
         else{
             JsonObject s=null;for(JsonElement e:stations)if(e.getAsJsonObject().get("cmd").getAsInt()==id)s=e.getAsJsonObject();if(s==null)throw new IllegalArgumentException("Unknown station");
             JsonArray a=s.getAsJsonObject("camera").getAsJsonArray("position"),b=s.getAsJsonObject("camera").getAsJsonArray("target");
+            if(CardData.read(p.getInventory().getItem(40)).isPresent()||held&&CardData.read(p.getInventory().getItem(7)).isPresent())throw new IllegalStateException("Model props cannot replace a real cartridge-bearing handheld");
             if(held){if(!HardwareCatalog.body(id).handheld())throw new IllegalArgumentException("Only portable hardware has a handheld shot");p.getInventory().setItem(7,hand.equals("main")?HardwareCatalog.variant(new ItemStack(ConsoleContent.HANDHELD.get()),id):ItemStack.EMPTY);p.getInventory().setItem(40,hand.equals("off")?HardwareCatalog.variant(new ItemStack(ConsoleContent.HANDHELD.get()),id):ItemStack.EMPTY);p.getInventory().selected=hand.equals("main")?7:8;p.inventoryMenu.broadcastChanges();}
             else{p.getInventory().setItem(40,ItemStack.EMPTY);p.getInventory().selected=8;p.inventoryMenu.broadcastChanges();}
             teleportEye(p,a.get(0).getAsDouble()+DX,a.get(1).getAsDouble()+DY,a.get(2).getAsDouble(),b.get(0).getAsDouble()+DX,b.get(1).getAsDouble()+DY,b.get(2).getAsDouble());
