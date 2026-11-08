@@ -5,7 +5,6 @@ public final class HeldGameScreen extends GameScreen {
     public HeldGameScreen(ClientActions actions,int port){super(actions,port,true);}
     @Override protected String worldLabel(){return "手持视角";}
     @Override public boolean mouseClicked(double x,double y,int button){
-        if(button==1&&minecraft!=null){minecraft.setScreen(new GameScreen(actions,port()));return true;}
-        return true;
+        return super.mouseClicked(x,y,button);
     }
 }

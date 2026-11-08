@@ -10,6 +10,10 @@ public final class HeldInputPolicyTest {
     private static int checks;
     private static void check(boolean value,String message){checks++;if(!value)throw new AssertionError(message);}
     public static void main(String[] args){
+        for(boolean released:new boolean[]{false,true})for(boolean leaving:new boolean[]{false,true}){
+            check(!HeldInputPolicy.captures(false,released,leaving),"World and settings never own game controls");
+            check(HeldInputPolicy.captures(true,released,leaving)==(!released&&!leaving),"Only a live focused game screen captures controls");
+        }
         var world=Set.of(87,65,83,68,69,81,70,49,84,32);
         for(int key:world)check(!HeldInputPolicy.permits(key,false,world),"World binding cannot simultaneously press a game button");
         for(int key:new int[]{262,263,264,265,257,74,75})check(HeldInputPolicy.permits(key,false,world),"Unassigned navigation/game key remains usable");

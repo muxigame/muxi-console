@@ -1,12 +1,16 @@
 # 逐平台模型：Minecraft原图审核
 
-## 当前像素设备外观轮
+## 当前手持、薄机身与按键反馈轮
+
+[当前图库](../build/held-feel-review/index.html)含同一产品04/QA05实际run的32次原始采图，SHA `e817e5553039eb17ed07ec2656540aeb33dfd2384c75150967fdfc638f23540d`、runId `303f67499b244eb6b88a143fe082d982`。九掌机/VB双手、GB/GBA活动画面的主副手/惯用左手、重绑设置与按下/松开/组合键、底座两时刻均已逐张查看，手端接壳且不挡屏幕/按键。GB中立与松开图字节相同而采集序号/时间不同；不以不同SHA数量代替实际采图数量。原live回执占用失败false不覆盖，77项与独立续办16项联合闭合，详见[本轮审核](HANDHELD-FEEL.md)。以下是前轮原图，不替代本轮新手位和按钮验收。
+
+## 像素设备外观轮（前一轮）
 
 [本轮图库](../build/pixel-realistic-review/index.html)仅收pixel-hardware-01的53张原始MC图，SHA `d46d73b4fff988f20ce85a7d71904e868939489279c429c0fbdbc5b6e3c6f697`、runId `851bb6c655e14edaa6046616f6695ce6`。22款新机体、20主副手均逐张看过；NGP/WS/VB等特殊操作区和支架也完整可见，未见紫黑缺图、明显悬空或被屏框挡住的活动面。媒体及控制器先拍到背面，独立补前图并保留两份来源；不能用旧模型图或软件preview替代。本轮未改大屏。细节、存档/底座窄验证及限制见[像素设备审核](PIXEL-HARDWARE-REVIEW.md)。下面各候选仍为历史原图和历史结论。
 
 ## 掌机、底座与薄屏接续
 
-当前候选 `dock-screen-01` 的[独立图库](../build/dock-review/index.html)包含9张当前原图、4张历史取景图和3份原始结果；产品SHA `b9d33b38d2c8cf0045b79d3ef9be38922a63f8fb373ae9030ac878e5212d71fb`，runId `ff9126cce10740e8b3fdaa6674adeb73`。无GUI手持、F透明手持操作、右键同worker全屏、3×2活动薄屏、低位旋转两个时刻及侧背图均已查看。机体最低点4/16、距槽顶1/16，没有高悬浮；侧面薄屏外壳完整，背板图明确为底边贴帧的近照，不冒称完整背面外壳图。原22机型几何未改，下文图库继续保留。
+前轮候选 `dock-screen-01` 的[独立图库](../build/dock-review/index.html)包含9张当前原图、4张历史取景图和3份原始结果；产品SHA `b9d33b38d2c8cf0045b79d3ef9be38922a63f8fb373ae9030ac878e5212d71fb`，runId `ff9126cce10740e8b3fdaa6674adeb73`。无GUI手持、F透明手持操作、右键同worker全屏、3×2活动薄屏、低位旋转两个时刻及侧背图均已查看。机体最低点4/16、距槽顶1/16，没有高悬浮；侧面薄屏外壳完整，背板图明确为底边贴帧的近照，不冒称完整背面外壳图。原22机型几何未改，下文图库继续保留。
 
 原主结果的05/06近照出画，07取景超出8格触发会话结束；其48项完成不作为该段最终主动保存证明。首次补验观察超时false保留；独立resumed补验19项要求每张图前同一底座room/ready/worker仍有效，最后真实正常leave提交新generation、client/vault同hash且worker自然关闭，原掌机完整取回。详见[当前状态](STATUS.md)与[操作说明](HANDHELD-DOCK.md)。所有PNG直接链接原run，不复制、不裁切合成；三MC JVM正常exit0，native审计无残留，运行payload已自动清理。
 

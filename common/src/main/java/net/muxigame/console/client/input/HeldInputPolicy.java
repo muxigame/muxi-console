@@ -6,6 +6,8 @@ import net.muxigame.console.runtime.PortInput;
 
 /** Held-world keyboard ownership: gamepad state is independent of the world's keyboard bindings. */
 public final class HeldInputPolicy {
+    /** The focused Screen owns all game keys; ordinary world movement and settings never send game input. */
+    public static boolean captures(boolean gameScreen,boolean released,boolean leaving){return gameScreen&&!released&&!leaving;}
     public static boolean permits(int key,boolean modified,Set<Integer> worldKeys){return key>=32&&!modified&&!worldKeys.contains(key);}
     public static PortInput directions(Platform platform,PortInput input,boolean up,boolean down,boolean left,boolean right){
         int mask=input.buttons();short lx=input.leftX(),ly=input.leftY();

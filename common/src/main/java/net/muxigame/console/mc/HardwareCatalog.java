@@ -12,8 +12,9 @@ import net.minecraft.world.item.component.CustomModelData;
 /** The authored model catalog is the single coordinate contract for bodies and live screens. */
 public final class HardwareCatalog {
     public record Plane(float x0,float y0,float x1,float y1,float z){}
-    public record Body(int id,Platform platform,String name,String form,int controllerPorts,List<Plane> screens,float[] bounds){
-        public Body{screens=List.copyOf(screens);bounds=bounds.clone();}
+    public record ControlSurface(int button,int port,String facing,float x0,float y0,float z0,float x1,float y1,float z1){}
+    public record Body(int id,Platform platform,String name,String form,int controllerPorts,List<Plane> screens,float[] bounds,List<ControlSurface> controls){
+        public Body{screens=List.copyOf(screens);bounds=bounds.clone();controls=List.copyOf(controls);}
         public boolean handheld(){return form.equals("handheld")||form.equals("viewer");}
         public int ports(){return controllerPorts;}
         @Override public float[] bounds(){return bounds.clone();}
@@ -25,7 +26,9 @@ public final class HardwareCatalog {
             default -> false;
         };}
     }
-    private static final Map<Integer,Body> BODIES=load();
+    private record Catalog(Map<Integer,Body> bodies,List<ControlSurface> generic,List<ControlSurface> controller){}
+    private static final Catalog CATALOG=load();
+    private static final Map<Integer,Body> BODIES=CATALOG.bodies();
     private static final Plane TV=new Plane(1.5f,3f,14.5f,12.75f,6.90f);
     public static Collection<Body> bodies(){return BODIES.values();}
     public static Body body(int id){return BODIES.get(id);}
@@ -34,8 +37,10 @@ public final class HardwareCatalog {
     public static boolean accepts(int body,Platform media){Body b=body(body);return body==0||b!=null&&b.accepts(media);}
     public static int ports(int body){Body b=body(body);return b==null?4:b.ports();}
     public static List<Plane> screens(int body){Body b=body(body);return b==null?List.of():b.screens();}
+    public static List<ControlSurface> controls(int body){Body b=body(body);return body==0?CATALOG.generic():b==null?List.of():b.controls();}
+    public static List<ControlSurface> controllerControls(){return CATALOG.controller();}
     public static Plane television(){return TV;}
-    private static Map<Integer,Body> load(){
+    private static Catalog load(){
         try(var input=HardwareCatalog.class.getResourceAsStream("/assets/muxi_console/model_catalog.json")){
             if(input==null)throw new IOException("Missing authored hardware catalog");
             JsonObject root=JsonParser.parseReader(new InputStreamReader(input,StandardCharsets.UTF_8)).getAsJsonObject();
@@ -49,11 +54,21 @@ public final class HardwareCatalog {
                 JsonObject box=j.getAsJsonObject("bounds");JsonArray min=box.getAsJsonArray("min"),max=box.getAsJsonArray("max");float[] bounds=new float[6];for(int k=0;k<3;k++){bounds[k]=min.get(k).getAsFloat();bounds[k+3]=max.get(k).getAsFloat();}
                 String name=j.has("zh_name")?j.get("zh_name").getAsString():"双人街机";String form=j.has("form_factor")?j.get("form_factor").getAsString():"arcade";
                 int ports=j.has("cabinet_seats")?j.get("cabinet_seats").getAsInt():j.get("controller_ports").getAsInt();
-                if(result.put(id,new Body(id,Platform.fromId(j.get("platform").getAsString()),name,form,ports,screens,bounds))!=null)throw new IOException("Duplicate body id");
+                if(result.put(id,new Body(id,Platform.fromId(j.get("platform").getAsString()),name,form,ports,screens,bounds,controls(j,"control_surfaces")))!=null)throw new IOException("Duplicate body id");
             }
-            if(result.size()!=22)throw new IOException("Incomplete hardware catalog");return Collections.unmodifiableMap(result);
+            if(result.size()!=22)throw new IOException("Incomplete hardware catalog");return new Catalog(Collections.unmodifiableMap(result),controls(root,"generic_control_surfaces"),controls(root,"controller_control_surfaces"));
         }catch(Exception e){throw new ExceptionInInitializerError(e);}
     }
     private static Plane plane(JsonObject j){JsonArray a=j.getAsJsonArray("from"),b=j.getAsJsonArray("to");return new Plane(a.get(0).getAsFloat(),a.get(1).getAsFloat(),b.get(0).getAsFloat(),b.get(1).getAsFloat(),a.get(2).getAsFloat());}
+    private static List<ControlSurface> controls(JsonObject object,String key)throws IOException{
+        if(!object.has(key))return List.of();List<ControlSurface> result=new ArrayList<>();
+        for(JsonElement row:object.getAsJsonArray(key)){
+            JsonObject j=row.getAsJsonObject();int button=j.get("button").getAsInt(),port=j.has("port")?j.get("port").getAsInt():0;String facing=j.has("facing")?j.get("facing").getAsString():"north";
+            JsonArray a=j.getAsJsonArray("from"),b=j.getAsJsonArray("to");float[] f=new float[6];for(int i=0;i<3;i++){f[i]=a.get(i).getAsFloat();f[i+3]=b.get(i).getAsFloat();if(!Float.isFinite(f[i])||!Float.isFinite(f[i+3])||f[i]<0||f[i+3]>16||f[i]>f[i+3])throw new IOException("Invalid control bounds");}
+            if(button<0||button>15||port<0||port>3||!(facing.equals("north")&&f[2]==f[5]&&f[0]<f[3]&&f[1]<f[4]||facing.equals("up")&&f[1]==f[4]&&f[0]<f[3]&&f[2]<f[5]))throw new IOException("Invalid control face");
+            result.add(new ControlSurface(button,port,facing,f[0],f[1],f[2],f[3],f[4],f[5]));
+        }
+        return List.copyOf(result);
+    }
     private HardwareCatalog(){}
 }

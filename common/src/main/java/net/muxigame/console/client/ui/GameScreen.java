@@ -1,9 +1,12 @@
 package net.muxigame.console.client.ui;
 
 import java.util.Objects;
+import java.util.HashSet;
+import java.util.Set;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.muxigame.console.client.input.InputProfiles;
 import org.lwjgl.glfw.GLFW;
 
 /** A non-pausing input surface in both world-TV and fitted fullscreen modes. */
@@ -13,6 +16,7 @@ public class GameScreen extends Screen {
     private boolean worldView;
     private boolean closed;
     private boolean fHeld;
+    private final Set<Integer> inputKeys = new HashSet<>();
     public GameScreen(ClientActions actions, int port) { this(actions,port,false); }
     protected GameScreen(ClientActions actions,int port,boolean worldView) {
         super(Component.translatable("ui.muxi_console.title"));
@@ -20,7 +24,19 @@ public class GameScreen extends Screen {
         this.actions = Objects.requireNonNull(actions); this.port = port;this.worldView=worldView;
     }
     public int port() { return port; }
-    @Override protected void init(){net.minecraft.client.KeyMapping.releaseAll();}
+    @Override protected void init(){
+        net.minecraft.client.KeyMapping.releaseAll();clearInputKeys();
+        if(actions instanceof net.muxigame.console.client.ConsoleClient client)client.resumeControls();
+        addRenderableWidget(new ConsoleButton(Math.max(4,width-90),6,84,20,Component.literal("按键设置"),ignored->{
+            clearInputKeys();
+            var platform=actions instanceof net.muxigame.console.client.ConsoleClient client?client.inputFeedback().platform():net.muxigame.console.domain.Platform.NES;
+            minecraft.setScreen(new ControlsScreen(this,platform));
+        }));
+    }
+    public Set<Integer> inputKeys(){return Set.copyOf(inputKeys);}
+    public void clearInputKeys(){inputKeys.clear();fHeld=false;}
+    public void focusKeyPressedOnOpen(){fHeld=true;}
+    @Override public void removed(){net.minecraft.client.KeyMapping.releaseAll();clearInputKeys();if(actions instanceof net.muxigame.console.client.ConsoleClient client)client.clearInputVisual();}
     protected String worldLabel(){return actions instanceof net.muxigame.console.client.ConsoleClient client&&client.handheldSession()?"手持视角":"电视视角";}
     public boolean worldView() { return worldView; }
     @Override public boolean isPauseScreen() { return false; }
@@ -35,25 +51,31 @@ public class GameScreen extends Screen {
                     pictureWidth, pictureHeight);
         }
         graphics.fill(0, height - 24, width, height, 0xd0203b42);
-        graphics.drawString(font, "P" + (port + 1) + "  ·  F 切换" + (worldView ? "全屏" : worldLabel()) + "  ·  F8 释放操作  ·  Esc 保存离开",
+        graphics.drawString(font, "P" + (port + 1) + "  ·  " + ControlsScreen.keyName(InputProfiles.get().focusKey()) + " 切换" + (worldView ? "全屏" : worldLabel()) + "  ·  F8 释放操作  ·  Esc 保存离开",
                 10, height - 16, ConsoleScreen.CREAM, false);
         String status = Objects.requireNonNullElse(actions.status(), "");
-        if (!status.isBlank()) graphics.drawString(font, font.plainSubstrByWidth(status, width - 20), 10, 10, ConsoleScreen.AMBER, false);
+        if (!status.isBlank()) graphics.drawString(font, font.plainSubstrByWidth(status, width - 110), 10, 10, ConsoleScreen.AMBER, false);
+        super.render(graphics,mouseX,mouseY,partialTick);
     }
     @Override public boolean keyPressed(int key, int scanCode, int modifiers) {
         if (key == GLFW.GLFW_KEY_ESCAPE) { onClose(); return true; }
-        if (key == GLFW.GLFW_KEY_F) { if (!fHeld) worldView = !worldView; fHeld = true; return true; }
+        if (key == InputProfiles.get().focusKey()) { if (!fHeld) worldView = !worldView; fHeld = true; return true; }
+        if(key==GLFW.GLFW_KEY_F8){if(actions instanceof net.muxigame.console.client.ConsoleClient client)client.releaseControls();if(minecraft!=null)minecraft.setScreen(null);return true;}
+        if(key>=GLFW.GLFW_KEY_SPACE&&key<=GLFW.GLFW_KEY_LAST)inputKeys.add(key);
         return true;
     }
     @Override public boolean keyReleased(int key, int scanCode, int modifiers) {
-        if (key == GLFW.GLFW_KEY_F) fHeld = false;
+        inputKeys.remove(key);
+        if (key == InputProfiles.get().focusKey()) fHeld = false;
         return true;
     }
     @Override public boolean mouseClicked(double x,double y,int button){
+        if(super.mouseClicked(x,y,button))return true;
         if(button==1&&worldView&&actions instanceof net.muxigame.console.client.ConsoleClient client&&client.handheldSession()){worldView=false;return true;}
         return true;
     }
     @Override public void onClose() {
+        clearInputKeys();
         if (!closed) { closed = true; actions.leave(); }
         if (minecraft != null && minecraft.screen == this) minecraft.setScreen(null);
     }

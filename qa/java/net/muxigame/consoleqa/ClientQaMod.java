@@ -56,6 +56,7 @@ public final class ClientQaMod {
     private String stateProbe="",stateProbeRequest="";
     private long sharedPcmBytes,sharedPcmNonzeroSamples;
     private final DockActions dockActions=new DockActions();
+    private final HeldActions heldActions=new HeldActions();
     public ClientQaMod() { NeoForge.EVENT_BUS.addListener(this::tick); }
     private void tick(ClientTickEvent.Post event) {
         clientTicks++;
@@ -84,6 +85,7 @@ public final class ClientQaMod {
     private JsonObject dispatch(JsonObject command) {
         Minecraft client = Minecraft.getInstance();
         String action = command.get("action").getAsString();
+        if(action.startsWith("hand_")){JsonObject callback=heldActions.command(client,command);JsonObject result=observe(client);result.add("handCallback",callback);return result;}
         if(action.startsWith("dock_")){dockActions.command(client,command);return observe(client);}
         try {
             switch (action) {
@@ -244,6 +246,7 @@ public final class ClientQaMod {
         result.add("shared",shared());JsonObject video=new JsonObject(),audio=new JsonObject();videoHistory.forEach((k,v)->video.addProperty(k.toString(),v));audioHistory.forEach((k,v)->audio.addProperty(k.toString(),v));result.add("sharedVideoHistory",video);result.add("sharedAudioHistory",audio);
         result.add("picture",NativeReview.picture(client));
         result.add("dock",DockActions.observe(client));
+        result.add("heldReview",heldActions.observe(client));
         var state = ConsoleClient.INSTANCE.snapshot();
         result.addProperty("status", state.status()); result.addProperty("room", state.room()); result.addProperty("epoch", state.epoch());
         result.addProperty("port", state.port()); result.addProperty("ready", state.ready()); result.addProperty("frames", state.frames()); result.addProperty("crc", state.frameCrc());

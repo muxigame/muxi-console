@@ -30,10 +30,21 @@ public final class HandheldRenderer extends BlockEntityWithoutLevelRenderer {
     }
     @Override public void renderByItem(ItemStack item,ItemDisplayContext display,PoseStack pose,MultiBufferSource buffers,int light,int overlay){
         body(item,pose,buffers,light,overlay);
+        if(item.is(ConsoleContent.CONTROLLER.get())){
+            if(display==ItemDisplayContext.FIRST_PERSON_LEFT_HAND||display==ItemDisplayContext.FIRST_PERSON_RIGHT_HAND)HandheldFeedback.draw(pose,buffers,HardwareCatalog.controllerControls(),ConsoleClient.INSTANCE.localInputVisual(),0);
+            return;
+        }
+        live(item,pose,buffers);
+    }
+    private static int live(ItemStack item,PoseStack pose,MultiBufferSource buffers){
         var state=ConsoleClient.INSTANCE.snapshot();var picture=ConsoleClient.INSTANCE.picture();
-        if(picture==null||!state.ready()||!state.room().startsWith("handheld/"))return;
-        if(CardData.read(item).filter(c->state.room().equals("handheld/"+c.instanceId())).isEmpty())return;
-        picture(item,picture,pose,buffers);
+        if(!state.ready()||!state.room().startsWith("handheld/"))return 0;
+        var card=CardData.read(item).filter(c->state.room().equals("handheld/"+c.instanceId()));if(card.isEmpty())return 0;
+        if(picture!=null)picture(item,picture,pose,buffers);
+        return HandheldFeedback.draw(pose,buffers,HardwareCatalog.controls(HardwareCatalog.model(item)),ConsoleClient.INSTANCE.heldInputVisual(card.get().instanceId()),0);
+    }
+    public static int presented(ItemStack item,PoseStack pose,MultiBufferSource buffers,int light){
+        body(item,pose,buffers,light,net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY);return live(item,pose,buffers);
     }
     private static void body(ItemStack item,PoseStack pose,MultiBufferSource buffers,int light,int overlay){
         Minecraft mc=Minecraft.getInstance();BakedModel selected=mc.getItemRenderer().getModel(item,mc.level,mc.player,0);BakedModel body=selected instanceof LiveModel live?live.body():selected;
@@ -44,8 +55,9 @@ public final class HandheldRenderer extends BlockEntityWithoutLevelRenderer {
         for(var plane:planes)DeviceRenderer.screen(pose,buffers,picture,plane);
     }
     /** Already in authored model coordinates: no BEWLR or hand-presentation recursion, no global picture override. */
-    public static void docked(ItemStack item,net.minecraft.resources.ResourceLocation sourcePicture,PoseStack pose,MultiBufferSource buffers,int light,int overlay){
+    public static void docked(ItemStack item,long console,net.minecraft.resources.ResourceLocation sourcePicture,PoseStack pose,MultiBufferSource buffers,int light,int overlay){
         body(item,pose,buffers,light,overlay);if(sourcePicture!=null)picture(item,sourcePicture,pose,buffers);
+        HandheldFeedback.draw(pose,buffers,HardwareCatalog.controls(HardwareCatalog.model(item)),ConsoleClient.INSTANCE.deviceInputVisual(console),0);
     }
 
 }

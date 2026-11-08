@@ -349,6 +349,7 @@ def model_catalog():
             "media":f"{NS}:item/cartridge_{platform}","media_kind":"disk" if platform == "fds" else "card" if platform in ("pce","lynx") else "cartridge",
             "controller_ports":DESKTOP_PORTS.get(platform,1),"silhouette":SILHOUETTES[platform],
             "bounds":bounds,
+            "control_surfaces":hardware.control_surfaces(platform,box,HANDHELD_PLANES,ARCADE_PLANES),
             "screen_plane":None if plane is None else {"from":[plane[0],plane[1],plane[4]],"to":[plane[2],plane[3],plane[4]],"facing":"north"},
             "review":{"row":(cmd-1)//5,"column":(cmd-1)%5,"station":[((cmd-1)%5)*4,64,((cmd-1)//5)*7],
                 "camera_offset":[2.8,2.0,-3.9],"camera_pitch":20,"image":f"{cmd:02d}-{platform}.png"}})
@@ -361,6 +362,8 @@ def model_catalog():
             entries[-1]["control_positions"] = [[8,7.2,3.3]]
             entries[-1]["cabinet_seats"] = 1
     return {"schema":1,"namespace":NS,"coordinate_units":16,"front":"north",
+        "generic_control_surfaces":hardware.control_surfaces("generic",box,HANDHELD_PLANES,ARCADE_PLANES),
+        "controller_control_surfaces":hardware.control_surfaces("controller",box,HANDHELD_PLANES,ARCADE_PLANES),
         "screen_plane":{"from":[1.5,3.0,6.90],"to":[14.5,12.75,6.90],"aspect":[4,3]},
         "display_layout":{"width_blocks":3,"height_blocks":2,"part_property":"part",
             "legacy_part":0,"large_parts":[1,2,3,4,5,6],"anchor_part":1,
@@ -375,6 +378,7 @@ def model_catalog():
             "bounds":{"min":[.25,0,1.8],"max":[15.75,15.75,14]},"cabinet_seats":2,
             "controller_ports":2,"screen_plane":{"from":[3.2,7,4.30],"to":[12.8,14.2,4.30],"facing":"north"},
             "control_positions":[[11.8,5.8,2.9],[4.2,5.8,2.9]],
+            "control_surfaces":hardware.control_surfaces("arcade",box,HANDHELD_PLANES,ARCADE_PLANES,True),
             "review":{"row":4,"column":1,"station":[4,64,28],"image":"22-arcade-2p.png"}}]}
 
 
@@ -650,6 +654,7 @@ def generated_files():
     for y in range(1, 16, 2):
         rect(idle_mono, 16, 0, y, 16, y + 1, "718360")
         rect(idle_color, 16, 0, y, 16, y + 1, "121C25")
+    files[f"{ASSETS}/textures/block/hardware/feedback.png"] = png(4,4,canvas(4,4,"FFFFFF"))
     files[f"{ASSETS}/textures/block/hardware/idle_mono.png"] = png(16,16,idle_mono)
     files[f"{ASSETS}/textures/block/hardware/idle_color.png"] = png(16,16,idle_color)
     serial = canvas(32, 32, "DFDED0")
@@ -937,6 +942,55 @@ def check_closure(files):
                         min(element["to"][1], y1) > max(element["from"][1], y0) + 1e-6:
                     raise ValueError(f"Opaque hardware covers the live viewport: {model_id}")
             checks += 1
+    # Highlight surfaces must describe current physical caps, not approximate
+    # screen overlays or coordinates from a previous model revision.
+    catalog = model_catalog()
+    controls = [(entry["geometry"], entry["control_surfaces"])
+                for entry in [*catalog["entries"], *catalog["additional_styles"]]]
+    controls += [(f"{NS}:item/template_handheld", catalog["generic_control_surfaces"]),
+                 (f"{NS}:item/controller", catalog["controller_control_surfaces"])]
+    for model_id, surfaces in controls:
+        elements = resolved(f"{ASSETS}/models/{model_id.split(':', 1)[1]}.json")["elements"]
+        for surface in surfaces:
+            bit, port = surface["button"], surface["port"]
+            lo, hi, facing = surface["from"], surface["to"], surface["facing"]
+            if not 0 <= bit < 16 or port not in (0, 1) or facing not in ("north", "up"):
+                raise ValueError(f"Invalid logical cap identity: {model_id}/{surface}")
+            axis = 2 if facing == "north" else 1
+            if not math.isclose(lo[axis], hi[axis], abs_tol=1e-7) or any(
+                    lo[i] >= hi[i] for i in range(3) if i != axis):
+                raise ValueError(f"Invalid cap plane: {model_id}/{surface}")
+            matching = [element for element in elements if
+                math.isclose(element["from" if facing == "north" else "to"][axis], lo[axis], abs_tol=1e-7)
+                and all(element["from"][i] <= lo[i] + 1e-7 and
+                        element["to"][i] >= hi[i] - 1e-7 for i in range(3) if i != axis)]
+            if not matching:
+                raise ValueError(f"Feedback misses actual button geometry: {model_id}/{surface}")
+            checks += 1
+    essential = {"gb": {0,2,3,4,5,6,7,8}, "gbc": {0,2,3,4,5,6,7,8},
+                 "gba": {0,2,3,4,5,6,7,8,10,11}, "gg": {0,3,4,5,6,7,8},
+                 "lynx": {0,3,4,5,6,7,8,10,11}, "ngp": {0,3,4,5,6,7,8},
+                 "ngpc": {0,3,4,5,6,7,8}, "ws": {0,3,4,5,6,7,8,10,11,12,13},
+                 "wsc": {0,3,4,5,6,7,8,10,11,12,13}}
+    for entry in catalog["entries"]:
+        platform = entry["platform"]
+        if platform not in essential:
+            continue
+        actual = {surface["button"] for surface in entry["control_surfaces"]}
+        if actual != essential[platform]:
+            raise ValueError(f"Physical control mapping incomplete: {platform}")
+        bounds = entry["bounds"]
+        if bounds["max"][2] - bounds["min"][2] >= 3.0:
+            raise ValueError(f"Handheld retains the old bulky case depth: {platform}")
+        for surface in entry["control_surfaces"]:
+            if surface["button"] in (0, 8) and max(surface["to"][i] - surface["from"][i] for i in (0, 1)) > .81:
+                raise ValueError(f"Handheld action cap is oversized: {platform}")
+        checks += 3
+    double_controls = catalog["additional_styles"][0]["control_surfaces"]
+    for port in (0, 1):
+        if {surface["button"] for surface in double_controls if surface["port"] == port} != set(range(12)):
+            raise ValueError(f"Two-seat cabinet has incomplete feedback on port {port}")
+        checks += 1
     generic = resolved(f"{ASSETS}/models/item/template_handheld.json")["elements"]
     bounds = [min(element["from"][axis] for element in generic) for axis in range(3)] + \
              [max(element["to"][axis] for element in generic) for axis in range(3)]

@@ -34,6 +34,8 @@ public final class ConsoleClient implements ClientActions {
     private DynamicTexture texture;private ResourceLocation picture;private int pictureWidth,pictureHeight;
     private Upload upload;private boolean preparingUpload;private RuntimeFiles runtimeFiles;
     private java.util.function.Supplier<PortInput> inputSource;
+    private volatile PortInput visualInput = PortInput.IDLE;
+    private long inputSubmissions;
     private UUID observedHandheld,attemptedHandheld,suppressedHandheld;private boolean controlsReleased;
     private static final class Session {
         final JsonObject context;final String room;final long epoch,position;final int port;final Platform platform;final String hash;final long size;final UUID card;final boolean shared,leader;volatile boolean hasPicture;
@@ -124,6 +126,7 @@ public final class ConsoleClient implements ClientActions {
         boolean sameRoom=existing!=null&&existing.room.equals(context.get("room").getAsString());
         stop();Session s=new Session(context);active=s;if(!sameRoom)controlsReleased=false;status="正在准备 "+s.platform.id().toUpperCase(Locale.ROOT)+"…";
         boolean held=context.has("presentation")&&context.get("presentation").getAsString().equals("held");
+        if(held)controlsReleased=true;
         if(open&&!held){controlsReleased=false;suppressedHandheld=null;showGame(s);}
         restoredStateHash="";if(s.shared&&!s.leader){status="正在连接主机画面与控制席…";SharedPlayClient.INSTANCE.start(context);return;}
         emulator.execute(()->{try{
@@ -160,9 +163,18 @@ public final class ConsoleClient implements ClientActions {
     public boolean heldControlsReleased(){return controlsReleased;}
     public boolean heldWorldPlaying(){Session s=active;Held held=heldCartridge();return s!=null&&s.ready&&!s.leaving&&s.room.startsWith("handheld/")&&held!=null&&s.card.equals(held.card.instanceId());}
     /** F8 gives the world its keys back without giving up the controller seat. */
-    public void releaseControls(){controlsReleased=true;inputSource=null;submitInput(PortInput.IDLE);}
+    public void releaseControls(){controlsReleased=true;inputSource=null;clearInputVisual();submitInput(PortInput.IDLE);}
     public void resumeControls(){controlsReleased=false;}
-    public void openHeldControls(){Session s=active;if(s!=null&&heldWorldPlaying()){controlsReleased=false;mc().setScreen(new HeldGameScreen(this,s.port));}}
+    public record InputFeedback(String room,Platform platform,UUID card,boolean focused,boolean controlsReleased,PortInput input,long sentCount){}
+    public InputFeedback inputFeedback(){Session s=active;return new InputFeedback(s==null?"":s.room,s==null?null:s.platform,s==null?null:s.card,mc().screen instanceof GameScreen,controlsReleased,localInputVisual(),inputSubmissions);}
+    /** Read-only level state from the same local sample submitted to the current session. */
+    public PortInput localInputVisual(){Session s=active;return s!=null&&s.ready&&!s.leaving&&!controlsReleased&&mc().screen instanceof GameScreen&&(inputSource!=null||mc().isWindowActive())?visualInput:PortInput.IDLE;}
+    public PortInput heldInputVisual(UUID card){Session s=active;return s!=null&&s.card.equals(card)?localInputVisual():PortInput.IDLE;}
+    public PortInput deviceInputVisual(long position){Session s=active;return s!=null&&s.position==position?localInputVisual():PortInput.IDLE;}
+    public int visualPort(){Session s=active;return s!=null&&s.ready&&!s.leaving&&!controlsReleased&&mc().screen instanceof GameScreen?s.port:-1;}
+    public void clearInputVisual(){visualInput=PortInput.IDLE;}
+
+    public void openHeldControls(){Session s=active;if(s!=null&&heldWorldPlaying()){controlsReleased=false;HeldGameScreen screen=new HeldGameScreen(this,s.port);mc().setScreen(screen);screen.focusKeyPressedOnOpen();}}
     public boolean leaveHeldWorld(){Session s=active;Held held=heldCartridge();if(s==null||!s.room.startsWith("handheld/")||controlsReleased||held==null||!s.card.equals(held.card.instanceId()))return false;leave();return true;}
     public void tick(){
         if(mc().player==null||mc().level==null||mc().getConnection()==null){observedHandheld=null;attemptedHandheld=null;suppressedHandheld=null;if(active!=null)stop();return;}
@@ -177,26 +189,24 @@ public final class ConsoleClient implements ClientActions {
                 attemptedHandheld=selected;JsonObject request=object();request.addProperty("hand",held.hand.name());request.addProperty("presentation","held");Wire.command("handheld_start",request);
             }return;
         }
-        if(!s.ready)return;
+        if(!s.ready){clearInputVisual();return;}
         PortInput input=PortInput.IDLE;
-        if(!s.leaving){
-            if(inputSource!=null)input=inputSource.get();
-            else if(mc().isWindowActive()&&mc().screen instanceof GameScreen)input=InputProfiles.get().sample(s.platform,mc().getWindow().getWindow());
-            else if(mc().isWindowActive()&&mc().screen==null&&!controlsReleased&&heldWorldPlaying()){
-                Set<Integer> blocked=new HashSet<>();for(var mapping:mc().options.keyMappings){var key=mapping.getKey();if(key.getType()==com.mojang.blaze3d.platform.InputConstants.Type.KEYSYM)blocked.add(key.getValue());}
-                long window=mc().getWindow().getWindow();boolean modified=org.lwjgl.glfw.GLFW.glfwGetKey(window,org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_CONTROL)==1||org.lwjgl.glfw.GLFW.glfwGetKey(window,org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_CONTROL)==1||org.lwjgl.glfw.GLFW.glfwGetKey(window,org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_ALT)==1||org.lwjgl.glfw.GLFW.glfwGetKey(window,org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_ALT)==1||org.lwjgl.glfw.GLFW.glfwGetKey(window,org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_SUPER)==1||org.lwjgl.glfw.GLFW.glfwGetKey(window,org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SUPER)==1;
-                input=InputProfiles.get().sampleWorld(s.platform,window,key->net.muxigame.console.client.input.HeldInputPolicy.permits(key,modified,blocked));
-            }
+        if(net.muxigame.console.client.input.HeldInputPolicy.captures(mc().screen instanceof GameScreen,controlsReleased,s.leaving)){
+            GameScreen game=(GameScreen)mc().screen;
+            if(inputSource!=null)input=Objects.requireNonNullElse(inputSource.get(),PortInput.IDLE);
+            else if(mc().isWindowActive())input=InputProfiles.get().sampleKeys(s.platform,game.inputKeys());
+            else game.clearInputKeys();
         }
+        visualInput=input;
         submitInput(input);
     }
     /** Normal frontend input entry point; all controller ownership and sequence checks remain on the server. */
-    public void submitInput(PortInput input){Session s=active;if(s==null||!s.ready||s.inputPending)return;long target=Math.max(s.lastInputTick+1,Math.max(0,s.tick+2));if(target>s.tick+12)return;JsonObject j=s.context.deepCopy();j.addProperty("sequence",s.sequence);j.addProperty("tick",target);j.addProperty("buttons",input.buttons());JsonArray a=new JsonArray();a.add(input.leftX());a.add(input.leftY());a.add(input.rightX());a.add(input.rightY());j.add("axes",a);s.inputPending=true;s.lastInputTick=target;Wire.command("input",j);}
+    public void submitInput(PortInput input){Session s=active;if(s==null||!s.ready||s.inputPending)return;long target=Math.max(s.lastInputTick+1,Math.max(0,s.tick+2));if(target>s.tick+12)return;JsonObject j=s.context.deepCopy();j.addProperty("sequence",s.sequence);j.addProperty("tick",target);j.addProperty("buttons",input.buttons());JsonArray a=new JsonArray();a.add(input.leftX());a.add(input.leftY());a.add(input.rightX());a.add(input.rightY());j.add("axes",a);s.inputPending=true;s.lastInputTick=target;inputSubmissions++;Wire.command("input",j);}
     /** Optional frontend integration; null returns to this mod's physical keyboard/gamepad sampler. */
-    public void setInputSource(java.util.function.Supplier<PortInput> source){inputSource=source;}
+    public void setInputSource(java.util.function.Supplier<PortInput> source){inputSource=source;clearInputVisual();}
     public void device(JsonObject context,String action,int port){JsonObject j=context.deepCopy();j.addProperty("action",action);j.addProperty("port",port);Wire.command("device_action",j);}
-    public void leave(){Session s=active;if(s!=null&&s.room.startsWith("handheld/"))suppressedHandheld=s.card;if(s!=null&&mc().getConnection()!=null&&s.ready){if(!s.leaving){s.leaving=true;inputSource=null;status="正在保存并离开…";Wire.command("leave_request",s.context.deepCopy());}return;}if(s!=null&&mc().getConnection()!=null)Wire.command("leave",object());stop();}
-    public void stop(){Session s=active;active=null;inputSource=null;displayedFrames=0;frameCrc="";SharedPlayClient.INSTANCE.stop();BrowserLinkClient.INSTANCE.stop();downloads.values().forEach(f->f.cancel(false));downloads.clear();if(s!=null){if(s.checkpoint!=null)s.checkpoint.completeExceptionally(new IOException("会话已停止"));emulator.execute(()->close(s));}}
+    public void leave(){clearInputVisual();Session s=active;if(s!=null&&s.room.startsWith("handheld/"))suppressedHandheld=s.card;if(s!=null&&mc().getConnection()!=null&&s.ready){if(!s.leaving){s.leaving=true;inputSource=null;status="正在保存并离开…";Wire.command("leave_request",s.context.deepCopy());}return;}if(s!=null&&mc().getConnection()!=null)Wire.command("leave",object());stop();}
+    public void stop(){Session s=active;active=null;inputSource=null;clearInputVisual();displayedFrames=0;frameCrc="";SharedPlayClient.INSTANCE.stop();BrowserLinkClient.INSTANCE.stop();downloads.values().forEach(f->f.cancel(false));downloads.clear();if(s!=null){if(s.checkpoint!=null)s.checkpoint.completeExceptionally(new IOException("会话已停止"));emulator.execute(()->close(s));}}
     private byte[] downloadState(Session s,JsonObject metadata)throws Exception{
         long size=metadata.get("size").getAsLong();if(size<1||size>32L*1024*1024)throw new IOException("存档大小超出当前范围");ByteArrayOutputStream output=new ByteArrayOutputStream((int)size);
         for(long offset=0;offset<size;){if(active!=s)throw new IOException("存档读取已取消");UUID id=UUID.randomUUID();CompletableFuture<Wire.Message> wait=new CompletableFuture<>();downloads.put(id,wait);JsonObject request=s.context.deepCopy();request.addProperty("request",id.toString());request.addProperty("generation",metadata.get("generation").getAsString());request.addProperty("offset",offset);mc().execute(()->Wire.command("state_read",request));Wire.Message response;

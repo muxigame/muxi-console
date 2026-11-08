@@ -79,6 +79,45 @@ def four_keys(b,cx,cy,z=5.3,size=2.1):
             for dx,dy in ((0,offset),(0,-offset),(offset,0),(-offset,0))]
 
 
+def control_box(b,surfaces,bit,facing='north',port=0):
+    """Record visible rectangles from the very same authored cap geometry."""
+    def emit(start,end,material,**faces):
+        element=b(start,end,material,**faces)
+        if surfaces is not None:
+            lo=list(start);hi=list(end)
+            if facing=='north':hi[2]=lo[2]
+            elif facing=='up':lo[1]=hi[1]
+            else:raise ValueError(facing)
+            surfaces.append({'button':bit,'from':lo,'to':hi,'facing':facing,'port':port})
+        return element
+    return emit
+
+
+def capsule(b,x0,y0,x1,y1,z,material='button',depth=.65):
+    # Three steps retain a low-resolution pill silhouette without square ends.
+    return rounded(b,x0,y0,x1,y1,z,z+depth,material,min((y1-y0)*.35,(x1-x0)*.2))
+
+
+def directional_surfaces(surfaces,cx,cy,z,size,bits=(4,5,6,7),port=0):
+    if surfaces is None:return
+    r=size/2;arm=size/6
+    # Only each arm's outer tip lights; the engraved centre remains visible.
+    rectangles=((cx-arm,cy+arm,cx+arm,cy+r),
+                (cx-arm,cy-r,cx+arm,cy-arm),
+                (cx+arm,cy-arm,cx+r,cy+arm),
+                (cx-r,cy-arm,cx-arm,cy+arm))
+    for bit,(x0,y0,x1,y1) in zip(bits,rectangles):
+        surfaces.append({'button':bit,'from':[x0,y0,z],'to':[x1,y1,z],'facing':'north','port':port})
+
+
+def slim_depth(elements,pivot,scale=.76):
+    # Keep the dynamic screen exactly in place; remove depth from the rear.
+    for element in elements:
+        for point in ('from','to'):
+            element[point][2]=round(pivot+(element[point][2]-pivot)*scale,6)
+    return elements
+
+
 def screen(b,plane,pad=.42):
     x0,y0,x1,y1,z=plane
     return [b([x0-pad,y0-pad,z+.05],[x1+pad,y1+pad,z+.85],'dark'),
@@ -108,8 +147,20 @@ def top_vents(b,x0,x1,y,z0,count=8,length=2.2):
     return [b([x0+i*step,y,z0],[x0+i*step+.18,y+.12,z0+length],'dark') for i in range(count)]
 
 
-def handheld(platform,b,planes):
+def handheld(platform,b,planes,surfaces=None):
     p=planes[platform]
+    def action(bit,cx,cy,z,r=.4,material='accent',depth=1.2):
+        return button(control_box(b,surfaces,bit),cx,cy,z,r,material,depth)
+    def direction(cx,cy,z,size):
+        directional_surfaces(surfaces,cx,cy,z,size)
+        return cross(b,cx,cy,z,size)
+    def key(bit,x0,y0,x1,y1,z,material='button'):
+        return capsule(control_box(b,surfaces,bit),x0,y0,x1,y1,z,material)
+    def separate(cx,cy,z,size,bits):
+        radius=size/2;w=size*.29;offset=radius-w/2
+        return [control_box(b,surfaces,bit)([cx+dx-w/2,cy+dy-w/2,z],
+                    [cx+dx+w/2,cy+dy+w/2,z+1.2],'button')
+                for bit,(dx,dy) in zip(bits,((0,offset),(0,-offset),(offset,0),(-offset,0)))]
     if platform=='gb':
         e=[b([3.8,1.7,6.15],[12.2,14.9,8.8],'shell'),
            b([4.3,1.05,6.15],[12.2,1.7,8.8],'shell'),
@@ -119,9 +170,9 @@ def handheld(platform,b,planes):
            b([4.35,7.9,5.98],[11.65,14.48,6.28],'edge'),
            b([5.1,2.0,8.78],[10.9,9.0,8.94],'ink'),
            b([5.25,2.16,8.92],[10.75,8.85,9.01],'shell')]
-        e+=cross(b,10.2,5.7,5.52,2.35)+button(b,4.85,6.0,5.43,.62)+button(b,6.4,5.25,5.43,.62)
-        for x in (7.0,8.65):
-            e+=[b([x-.5,3.48,5.84],[x+.3,3.8,6.17],'button'),b([x-.3,3.35,5.84],[x+.5,3.67,6.17],'button')]
+        e+=direction(10.2,5.7,5.62,2.15)+action(8,4.85,6.0,5.56,.4)+action(0,6.4,5.25,5.56,.4)
+        for bit,x in ((3,7.0),(2,8.65)):
+            e+=key(bit,x-.44,3.43,x+.44,3.69,5.88)
         e+=[b([4.55+i*.55,1.9+i*.13,5.99],[4.74+i*.55,2.8+i*.13,6.16],'dark') for i in range(5)]
         e+=[b([11.75,11.8,5.99],[12.0,12.1,6.17],'red'),b([5.8,15.2,6.6],[7.5,15.37,7.5],'button')]
     elif platform=='gbc':
@@ -129,19 +180,20 @@ def handheld(platform,b,planes):
         e+=rounded(b,4.3,14.5,11.7,15.25,6.2,8.35,'shell',.2)
         e+=[b([4.2,1.6,6.35],[11.8,14.4,6.48],'edge'),b([4.62,7.94,5.74],[11.38,14.25,6.15],'dark'),
             b([5.15,2.3,8.5],[10.85,10.7,8.67],'ink'),b([5.33,2.45,8.65],[10.67,10.5,8.72],'shell')]
-        e+=cross(b,10.25,5.6,5.37,2.15)+button(b,4.8,5.95,5.29,.57,'button')+button(b,6.25,5.25,5.29,.57,'button')
-        e+=[b([7.4,3.35,5.72],[8.35,3.72,6.12],'button'),b([8.8,3.35,5.72],[9.75,3.72,6.12],'button')]
+        e+=direction(10.25,5.6,5.52,2.0)+action(8,4.8,5.95,5.46,.38,'button')+action(0,6.25,5.25,5.46,.38,'button')
+        e+=key(3,7.4,3.4,8.3,3.65,5.78)+key(2,8.85,3.4,9.75,3.65,5.78)
         e+=[b([4.6+i*.43,1.95,5.91],[4.78+i*.43,2.67,6.15],'dark') for i in range(5)]
         e+=[b([11.55,11.6,5.72],[11.82,11.9,6.1],'red')]
     elif platform=='gba':
         e=rounded(b,.3,4.05,15.7,10.95,6.05,8.55,'shell',.75)
         e+=rounded(b,1.0,3.65,15.0,11.5,6.2,8.35,'shell',.8)
         e+=[b([.8,5.0,6.0],[3.4,9.85,6.27],'edge'),b([12.6,5.0,6.0],[15.2,9.85,6.27],'edge'),
-            b([1.55,10.9,6.4],[4.2,11.75,8.1],'metal'),b([11.8,10.9,6.4],[14.45,11.75,8.1],'metal'),
+            control_box(b,surfaces,11,'up')([1.55,10.9,6.4],[4.2,11.55,8.1],'metal'),
+            control_box(b,surfaces,10,'up')([11.8,10.9,6.4],[14.45,11.55,8.1],'metal'),
             b([4.0,4.66,5.56],[12.0,10.14,6.18],'dark'),b([5.1,4.0,8.53],[10.9,10.6,8.7],'ink'),
             b([5.3,4.2,8.68],[10.7,10.4,8.75],'shell')]
-        e+=cross(b,13.55,7.45,5.23,2.3)+button(b,1.55,7.85,5.2,.62,'metal')+button(b,2.8,6.6,5.2,.62,'metal')
-        e+=[b([5.55,4.1,5.72],[6.65,4.43,6.15],'button'),b([7.2,4.1,5.72],[8.3,4.43,6.15],'button')]
+        e+=direction(13.55,7.45,5.4,2.1)+action(8,1.55,7.85,5.4,.4,'metal')+action(0,2.8,6.6,5.4,.4,'metal')
+        e+=key(3,5.65,4.12,6.55,4.37,5.82)+key(2,7.3,4.12,8.2,4.37,5.82)
         e+=[b([1.05+i*.45,5.25,5.82],[1.23+i*.45,5.95,6.15],'dark') for i in range(5)]
         e+=[b([14.65,9.45,5.94],[14.92,9.72,6.15],'green')]
     elif platform in ('gg','lynx'):
@@ -149,16 +201,18 @@ def handheld(platform,b,planes):
         e=rounded(b,x0,3.75,x1,11.85,6.14,9.15,'shell',.85)
         e+=rounded(b,x0+.35,4.1,x1-.35,11.5,6.0,6.45,'ink',.7)
         e+=[b([4.55,4.0,9.13],[11.45,11.55,9.32],'ink')]
-        e+=cross(b,13.7 if lynx else 13.0,7.4,5.28 if lynx else 5.48,2.2)
-        e+=button(b,1.4 if lynx else 1.8,7.9,5.2 if lynx else 5.36,.59,'button')
-        e+=button(b,2.6 if lynx else 3.1,6.5,5.2 if lynx else 5.36,.59,'button')
+        e+=direction(13.7 if lynx else 13.0,7.4,5.5 if lynx else 5.66,2.05)
+        e+=action(8,1.4 if lynx else 1.8,7.9,5.45 if lynx else 5.58,.4,'button')
+        e+=action(0,2.6 if lynx else 3.1,6.5,5.45 if lynx else 5.58,.4,'button')
         if lynx:
             # Repeated A/B groups permit turning the device for left-handed use.
-            e+=button(b,1.4,10.5,5.2,.59,'button')+button(b,2.6,9.3,5.2,.59,'button')
-            e += [b([.6,7.3+i*.52,5.62],[1.25,7.53+i*.52,6.1],'metal') for i in range(3)]
+            e+=action(8,1.4,10.5,5.45,.4,'button')+action(0,2.6,9.3,5.45,.4,'button')
+            e += [*key(10,.65,7.3,1.22,7.53,5.76,'metal'),
+                  *key(3,.65,7.82,1.22,8.05,5.76,'metal'),
+                  *key(11,.65,8.34,1.22,8.57,5.76,'metal')]
             e += [b([13.1+i*.45,4.75,5.92],[13.3+i*.45,5.4,6.2],'dark') for i in range(5)]
         else:
-            e += [b([1.55,9.8,5.68],[2.8,10.25,6.1],'blue')]
+            e += key(3,1.65,9.86,2.7,10.16,5.8,'blue')
             e += [b([1.25+i*.42,4.65,5.95],[1.43+i*.42,5.35,6.18],'dark') for i in range(6)]
         e += [b([11.95,10.5,5.92],[12.2,10.8,6.16],'red')]
     elif platform in ('ngp','ngpc'):
@@ -169,9 +223,10 @@ def handheld(platform,b,planes):
             b([4.85,3.55,8.78],[11.15,11.95,8.97],'ink')]
         # Recessed octagonal click stick, not an oversized cross.
         e+=rounded(b,11.8,5.65,14.35,8.4,5.48,6.23,'dark',.45)
-        e+=button(b,13.08,7.03,5.1,.74,'button',.6)
-        e+=button(b,1.85,7.9,5.32,.62,'button')+button(b,3.1,6.5,5.32,.62,'button')
-        e += [b([2.1,10.6,5.94],[3.2,11.0,6.2],'button')]
+        e+=button(b,13.08,7.03,5.32,.62,'button',.6)
+        directional_surfaces(surfaces,13.08,7.03,5.32,1.0)
+        e+=action(8,1.85,7.9,5.52,.4,'button')+action(0,3.1,6.5,5.52,.4,'button')
+        e += key(3,2.18,10.66,3.12,10.93,6.0)
         e += [b([2.0+i*.45,4.15,5.97],[2.17+i*.45,4.9,6.2],'dark') for i in range(5)]
         if color:e += [b([6.0,12.4,6.45],[10.0,12.75,8.15],'ink'),b([14.3,10.3,5.98],[14.6,10.6,6.2],'green')]
         else:e += [b([6.2,12.55,6.8],[9.8,12.7,8.0],'button')]
@@ -181,14 +236,17 @@ def handheld(platform,b,planes):
         e+=rounded(b,1.0,3.25,15.0,12.0,6.26,8.2,'edge',.55)
         e += [b([2.9,4.6,5.9 if not color else 5.65],[11.02,10.3,6.36],'dark'),
               b([4.7,4.0,8.38],[11.3,11.2,8.56],'ink')]
-        e += four_keys(b,13.6,8.9,5.35,2.0)+four_keys(b,13.6,5.95,5.35,2.0)
-        e += button(b,1.25,7.7,5.25,.53,'button')+button(b,2.4,6.5,5.25,.53,'button')
-        e += [b([6.3,4.02,5.76],[7.4,4.34,6.2],'button')]
+        e += separate(13.6,8.9,5.53,1.85,(13,12,10,11))+separate(13.6,5.95,5.53,1.85,(4,5,6,7))
+        e += action(8,1.25,7.7,5.48,.36,'button')+action(0,2.4,6.5,5.48,.36,'button')
+        e += key(3,6.4,4.06,7.3,4.3,5.84)
         e += [b([.9+i*.42,4.4,5.93],[1.07+i*.42,5.1,6.2],'dark') for i in range(5)]
-        if color:e += [b([4.5,11.65,6.4],[11.0,12.3,8.0],'shell'),b([8.1,4.02,5.76],[9.1,4.34,6.2],'button')]
+        if color:e += [b([4.5,11.65,6.4],[11.0,12.3,8.0],'shell'),
+                       *capsule(b,8.15,4.06,9.05,4.3,5.84)]  # Sound control is not the core's rotate binding.
         else:e += [b([11.6,10.7,5.95],[12.5,11.25,6.27],'button')]
     else:raise ValueError(platform)
-    return e+screen(b,p)
+    result=slim_depth(e+screen(b,p),p[4])
+    if surfaces is not None:slim_depth(surfaces,p[4])
+    return result
 
 
 def geometry(platform,b,planes,arcade_planes):
@@ -280,7 +338,7 @@ def geometry(platform,b,planes,arcade_planes):
     raise ValueError(platform)
 
 
-def arcade(b,double,planes):
+def arcade(b,double,planes,surfaces=None):
     x0,x1=(.4,15.6) if double else (3,13);y=4.9 if double else 6.3;plane=planes['double' if double else 'single']
     e=[b([x0,0,4],[x1,.7,14],'dark'),b([x0+.35,.7,4.3],[x1-.35,y,13.65],'ink'),
        b([x0,1.0,4],[x0+.72,15.75,14],'accent'),b([x1-.72,1,4],[x1,15.75,14],'accent'),
@@ -296,10 +354,16 @@ def arcade(b,double,planes):
         material='blue' if index==0 else 'red'
         e += [b([cx+.7,y+.9,2.55],[cx+1.35,y+1.5,3.2],'dark')]
         e+=button(b,cx+1.02,y+1.5,2.45,.52,material,.75)
+        directional_surfaces(surfaces,cx+1.02,y+1.5,2.45,.8,port=index)
         for row in range(2):
             for col in range(3):
                 xx=cx-1.6+col*.7;zz=2.5+row*.85
-                e+=top_disc(b,xx,zz,.28,y+.9,y+1.13,('red','yellow','green')[col])
+                bit=((0,8,1),(9,10,11))[row][col]
+                e+=top_disc(control_box(b,surfaces,bit,'up',index),xx,zz,.25,y+.9,y+1.1,('red','yellow','green')[col])
+        for bit,xx in ((3,cx+.35),(2,cx+1.3)):
+            cb=control_box(b,surfaces,bit,'up',index)
+            e+=[cb([xx, y+.9,3.85],[xx+.7,y+1.07,4.09],'metal'),
+                cb([xx+.08,y+.9,3.8],[xx+.62,y+1.07,4.14],'metal')]
     return e+screen(b,plane)
 
 
@@ -333,12 +397,17 @@ def media(platform,index,b):
     return e
 
 
-def generic(kind,b):
+def generic(kind,b,surfaces=None):
     if kind=='handheld':
         e=rounded(b,0,3,16,12.2,6.3,8.5,'shell',.75)
-        e += [b([4.0,4.8,6.02],[12.0,11.1,6.4],'dark'),b([.8,11.6,6.5],[3.3,12.4,8.2],'edge'),b([12.7,11.6,6.5],[15.2,12.4,8.2],'edge')]
-        e += cross(b,13.7,7.3,5.835,2.2)+button(b,1.5,7.9,5.8,.55)+button(b,2.8,6.7,5.8,.55)
-        e += [b([6.0,4.0,6.0],[7.1,4.35,6.4],'button'),b([8.2,4.0,6.0],[9.3,4.35,6.4],'button')]
+        e += [b([4.0,4.8,6.02],[12.0,11.1,6.4],'dark'),
+              control_box(b,surfaces,11,'up')([.8,11.6,6.5],[3.3,12.4,8.2],'edge'),
+              control_box(b,surfaces,10,'up')([12.7,11.6,6.5],[15.2,12.4,8.2],'edge')]
+        e += cross(b,13.7,7.3,5.835,2.05)
+        directional_surfaces(surfaces,13.7,7.3,5.835,2.05)
+        e += button(control_box(b,surfaces,8),1.5,7.9,5.8,.38)+button(control_box(b,surfaces,0),2.8,6.7,5.8,.38)
+        e += capsule(control_box(b,surfaces,3),6.1,4.05,7.0,4.3,6.0)
+        e += capsule(control_box(b,surfaces,2),8.3,4.05,9.2,4.3,6.0)
         return e+screen(b,(4.3,5.2,11.7,10.75,5.98))
     if kind=='desktop':
         e=deck_feet(b)+[b([1,.4,2],[15,3.5,14],'ink'),b([1.5,3.5,2.5],[14.5,4.2,13.5],'shell'),
@@ -359,10 +428,24 @@ def generic(kind,b):
     if kind=='controller':
         e=rounded(b,1.0,4.5,15.0,10.5,6.25,8.7,'shell',1.0)
         e += [b([1.5,3.25,6.5],[4.6,4.8,8.7],'ink'),b([11.4,3.25,6.5],[14.5,4.8,8.7],'ink'),
-              b([2.5,10.3,6.5],[5.4,11.0,8.3],'edge'),b([10.6,10.3,6.5],[13.5,11.0,8.3],'edge'),
-              b([6.3,6.7,5.95],[7.4,7.05,6.4],'button'),b([8.5,6.7,5.95],[9.6,7.05,6.4],'button')]
-        e += cross(b,12.3,7.6,5.7,2.5)
-        for x,y,m in ((3.1,8.0,'red'),(4.3,6.8,'yellow'),(4.3,9.2,'blue'),(5.5,8.0,'green')):e+=button(b,x,y,5.65,.48,m)
+              control_box(b,surfaces,11,'up')([2.5,10.3,6.5],[5.4,11.0,8.3],'edge'),
+              control_box(b,surfaces,10,'up')([10.6,10.3,6.5],[13.5,11.0,8.3],'edge')]
+        e += capsule(control_box(b,surfaces,3),6.4,6.75,7.3,7.0,5.95)
+        e += capsule(control_box(b,surfaces,2),8.6,6.75,9.5,7.0,5.95)
+        e += cross(b,12.3,7.6,5.7,2.2)
+        directional_surfaces(surfaces,12.3,7.6,5.7,2.2)
+        for bit,x,y,m in ((8,3.1,8.0,'red'),(0,4.3,6.8,'yellow'),(9,4.3,9.2,'blue'),(1,5.5,8.0,'green')):
+            e+=button(control_box(b,surfaces,bit),x,y,5.65,.36,m)
         return e
     if kind=='cartridge':return media('gb',3,b)
     raise ValueError(kind)
+
+
+def control_surfaces(platform,b,planes,arcade_planes,double=False):
+    """Exact authored visible cap planes, using public RetroPad button IDs."""
+    surfaces=[]
+    if platform in planes:handheld(platform,b,planes,surfaces)
+    elif platform=='generic':generic('handheld',b,surfaces)
+    elif platform=='controller':generic('controller',b,surfaces)
+    elif platform=='arcade':arcade(b,double,arcade_planes,surfaces)
+    return surfaces

@@ -96,6 +96,8 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
                 str(sources / ("DockScene.java" if side == "server" else "DockActions.java"))]
         if side == "server":
             args.append(str(sources / "PixelScene.java"))
+        else:
+            args.append(str(sources / "HeldActions.java"))
         argument_file = out / (side + ".args")
         sdk.argfile(argument_file, args)
         command = [str(jdk / "javac.exe"), "-J-Xmx512m", "-J-XX:ActiveProcessorCount=1", "-J-Dfile.encoding=UTF-8", "-J-Duser.language=en", "@" + str(argument_file)]

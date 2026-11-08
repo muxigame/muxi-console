@@ -22,6 +22,7 @@ public final class ControlsScreen extends ConsoleScreen {
     private String message = "";
     private ConsoleButton platformButton;
     private ConsoleButton gamepadButton;
+    private ConsoleButton focusButton;
     private final ConsoleButton[] keyButtons = new ConsoleButton[16];
 
     public ControlsScreen(Screen parent, Platform platform) {
@@ -34,8 +35,8 @@ public final class ControlsScreen extends ConsoleScreen {
         message = profiles.loadWarning();
     }
     @Override protected void init() {
-        layout(548, 338);
-        rows = Math.max(2, Math.min(8, (panelHeight - 156) / 22));
+        layout(548, 366);
+        rows = Math.max(2, Math.min(8, (panelHeight - 206) / 22));
         int pageSize = rows * 2, pages = (16 + pageSize - 1) / pageSize;
         page = Math.min(page, pages - 1);
         java.util.Arrays.fill(keyButtons, null);
@@ -47,12 +48,15 @@ public final class ControlsScreen extends ConsoleScreen {
                 .pos(left + panelWidth / 2 + 4, top + 56).selected(profiles.profile(platform).enabled())
                 .maxWidth(panelWidth / 2 - 18).onValueChange((box, enabled) -> profiles.setEnabled(platform, enabled)).build());
         gamepadButton = button(left + 14, top + 82, panelWidth - 28, "", ignored -> cycleGamepad());
+        focusButton = button(left + 14, top + 108, panelWidth - 28, "", ignored -> {
+            pending=16;message="按下操作视角键；Esc 取消，Delete 恢复 F；同键游戏绑定会清除";refresh();
+        });
         int cellWidth = (panelWidth - 36) / 2;
         for (int offset = 0; offset < pageSize && page * pageSize + offset < 16; offset++) {
             int bit = page * pageSize + offset;
             int col = offset / rows, row = offset % rows;
-            keyButtons[bit] = button(left + 14 + col * (cellWidth + 8), top + 108 + row * 22,
-                    cellWidth, "", ignored -> { pending = bit; message = "按下新按键；Esc 取消，Delete 清除"; refresh(); });
+            keyButtons[bit] = button(left + 14 + col * (cellWidth + 8), top + 134 + row * 22,
+                    cellWidth, "", ignored -> { pending = bit; message = "按下新按键；Esc 取消，Delete 清除；重复键将从原功能移除"; refresh(); });
         }
         if (pages > 1) {
             button(left + 14, top + panelHeight - 52, 44, "上页", ignored -> { pending = -1; page = (page + pages - 1) % pages; rebuildWidgets(); });
@@ -95,6 +99,7 @@ public final class ControlsScreen extends ConsoleScreen {
         for (int bit = 0; bit < keyButtons.length; bit++) if (keyButtons[bit] != null)
             keyButtons[bit].setMessage(Component.literal(InputProfiles.buttonName(platform,bit) + " · "
                     + (pending == bit ? "按下按键…" : keyName(profiles.profile(platform).keyBinding(bit)))));
+        if(focusButton!=null)focusButton.setMessage(Component.literal("操作视角（所有平台） · "+(pending==16?"按下按键…":keyName(profiles.focusKey()))));
     }
     static String keyName(int key) {
         String result = GLFW.glfwGetKeyName(key, 0);
@@ -117,11 +122,11 @@ public final class ControlsScreen extends ConsoleScreen {
         if (key == capturedKey) return true;
         if (pending >= 0) {
             if (key == GLFW.GLFW_KEY_ESCAPE) { pending = -1; message = "已取消绑定"; refresh(); return true; }
-            if (key == GLFW.GLFW_KEY_F) { message = "F 用于切换电视视角，请选择其他按键"; return true; }
             try {
-                profiles.bind(platform, pending, key == GLFW.GLFW_KEY_DELETE ? GLFW.GLFW_KEY_UNKNOWN : key);
-                capturedKey = key; pending = -1; message = "绑定已更新，点击保存写入配置"; refresh();
-            } catch (IllegalArgumentException error) { message = "请选择可用的键盘按键"; }
+                if(pending==16){int cleared=profiles.bindFocus(key==GLFW.GLFW_KEY_DELETE?GLFW.GLFW_KEY_F:key);message="操作视角已更新"+(cleared>0?"，已清除 "+cleared+" 个同键游戏绑定":"")+"；点击保存";}
+                else{String previous=previousBinding(key,pending);profiles.bind(platform,pending,key==GLFW.GLFW_KEY_DELETE?GLFW.GLFW_KEY_UNKNOWN:key);message=previous.isEmpty()?"绑定已更新，点击保存写入配置":"已解除原 "+previous+" 绑定，点击保存";}
+                capturedKey = key; pending = -1; refresh();
+            } catch (IllegalArgumentException error) { message = "Esc、F8 和当前操作视角键保留，请换一个按键"; }
             return true;
         }
         return super.keyPressed(key, scanCode, modifiers);
@@ -131,12 +136,10 @@ public final class ControlsScreen extends ConsoleScreen {
         return super.keyReleased(key, scanCode, modifiers);
     }
     @Override public void onClose() { minecraft.setScreen(parent); }
+    private String previousBinding(int key,int current){if(key==GLFW.GLFW_KEY_DELETE)return "";var profile=profiles.profile(platform);for(int bit=0;bit<16;bit++)if(bit!=current&&profile.keyBinding(bit)==key)return InputProfiles.buttonName(platform,bit);for(int direction=0;direction<8;direction++)if(profile.axisBinding(direction)==key)return "摇杆方向";return "";}
     @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         panel(graphics, "每个平台独立保存 · 标准手柄下键 B / 右键 A");
-        int available = panelWidth - 28;
-        int textX = left + 14;
-        if (rows * 2 < 16) { textX += 102; available -= 102; }
-        line(graphics, message, textX, top + panelHeight - 46, available, AMBER);
+        line(graphics, message, left+14, top + panelHeight - 66, panelWidth-28, AMBER);
         super.render(graphics, mouseX, mouseY, partialTick);
     }
 }

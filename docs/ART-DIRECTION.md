@@ -2,7 +2,9 @@
 
 第一方几何、像素纹理、字形和界面由本仓独立编写。美术输入是 `tools/generate_assets.py` 与 `tools/pixel_hardware.py` 中可编辑的坐标、色值和像素字形；不读取旧分叉、Cartridge或厂商模型文件。公开实物图仅作轮廓和部件布局参考，不导入贴图、厂商logo或游戏封面。平台名称描述兼容范围。
 
-本轮按用户要求进一步改为真实年代设备的像素化造型：独立塑料壳色、上下壳接缝、阶梯圆角、卡槽、插口及实际控制布局，弱化旧统一青金配色、厚重叠层和大铭牌。22款机体均重做几何，不以换色代替外形。九款掌机按north前视local +X为视觉左排列方向区和动作键；旧左右反向已修正，游戏UV保持。用户随后明确大屏不再修改，因此旧屏、新3×2屏及依赖的公共纹理全部冻结。范围与实图审查见[本轮审核](PIXEL-HARDWARE-REVIEW.md)。
+设备采用真实年代设备的像素化造型：独立塑料壳色、上下壳接缝、阶梯圆角、卡槽、插口及实际控制布局，弱化旧统一青金配色、厚重叠层和大铭牌。22款机体均重做几何，不以换色代替外形。九款掌机按north前视local +X为视觉左排列方向区和动作键；游戏UV保持。用户明确大屏不再修改，因此旧屏、新3×2屏及依赖的公共纹理全部冻结。最初完整年代机型审查见[前轮审核](PIXEL-HARDWARE-REVIEW.md)。
+
+后续手持改进将九掌机机壳深度压至原来的76%，连同收小按键后总深度减少约27–29%。AB保留小型像素圆角形，半径0.36–0.40模型单位；Start/Select/Option使用三段圆端胶囊，宽约0.9、高0.24–0.30。桌机仍保留各年代机体的真实形态，不统一压成薄片。通用0保持原bounds和内屏坐标，按钮细化但不破坏旧坐标契约。
 
 ## 固定编号与形态
 
@@ -59,6 +61,14 @@ CMD1..19保持原顺序，FDS追加20，ARCADE追加21。22只表示ARCADE的双
 
 VB没有伪装成电视的中央屏。catalog的 `screen_planes` 给出两个眼框内的12:7平面。当前 `preview_mode=duplicated-mono` 表示将同一平面预览重复显示到两眼；不将它称为立体渲染验收。两个眼框各使用完整UV，控制席仍只有1个。
 
+## 手持与按键反馈
+
+`HandheldPresentation`在实际RenderHandEvent中画玩家皮肤手臂；主手掌机且副手空时双手支撑，其余按实际持手单手支撑，遵从Minecraft惯用手。它直接绘制原baked机体、动态内屏和反馈层，三者共用同一模型变换；不复制一套假的平面掌机。只读snapshot记录真实左右手绘制分支与高光数，仍须实图确认接触位置和遮挡。
+
+catalog的`control_surfaces`为实际按钮外表面片，包含`button`（公开RetroPad位0..15）、`from`/`to`零厚平面、`facing`（north/up）及可选`port`。同一键可多片，精确覆盖像素圆角、十字键、Lynx重复AB；肩键为up面。通用0及控制器分别位于root的`generic_control_surfaces`、`controller_control_surfaces`。224片均核对来自实际按钮几何，双人街机按port区分，桌机外壳与VB眼罩不虚构AB。
+
+反馈与送往当前会话的输入共用同一份本地采样，以纯白自制小纹理着天蓝色高光；松键、设置、释放或离开归零。不宣称模型按键真实下沉。WS/WSC第二方向组使用核心对应L/R/L2/R2位，不将旋屏快捷键虚构为Select实体键；[公开核心输入说明](https://docs.libretro.com/library/beetle_cygne/)可用于核对。
+
 ## 再生成与校验
 
 ```powershell
@@ -67,6 +77,6 @@ python -B tools/generate_assets.py --check
 python -B tools/generate_assets.py --check --preview --gallery-plan
 ```
 
-生成器只依赖Python标准库。当前生成353项资源；22464项检查包含逐字节再现、继承/纹理/配方/中英平台键闭包、PNG解码/CRC/zlib、MC图集可达、CMD稳定映射、21个平台机身与媒体的纯坐标差异、掌机屏幕比例、单双街机几何、六片覆盖/UV连续/四朝向及旧屏迁移。另检查49个实际硬件/媒体的物理接合、13个动态视口无遮挡及通用0硬编码坐标保持。168个新增小PNG为自行生成的设备材质，原屏幕公共PNG不变。所有模型纹理必须位于MC1.21.1默认blocks atlas可收录的 `textures/block/` 或 `textures/item/` 下。
+生成器只依赖Python标准库。当前生成354项资源；23534项检查包含逐字节再现、继承/纹理/配方/中英平台键闭包、PNG解码/CRC/zlib、MC图集可达、CMD稳定映射、21个平台机身与媒体的纯坐标差异、掌机屏幕比例、单双街机几何、六片覆盖/UV连续/四朝向及旧屏迁移。另检查49个实际硬件/媒体的物理接合、13个动态视口无遮挡、通用0硬编码坐标保持，以及224个控制表面与实际几何的对应关系。自制设备材质及白色反馈PNG不改变原屏幕公共PNG。所有模型纹理必须位于MC1.21.1默认blocks atlas可收录的 `textures/block/` 或 `textures/item/` 下。
 
-`build/assets-preview.png` 是内部软件几何预览，不能作为Minecraft审核图。真实审核要求及分轮结论见 [MODEL-REVIEW.md](MODEL-REVIEW.md)。[当前像素设备图库](../build/pixel-realistic-review/index.html)收53张同候选原图，含22种机体、9掌机及VB完整主副手、媒体/配件与动态内屏；[前轮模型图库](../build/model-review/index.html)保留其原图及分轮来源，不替代本轮新几何验收。
+`build/assets-preview.png` 是内部软件几何预览，不能作为Minecraft审核图。真实审核要求及分轮结论见 [MODEL-REVIEW.md](MODEL-REVIEW.md)。[当前手持图库](../build/held-feel-review/index.html)收32次同候选采图，覆盖新手臂、薄掌机、小按钮、真实按键反馈和底座；[前轮像素设备图库](../build/pixel-realistic-review/index.html)的53图及[更早模型图库](../build/model-review/index.html)保留其原图和分轮来源，不替代本轮新手位及薄壳验收。

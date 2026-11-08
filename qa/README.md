@@ -12,7 +12,19 @@
 
 本目录实现和编译通过不等于场景已通过。`scenarioComplete` 只根据本轮真实结果设置；截图仍须人工/图像查看验收，`visualAcceptance` 与 `physicalOSInput` 始终 false。文件拖入、Checkbox/Button、InputSource 均是正常前端回调测试，不冒称实体鼠标、实体键盘或真实手柄操作。
 
-## 年代硬件像素模型专项
+## 手臂、薄掌机与按键反馈专项
+
+精确产品冻结后，仍使用 `qa/build.py --name <新名称> --product <本仓候选JAR> --pixel-review` 及正常最小profile。由root统一runner提供实际新run后，先 `qa/drive.py --check`，再 `qa/held_review.py --run <实际run> --build <QA报告> --phase models --pause-after-first`。只准备普通空机，拍九掌机与VB的十张本轮原图；首张双手图必须先人工核手臂、握持位置和取景，再继续。绘制分支计数不能代替手臂实际在画内的原图检查。
+
+`--phase live --pause-after-first` 正常上传声明/刻录本仓GB及GBA诊断，保留原卡身份和完整外壳；采GB主右/副左后暂停，先人工检查单手握持再继续。逐项采双手、主右副左、左惯用手镜像，以及idle/真实按下/松开/组合键天蓝反馈；普通设置按钮更改A和操作视角键、保存后独立读回配置、核平台隔离及恢复默认。输入来自普通GUI回调和隐藏窗口授权前端：实际回调键集合经产品 `InputProfiles.sampleKeys` 映射，再走同一服务端控制席/核心和真实高光；不直接造视觉mask。普通世界KeyMapping前进实测位移同时游戏mask0，专注GUI的W/Q/数字/F/鼠标回调被消费且玩家/库存/选栏/方块不变；右键全屏/配置视角键返回保持同room/epoch/worker，正常松键归零；F8、设置切换清键，Esc完成真实保存退出。底座两角度原图及同卡恢复/正常保存/整物取回作几何接缝回归。不重跑未变桌机、大屏或21核心矩阵。
+
+`qa/held_gallery.py --run <实际run> --build <QA报告> --require-live` 生成 `build/held-feel-review/index.html`，仅链接同run同SHA的原结果及32张原PNG（含GB功能胶囊键/GBA肩键实际按下）。正常路径收model/live两份完成结果；05实际收model=true、原live=false和独立续办=true三份结果，按下述严格门联合核验。工具核路径、SHA、PNG解码与尺寸，不复制、裁切、修饰、拼图或导入旧模型照片。`HandheldPresentation.snapshot()`只读实际RenderHandEvent末尾记录，必须与原图结合审核；不设置 `visualAcceptance=true`，不冒称实体OS键鼠或真实手柄验收。
+
+05原live在GBA功能组合松键回执时遇NTFS原子替换冲突，原false结果、77项已通过断言、20张live原图及boot.log具体原行保留。`qa/held_continue.py --run <同run> --build <同QA报告> --source-sha256 <原false完整SHA> --checkpoint-sha256 <实际cleanup存档SHA>`只接受这一精确阶段、同run/同产品/同卡及正常清理证据；从真实GBA已提交状态恢复，另写独立续办结果，仅补GBA剩余模式/隔离/F8/设置/正常保存和底座两图/取回，不重放丢回执命令，不覆盖任何原结果或照片。联合图库明确原false和16项续办的来源，不能把联合闭合改写成原轮零失败。
+
+`drive.read_json`在Windows以只读共享READ/WRITE/DELETE句柄读取，并保持1MiB、owner、PID代际、租约及产物身份门；减少读者阻止替换的机会，不更改ACL。实际续办无观察超时，但独立持句柄/并发替换压力试验仍遇AccessDenied，不能宣称完全消除所有NTFS替换竞争。此观察与原失败另记短说明，不扩成内部QA平台重构。
+
+## 前轮年代硬件像素模型专项
 
 候选模型全部变化时，新建统一run和当前候选QA，不复用旧模型图：`python -B qa/build.py --name <新名称> --product <本仓候选JAR> --pixel-review`。该显式选项仅向分侧QA包加入已验证的本仓原创 `build/platform-smoke/regression.gba`（65536字节），绑定既有 `gba-result.json` 的内容哈希与exit0、原生成源及 `GbaSmoke.java` 哈希；不重新生成ROM或重跑核心长矩阵。GB仍使用本仓32768字节原创诊断。产品包不加入这些测试ROM。
 

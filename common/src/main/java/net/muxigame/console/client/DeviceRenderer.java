@@ -29,6 +29,7 @@ public final class DeviceRenderer implements BlockEntityRenderer<DeviceEntity> {
         ResourceLocation picture=picture(console);if(picture==null)return;
         Direction facing=device.getBlockState().getValue(DeviceBlock.FACING);stack.pushPose();stack.translate(.5,0,.5);stack.mulPose(Axis.YP.rotationDegrees(switch(facing){case EAST->-90;case SOUTH->180;case WEST->90;default->0;}));stack.translate(-.5,0,-.5);
         for(var plane:planes)screen(stack,buffers,picture,plane);
+        if(device.kind()==DeviceBlock.Kind.DESK)HandheldFeedback.draw(stack,buffers,HardwareCatalog.controls(device.getBlockState().getValue(DeviceBlock.MODEL)),ConsoleClient.INSTANCE.deviceInputVisual(console),ConsoleClient.INSTANCE.visualPort());
         stack.popPose();
     }
     private static ResourceLocation picture(long console){ResourceLocation picture=console==ConsoleClient.INSTANCE.screenConsole()?ConsoleClient.INSTANCE.picture():null;return picture==null?BrowserLinkClient.INSTANCE.pictureFor(console):picture;}
@@ -40,7 +41,7 @@ public final class DeviceRenderer implements BlockEntityRenderer<DeviceEntity> {
         stack.pushPose();stack.translate(.5,.25-scale*b[1]/16f,.5);
         float angle=device.getLevel()==null?0:((device.getLevel().getGameTime()%7200)+partial)*.5f;
         stack.mulPose(Axis.YP.rotationDegrees(angle));stack.scale(scale,scale,scale);stack.translate(-centerX,0,-centerZ);
-        HandheldRenderer.docked(item,picture(device.getBlockPos().asLong()),stack,buffers,light,overlay);stack.popPose();
+        HandheldRenderer.docked(item,device.getBlockPos().asLong(),picture(device.getBlockPos().asLong()),stack,buffers,light,overlay);stack.popPose();
     }
     public static void screen(PoseStack stack,MultiBufferSource buffers,ResourceLocation picture,HardwareCatalog.Plane p){
         double aspect=(p.x1()-p.x0())/(double)(p.y1()-p.y0());

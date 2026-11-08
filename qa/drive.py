@@ -28,7 +28,26 @@ def read_json(path):
     path = Path(path)
     if path.stat().st_size > 1024 * 1024:
         raise ValueError("Oversize QA metadata")
-    return json.loads(path.read_text(encoding="utf-8-sig"))
+    if os.name == "nt":
+        # Atomic Java reply replacement must remain possible while this reader holds
+        # the old file. The default CRT reader shares READ/WRITE but denies DELETE.
+        # This is a read-only handle; it neither changes ACLs nor retries an action.
+        import ctypes
+        from ctypes import wintypes
+        import msvcrt
+        kernel=ctypes.WinDLL("kernel32",use_last_error=True)
+        create=kernel.CreateFileW
+        create.argtypes=[wintypes.LPCWSTR,wintypes.DWORD,wintypes.DWORD,ctypes.c_void_p,wintypes.DWORD,wintypes.DWORD,wintypes.HANDLE]
+        create.restype=wintypes.HANDLE
+        handle=create(str(path),0x80000000,1|2|4,None,3,0x80,None)
+        if handle==ctypes.c_void_p(-1).value:raise ctypes.WinError(ctypes.get_last_error())
+        try:descriptor=msvcrt.open_osfhandle(int(handle),os.O_RDONLY|os.O_BINARY)
+        except BaseException:
+            kernel.CloseHandle.argtypes=[wintypes.HANDLE];kernel.CloseHandle(handle);raise
+        with os.fdopen(descriptor,"rb")as source:content=source.read(1024*1024+1)
+    else:content=path.read_bytes()
+    if len(content)>1024*1024:raise ValueError("Oversize QA metadata")
+    return json.loads(content.decode("utf-8-sig"))
 
 
 class Driver:

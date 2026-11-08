@@ -16,6 +16,9 @@ public final class HardwareCatalogTest {
             bounds[0]=-999;check(body.bounds()[0]>=0,"bounds immutable");
             if(body.handheld()||body.form().equals("arcade"))check(!body.screens().isEmpty(),"physical screen present");
             for(var screen:body.screens())check(screen.x0()<screen.x1()&&screen.y0()<screen.y1()&&screen.z()>=0&&screen.z()<=16,"nonempty screen coordinate contract");
+            if(body.form().equals("handheld")||body.form().equals("arcade"))check(!body.controls().isEmpty(),"playable physical controls have feedback surfaces");
+            for(var control:body.controls())check(control.port()<body.ports(),"feedback belongs to an existing control seat");
+            if(!body.handheld()&&!body.form().equals("arcade"))check(body.controls().isEmpty(),"external-controller consoles do not invent game buttons");
         }
         check(HardwareCatalog.accepts(0,Platform.NES),"legacy generic body preserved");
         check(HardwareCatalog.accepts(5,Platform.GB)&&HardwareCatalog.accepts(5,Platform.GBC),"GBA body accepts earlier cartridges");
@@ -25,6 +28,15 @@ public final class HardwareCatalogTest {
         check(HardwareCatalog.ports(19)==1&&HardwareCatalog.screens(19).size()==2,"VB is single-player two-view body");
         check(HardwareCatalog.ports(21)==1&&HardwareCatalog.ports(22)==2,"cabinet control seats match geometry");
         check(!HardwareCatalog.accepts(99,Platform.NES),"unknown typed hardware rejected");
+        check(!HardwareCatalog.controls(0).isEmpty()&&!HardwareCatalog.controllerControls().isEmpty(),"generic handheld and physical controller have feedback");
+        check(HardwareCatalog.controls(19).isEmpty(),"VB visor does not invent controller buttons");
+        for(int id:new int[]{17,18}){
+            var buttons=HardwareCatalog.controls(id).stream().map(HardwareCatalog.ControlSurface::button).collect(java.util.stream.Collectors.toSet());
+            check(buttons.containsAll(java.util.Set.of(4,5,6,7,10,11,12,13)),"WonderSwan both direction clusters follow the core input ABI");
+            check(!buttons.contains(2),"WonderSwan rotate-screen shortcut is not a physical Select button");
+        }
+        var ports=HardwareCatalog.controls(22).stream().map(HardwareCatalog.ControlSurface::port).collect(java.util.stream.Collectors.toSet());
+        check(ports.equals(java.util.Set.of(0,1)),"two-player cabinet feedback distinguishes both actual control decks");
         System.out.println("Hardware catalog: "+checks+" checks passed");
     }
 }
