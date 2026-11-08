@@ -18,17 +18,29 @@ import java.util.List;
 /** Original screen geometry contract; frontend picture is independent of hardware model implementation. */
 public final class DeviceRenderer implements BlockEntityRenderer<DeviceEntity> {
     public DeviceRenderer(BlockEntityRendererProvider.Context context){}
+    @Override public net.minecraft.world.phys.AABB getRenderBoundingBox(DeviceEntity device){return device.largeScreen()?ScreenLayout.bounds(device.screenAnchor(),device.getBlockState().getValue(DeviceBlock.FACING)):new net.minecraft.world.phys.AABB(device.getBlockPos());}
     public void render(DeviceEntity device,float partial,PoseStack stack,MultiBufferSource buffers,int light,int overlay){
+        if(device.kind()==DeviceBlock.Kind.DOCK){dock(device,partial,stack,buffers,light,overlay);return;}
         long console;List<HardwareCatalog.Plane> planes;
-        if(device.kind()==DeviceBlock.Kind.SCREEN){if(device.linkedConsole==null)return;console=device.linkedConsole.asLong();planes=List.of(HardwareCatalog.television());}
+        if(device.kind()==DeviceBlock.Kind.SCREEN){if(!device.screenPrimary()||device.linkedConsole==null)return;console=device.linkedConsole.asLong();planes=List.of(device.largeScreen()?new HardwareCatalog.Plane(-31.25f,.5f,15.25f,31.5f,6.90f):HardwareCatalog.television());}
         else if(device.kind()==DeviceBlock.Kind.DESK){console=device.getBlockPos().asLong();planes=HardwareCatalog.screens(device.getBlockState().getValue(DeviceBlock.MODEL));}
         else return;
         if(planes.isEmpty())return;
-        ResourceLocation picture=console==ConsoleClient.INSTANCE.screenConsole()?ConsoleClient.INSTANCE.picture():null;
-        if(picture==null)picture=BrowserLinkClient.INSTANCE.pictureFor(console);if(picture==null)return;
+        ResourceLocation picture=picture(console);if(picture==null)return;
         Direction facing=device.getBlockState().getValue(DeviceBlock.FACING);stack.pushPose();stack.translate(.5,0,.5);stack.mulPose(Axis.YP.rotationDegrees(switch(facing){case EAST->-90;case SOUTH->180;case WEST->90;default->0;}));stack.translate(-.5,0,-.5);
         for(var plane:planes)screen(stack,buffers,picture,plane);
         stack.popPose();
+    }
+    private static ResourceLocation picture(long console){ResourceLocation picture=console==ConsoleClient.INSTANCE.screenConsole()?ConsoleClient.INSTANCE.picture():null;return picture==null?BrowserLinkClient.INSTANCE.pictureFor(console):picture;}
+    private static void dock(DeviceEntity device,float partial,PoseStack stack,MultiBufferSource buffers,int light,int overlay){
+        var item=device.dockedHandheld;if(item.isEmpty()||!item.is(ConsoleContent.HANDHELD.get()))return;
+        var body=HardwareCatalog.body(HardwareCatalog.model(item));float[] b=body==null?new float[]{0,3,5.8f,16,12.4f,8.5f}:body.bounds();
+        float scale=.7f;float centerX=(b[0]+b[3])/32f,centerZ=(b[2]+b[5])/32f;
+        // The lowest authored vertex stays at 4/16, one pixel above the 3/16 base: no vertical bob.
+        stack.pushPose();stack.translate(.5,.25-scale*b[1]/16f,.5);
+        float angle=device.getLevel()==null?0:((device.getLevel().getGameTime()%7200)+partial)*.5f;
+        stack.mulPose(Axis.YP.rotationDegrees(angle));stack.scale(scale,scale,scale);stack.translate(-centerX,0,-centerZ);
+        HandheldRenderer.docked(item,picture(device.getBlockPos().asLong()),stack,buffers,light,overlay);stack.popPose();
     }
     public static void screen(PoseStack stack,MultiBufferSource buffers,ResourceLocation picture,HardwareCatalog.Plane p){
         double aspect=(p.x1()-p.x0())/(double)(p.y1()-p.y0());

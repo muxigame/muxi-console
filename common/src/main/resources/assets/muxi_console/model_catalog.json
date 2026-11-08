@@ -19,6 +19,70 @@
       3
     ]
   },
+  "display_layout": {
+    "width_blocks": 3,
+    "height_blocks": 2,
+    "part_property": "part",
+    "legacy_part": 0,
+    "large_parts": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "anchor_part": 1,
+    "part_index": "part - 1 = column + row * 3",
+    "north_column_direction": "west",
+    "bounds": {
+      "min": [
+        -32,
+        0,
+        6.94
+      ],
+      "max": [
+        16,
+        32,
+        9
+      ]
+    },
+    "screen_plane": {
+      "from": [
+        -31.25,
+        0.5,
+        6.94
+      ],
+      "to": [
+        15.25,
+        31.5,
+        6.94
+      ],
+      "aspect": [
+        3,
+        2
+      ]
+    }
+  },
+  "dock_layout": {
+    "geometry": "muxi_console:block/handheld_dock",
+    "bounds": {
+      "min": [
+        1,
+        0,
+        1.95
+      ],
+      "max": [
+        15,
+        3,
+        14
+      ]
+    },
+    "slot_top_y": 3,
+    "display_min_y": 4,
+    "display_motion": "rotation_only",
+    "display_source": "stored_handheld_item"
+  },
   "entries": [
     {
       "platform": "nes",

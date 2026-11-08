@@ -15,8 +15,8 @@ import net.minecraft.world.level.block.state.properties.*;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.server.level.ServerPlayer;
 
-public final class DeviceBlock extends BaseEntityBlock {
-    public enum Kind {DESK,WRITER,SCREEN}
+public class DeviceBlock extends BaseEntityBlock {
+    public enum Kind {DESK,WRITER,SCREEN,DOCK}
     public static final DirectionProperty FACING=BlockStateProperties.HORIZONTAL_FACING;
     public static final IntegerProperty MODEL=IntegerProperty.create("model",0,22);
     public final Kind kind;
@@ -28,7 +28,7 @@ public final class DeviceBlock extends BaseEntityBlock {
     protected RenderShape getRenderShape(BlockState s){return RenderShape.MODEL;}
     @Override protected net.minecraft.world.phys.shapes.VoxelShape getShape(BlockState s,BlockGetter level,BlockPos pos,net.minecraft.world.phys.shapes.CollisionContext context){
         HardwareCatalog.Body body=kind==Kind.DESK?HardwareCatalog.body(s.getValue(MODEL)):null;
-        if(body==null)return kind==Kind.DESK?Block.box(1,0,2,15,6,14):super.getShape(s,level,pos,context);
+        if(body==null){if(kind==Kind.DESK)return Block.box(1,0,2,15,6,14);if(kind==Kind.DOCK)return s.getValue(FACING).getAxis()==Direction.Axis.X?Block.box(2,0,1,14,3,15):Block.box(1,0,2,15,3,14);return super.getShape(s,level,pos,context);}
         float[] b=body.bounds();double x0=b[0],z0=b[2],x1=b[3],z1=b[5];
         switch(s.getValue(FACING)){case EAST->{x0=16-b[5];z0=b[0];x1=16-b[2];z1=b[3];}case SOUTH->{x0=16-b[3];z0=16-b[5];x1=16-b[0];z1=16-b[2];}case WEST->{x0=b[2];z0=16-b[3];x1=b[5];z1=16-b[0];}default->{}}
         return Block.box(x0,b[1],z0,x1,b[4],z1);
@@ -47,6 +47,7 @@ public final class DeviceBlock extends BaseEntityBlock {
     protected void onRemove(BlockState old,Level level,BlockPos pos,BlockState next,boolean moving){
         if(!old.is(next.getBlock()) && !level.isClientSide && level.getBlockEntity(pos) instanceof DeviceEntity d){
             ConsoleServer.removed(d);if(!d.card.isEmpty())Containers.dropItemStack(level,pos.getX()+.5,pos.getY()+.4,pos.getZ()+.5,d.card.copy());
+            if(!d.dockedHandheld.isEmpty())Containers.dropItemStack(level,pos.getX()+.5,pos.getY()+.4,pos.getZ()+.5,d.dockedHandheld.copy());
             for(int i=0;i<d.ports;i++)Containers.dropItemStack(level,pos.getX()+.5,pos.getY()+.4,pos.getZ()+.5,new ItemStack(ConsoleContent.CONTROLLER.get()));
         }
         super.onRemove(old,level,pos,next,moving);

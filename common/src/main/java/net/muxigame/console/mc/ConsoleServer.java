@@ -28,7 +28,7 @@ public final class ConsoleServer {
         public final Map<UUID,String> ready=new HashMap<>();public final Map<Long,Map<Integer,short[]>> analog=new TreeMap<>();
         public final Map<Integer,int[]> heldInputs=new HashMap<>();
         public final Map<Long,Map<UUID,String>> crc=new HashMap<>();
-        public final Set<UUID> requestedLeaves=new LinkedHashSet<>();
+        public final Set<UUID> requestedLeaves=new LinkedHashSet<>();public final Map<UUID,String> presentations=new HashMap<>();public final Set<UUID> openOnStart=new HashSet<>();public long handheldSaveDeadline;
         public long observedEpoch=0,frame=0,waiting=0,handoverStarted;public double fps=60,carry=0;public String fingerprint="";public UUID pendingJoin,pendingLeave;public int pendingPort;
         Room(String key,DeviceEntity d,Cartridge c,UUID host,int count){this.key=key;device=d;card=c;session=new ConsoleSession(d==null?UUID.randomUUID():d.identity,c,host,count);inputs=new InputTimeline(session,12);}
     }
@@ -44,21 +44,45 @@ public final class ConsoleServer {
     private static boolean nearby(ServerPlayer p,DeviceEntity d){return d.getLevel()==p.serverLevel() && p.distanceToSqr(d.getBlockPos().getCenter())<=64;}
     private static DeviceEntity device(ServerPlayer p,JsonObject body){
         BlockPos pos=BlockPos.of(body.get("position").getAsLong());
-        if(!p.serverLevel().hasChunkAt(pos) || !(p.serverLevel().getBlockEntity(pos) instanceof DeviceEntity d) || !nearby(p,d))throw new DomainException("reach","设备已超出操作范围");return d;
+        if(!p.serverLevel().hasChunkAt(pos) || !(p.serverLevel().getBlockEntity(pos) instanceof DeviceEntity d) || !nearby(p,d))throw new DomainException("reach","设备已超出操作范围");return primary(d);
+    }
+    private static DeviceEntity primary(DeviceEntity device){
+        if(!device.largeScreen())return device;
+        if(device.getLevel()!=null&&device.getLevel().hasChunkAt(device.screenAnchor())&&device.getLevel().getBlockEntity(device.screenAnchor()) instanceof DeviceEntity anchor&&anchor.kind()==DeviceBlock.Kind.SCREEN&&anchor.identity.equals(device.identity)&&anchor.screenPrimary())return anchor;
+        throw new DomainException("screen","屏幕结构已不完整，请重新放置");
+    }
+    private static boolean activeCard(WorldState world,UUID instance){return world.rooms.values().stream().anyMatch(room->room.card.instanceId().equals(instance));}
+    private static boolean inHand(ServerPlayer player,UUID instance){return List.of(player.getMainHandItem(),player.getOffhandItem()).stream().filter(item->item.is(ConsoleContent.HANDHELD.get())).anyMatch(item->CardData.read(item).map(card->card.instanceId().equals(instance)).orElse(false));}
+    private static boolean inInventory(ServerPlayer player,UUID instance){for(int slot=0;slot<player.getInventory().getContainerSize();slot++){ItemStack item=player.getInventory().getItem(slot);if(item.is(ConsoleContent.HANDHELD.get())&&CardData.read(item).map(card->card.instanceId().equals(instance)).orElse(false))return true;}return false;}
+    private static void requireInactive(WorldState world,DeviceEntity device){if(world.rooms.containsKey(key(device)))throw new DomainException("save","请先按Esc保存并离开游戏，再取出掌机");}
+    private static void dock(ServerPlayer player,DeviceEntity device,ItemStack held)throws IOException{
+        WorldState world=state(player.server);requireInactive(world,device);
+        if(!device.dockedHandheld.isEmpty())throw new DomainException("dock","底座已有掌机，请先取出");
+        var body=HardwareCatalog.body(HardwareCatalog.model(held));if(HardwareCatalog.model(held)!=0&&(body==null||!body.handheld()))throw new DomainException("hardware","只能安装手持式游戏机");
+        Optional<Cartridge> card=CardData.read(held);if(card.isPresent()&&activeCard(world,card.get().instanceId()))throw new DomainException("save","请先按Esc保存并离开掌机，再放到底座");
+        device.dockedHandheld=held.split(1);device.powered=false;device.changed();player.inventoryMenu.broadcastChanges();player.displayClientMessage(Component.literal("掌机已安装；使用底座连接大屏幕"),true);
+    }
+    private static void ejectDock(ServerPlayer player,WorldState world,DeviceEntity device){
+        requireInactive(world,device);if(!device.dockedHandheld.isEmpty()){ItemStack take=device.dockedHandheld;device.dockedHandheld=ItemStack.EMPTY;if(!player.getInventory().add(take))player.drop(take,false);player.inventoryMenu.broadcastChanges();}device.powered=false;device.changed();
     }
     private static void error(ServerPlayer p,String code,String message){JsonObject j=object();j.addProperty("code",code);j.addProperty("message",message==null?code:message);Wire.send(p,"error",j);}
     public static void interact(ServerPlayer p,BlockPos position,InteractionHand hand){
         try{
-            if(!(p.serverLevel().getBlockEntity(position) instanceof DeviceEntity d)||!nearby(p,d))return;
-            ItemStack held=p.getItemInHand(hand);
+            if(!(p.serverLevel().getBlockEntity(position) instanceof DeviceEntity clicked)||!nearby(p,clicked))return;
+            DeviceEntity d=primary(clicked);position=d.getBlockPos();ItemStack held=p.getItemInHand(hand);
             if(d.kind()==DeviceBlock.Kind.WRITER){
                 WorldState s=state(p.server);WriterLease w=new WriterLease(UUID.randomUUID(),dimension(p),position,now()+300000);s.writers.put(p.getUUID(),w);
                 JsonObject j=object();j.addProperty("token",w.token.toString());j.addProperty("position",position.asLong());Wire.send(p,"writer_open",j);return;
             }
             if(d.kind()==DeviceBlock.Kind.SCREEN){
                 DeviceEntity nearest=null;double dist=65;
-                for(BlockPos pos:BlockPos.betweenClosed(position.offset(-8,-3,-8),position.offset(8,3,8))){if(p.serverLevel().getBlockEntity(pos) instanceof DeviceEntity other && other.kind()==DeviceBlock.Kind.DESK){double n=pos.distSqr(position);if(n<dist){nearest=other;dist=n;}}}
+                for(BlockPos pos:BlockPos.betweenClosed(position.offset(-8,-3,-8),position.offset(8,3,8))){if(p.serverLevel().getBlockEntity(pos) instanceof DeviceEntity other && (other.kind()==DeviceBlock.Kind.DESK||other.kind()==DeviceBlock.Kind.DOCK)){double n=pos.distSqr(position);if(n<dist){nearest=other;dist=n;}}}
                 if(nearest==null)throw new DomainException("screen","附近没有可连接的木犀主机");d.linkedConsole=nearest.getBlockPos();d.changed();p.displayClientMessage(Component.literal("屏幕已连接附近主机"),true);return;
+            }
+            if(d.kind()==DeviceBlock.Kind.DOCK){
+                if(held.is(ConsoleContent.HANDHELD.get())){dock(p,d,held);return;}
+                if(p.isShiftKeyDown()&&held.isEmpty()){ejectDock(p,state(p.server),d);return;}
+                if(held.is(ConsoleContent.CARTRIDGE.get()))throw new DomainException("dock","请先将卡带装入掌机，再把整台掌机安装到底座");
             }
             if(held.is(ConsoleContent.CARTRIDGE.get())){
                 if(!d.card.isEmpty())throw new DomainException("slot","请先取出当前卡带");
@@ -67,11 +91,11 @@ public final class ConsoleServer {
                 if(!state(p.server).content.has(c.sha256()))throw new DomainException("rom","服务器没有此卡带内容");
                 stopDevice(d,"卡带已变更");d.card=held.split(1);d.changed();return;
             }
-            if(held.is(ConsoleContent.CONTROLLER.get())){if(d.ports>=HardwareCatalog.ports(d.getBlockState().getValue(DeviceBlock.MODEL)))throw new DomainException("ports","此机型控制器接口已满");d.ports++;held.shrink(1);d.changed();return;}
+            if(held.is(ConsoleContent.CONTROLLER.get())){if(d.controllerCapacity()>=HardwareCatalog.ports(d.hardwareModel()))throw new DomainException("ports","此机型控制器接口已满");d.ports++;held.shrink(1);d.changed();return;}
             JsonObject j=view(d);Wire.send(p,"device_open",j);
         }catch(Exception e){error(p,e instanceof DomainException de?de.code():"device",e.getMessage());}
     }
-    public static JsonObject view(DeviceEntity d){JsonObject j=object();j.addProperty("position",d.getBlockPos().asLong());j.addProperty("powered",d.powered);j.addProperty("ports",Math.min(d.ports,HardwareCatalog.ports(d.getBlockState().getValue(DeviceBlock.MODEL))));j.addProperty("model",d.getBlockState().getValue(DeviceBlock.MODEL));j.addProperty("identity",d.identity.toString());CardData.read(d.card).ifPresent(c->j.add("card",cardJson(c)));return j;}
+    public static JsonObject view(DeviceEntity d){JsonObject j=object();j.addProperty("position",d.getBlockPos().asLong());j.addProperty("kind",d.kind().name().toLowerCase(Locale.ROOT));j.addProperty("docked",!d.dockedHandheld.isEmpty());j.addProperty("powered",d.powered);j.addProperty("ports",d.controllerCapacity());j.addProperty("model",d.hardwareModel());j.addProperty("identity",d.identity.toString());CardData.read(d.media()).ifPresent(c->j.add("card",cardJson(c)));return j;}
     private static long now(){return System.currentTimeMillis();}
     private static boolean hasBlank(ServerPlayer p){for(int i=0;i<p.getInventory().getContainerSize();i++)if(p.getInventory().getItem(i).is(ConsoleContent.BLANK.get()))return true;return false;}
     private static void consumeBlank(ServerPlayer p){for(int i=0;i<p.getInventory().getContainerSize();i++){ItemStack s=p.getInventory().getItem(i);if(s.is(ConsoleContent.BLANK.get())){s.shrink(1);return;}}throw new DomainException("blank","需要一个空白卡带");}
@@ -106,6 +130,7 @@ public final class ConsoleServer {
                     JsonObject reply=object();reply.addProperty("request",b.get("request").getAsString());reply.addProperty("offset",offset);reply.addProperty("size",size);reply.addProperty("hash",hash);Wire.send(p,"rom_chunk",reply,s.content.read(hash,offset,24576));
                 }
                 case "device_action" -> action(p,s,b);
+                case "handheld_start" -> {if(!b.has("presentation")||!b.get("presentation").getAsString().equals("held"))throw new DomainException("handheld","无效的掌机视图");startHandheld(p,InteractionHand.valueOf(b.get("hand").getAsString()),"held");}
                 case "handheld_body" -> {InteractionHand hand=InteractionHand.valueOf(b.get("hand").getAsString());ItemStack item=p.getItemInHand(hand);int model=b.get("model").getAsInt();var body=HardwareCatalog.body(model);if(!item.is(ConsoleContent.HANDHELD.get())||CardData.read(item).isPresent()||model!=0&&(body==null||!body.handheld()))throw new DomainException("hardware","请手持空掌机选择有效机型");HardwareCatalog.variant(item,model);p.inventoryMenu.broadcastChanges();}
                 case "ready" -> {
                     Room r=ownedRoom(p,s,b);if(r.card.platform().sharedRuntime()&&!r.session.host().equals(p.getUUID()))throw new DomainException("core","此机型由主控制席运行核心，请重新加入控制席");String fp=b.get("fingerprint").getAsString();if(!fp.matches("[a-f0-9]{64}"))throw new DomainException("core","核心身份无效");
@@ -119,7 +144,7 @@ public final class ConsoleServer {
                     }finally{JsonObject ack=object();ack.addProperty("room",r.key);ack.addProperty("epoch",r.session.epoch());ack.addProperty("accepted",accepted);ack.addProperty("nextSequence",r.inputs.expectedSequence(p.getUUID(),port));ack.addProperty("nextTick",r.inputs.nextTick());Wire.send(p,"input_ack",ack);}
                 }
                 case "leave" -> leave(p,s,"玩家离开控制席");
-                case "leave_request" -> {Room r=ownedRoom(p,s,b);r.requestedLeaves.add(p.getUUID());if(r.pendingJoin==null&&r.pendingLeave==null){r.pendingLeave=p.getUUID();r.handoverStarted=now();requestCheckpoint(p.server,r);}}
+                case "leave_request" -> {Room r=ownedRoomForSave(p,s,b);r.requestedLeaves.add(p.getUUID());if(r.pendingJoin==null&&r.pendingLeave==null){r.pendingLeave=p.getUUID();r.handoverStarted=now();requestCheckpoint(p.server,r);}}
                 case "runtime_failed" -> {Room r=ownedRoom(p,s,b);stopRoom(p.server,s,r,"模拟器启动或运行失败："+b.get("reason").getAsString());}
                 case "frame_crc" -> {
                     Room r=ownedRoom(p,s,b);if(r.card.platform().sharedRuntime())return;long frame=b.get("frame").getAsLong();if(frame<0||frame>r.frame)throw new DomainException("frame","画面校验帧无效");
@@ -139,24 +164,24 @@ public final class ConsoleServer {
     }
     private static void uploadAck(ServerPlayer p,UploadManager.Status v){JsonObject j=object();j.addProperty("upload",v.id().toString());j.addProperty("offset",v.offset());j.addProperty("total",v.total());Wire.send(p,"upload_ack",j);}
     private static void action(ServerPlayer p,WorldState s,JsonObject b){
-        DeviceEntity d=device(p,b);if(d.kind()!=DeviceBlock.Kind.DESK)throw new DomainException("device","此设备不是主机");
+        DeviceEntity d=device(p,b);if(d.kind()!=DeviceBlock.Kind.DESK&&d.kind()!=DeviceBlock.Kind.DOCK)throw new DomainException("device","此设备不是主机或掌机底座");
         switch(b.get("action").getAsString()){
-            case "body" -> {if(d.powered||!d.card.isEmpty())throw new DomainException("hardware","取出卡带并关机后才能选择机型");int model=b.get("port").getAsInt();if(model<0||model>22)throw new DomainException("hardware","未知机型");if(d.ports>HardwareCatalog.ports(model))throw new DomainException("ports","请先选择具有足够控制接口的机型");p.serverLevel().setBlock(d.getBlockPos(),d.getBlockState().setValue(DeviceBlock.MODEL,model),3);d.changed();}
+            case "body" -> {if(d.kind()==DeviceBlock.Kind.DOCK)throw new DomainException("hardware","底座保留安装的掌机机型");if(d.powered||!d.card.isEmpty())throw new DomainException("hardware","取出卡带并关机后才能选择机型");int model=b.get("port").getAsInt();if(model<0||model>22)throw new DomainException("hardware","未知机型");if(d.ports>HardwareCatalog.ports(model))throw new DomainException("ports","请先选择具有足够控制接口的机型");p.serverLevel().setBlock(d.getBlockPos(),d.getBlockState().setValue(DeviceBlock.MODEL,model),3);d.changed();}
             case "power" -> {d.powered=!d.powered;if(!d.powered)stopDevice(d,"主机已关闭");d.changed();}
-            case "eject" -> {stopDevice(d,"卡带已取出");if(!d.card.isEmpty()){ItemStack take=d.card;d.card=ItemStack.EMPTY;if(!p.getInventory().add(take))p.drop(take,false);p.inventoryMenu.broadcastChanges();}d.powered=false;d.changed();}
-            case "link" -> {int count=0;for(BlockPos pos:BlockPos.betweenClosed(d.getBlockPos().offset(-8,-3,-8),d.getBlockPos().offset(8,3,8))){if(p.serverLevel().getBlockEntity(pos) instanceof DeviceEntity screen && screen.kind()==DeviceBlock.Kind.SCREEN){screen.linkedConsole=d.getBlockPos();screen.changed();count++;}}p.displayClientMessage(Component.literal("已连接 "+count+" 个附近屏幕"),true);}
+            case "eject" -> {if(d.kind()==DeviceBlock.Kind.DOCK){ejectDock(p,s,d);break;}stopDevice(d,"卡带已取出");if(!d.card.isEmpty()){ItemStack take=d.card;d.card=ItemStack.EMPTY;if(!p.getInventory().add(take))p.drop(take,false);p.inventoryMenu.broadcastChanges();}d.powered=false;d.changed();}
+            case "link" -> {Set<BlockPos> linked=new HashSet<>();for(BlockPos pos:BlockPos.betweenClosed(d.getBlockPos().offset(-8,-3,-8),d.getBlockPos().offset(8,3,8))){if(p.serverLevel().getBlockEntity(pos) instanceof DeviceEntity screen && screen.kind()==DeviceBlock.Kind.SCREEN){screen=primary(screen);if(linked.add(screen.getBlockPos())){screen.linkedConsole=d.getBlockPos();screen.changed();}}}p.displayClientMessage(Component.literal("已连接 "+linked.size()+" 个附近屏幕"),true);}
             case "join" -> {
-                Cartridge card=CardData.read(d.card).orElseThrow(()->new DomainException("card","请先插入卡带"));if(!d.powered)throw new DomainException("power","请先开机");
-                if(!HardwareCatalog.accepts(d.getBlockState().getValue(DeviceBlock.MODEL),card.platform()))throw new DomainException("hardware","此卡带与主机机型不兼容");
-                int available=Math.min(d.ports,HardwareCatalog.ports(d.getBlockState().getValue(DeviceBlock.MODEL)));int port=b.get("port").getAsInt();if(port<0||port>=available||port>=card.platform().controllerPorts())throw new DomainException("port","这个控制接口尚不可用");
+                Cartridge card=CardData.read(d.media()).orElseThrow(()->new DomainException("card",d.kind()==DeviceBlock.Kind.DOCK?"请先安装已装卡的掌机":"请先插入卡带"));if(!d.powered)throw new DomainException("power","请先开机");
+                if(!HardwareCatalog.accepts(d.hardwareModel(),card.platform()))throw new DomainException("hardware","此卡带与主机机型不兼容");
+                int available=d.controllerCapacity();int port=b.get("port").getAsInt();if(port<0||port>=available||port>=card.platform().controllerPorts())throw new DomainException("port","这个控制接口尚不可用");
                 String roomKey=key(d);Room r=s.rooms.get(roomKey);
-                if(r!=null&&r.session.isController(p.getUUID())){sendStart(p,r);return;}
+                if(r!=null&&r.session.isController(p.getUUID())){sendStart(p,r,true);return;}
                 leave(p,s,"切换控制席");
                 r=s.rooms.get(roomKey);
                 if(r==null){if(port!=0)throw new DomainException("port","请先由一号控制席启动会话");r=new Room(roomKey,d,card,p.getUUID(),Math.min(available,card.platform().controllerPorts()));s.rooms.put(roomKey,r);}
                 else if(!r.fingerprint.isEmpty()&&r.ready.containsKey(r.session.host())){if(r.pendingJoin!=null||r.pendingLeave!=null)throw new DomainException("save","正在同步存档，请稍候");if(r.session.controllers().containsKey(port))throw new DomainException("occupied","控制接口已被占用");r.pendingJoin=p.getUUID();r.pendingPort=port;r.handoverStarted=now();requestCheckpoint(p.server,r);return;}
                 else r.session.grantControl(r.session.host(),p.getUUID(),port);
-                synchronize(p.server,r);
+                r.openOnStart.add(p.getUUID());synchronize(p.server,r);
             }
             default -> throw new DomainException("operation","未知主机操作");
         }
@@ -166,22 +191,40 @@ public final class ConsoleServer {
         try{
             ItemStack handheld=p.getItemInHand(hand);WorldState s=state(p.server);Optional<Cartridge> cart=CardData.read(handheld);
             if(p.isShiftKeyDown()){
-                if(cart.isPresent()){leave(p,s,"掌机卡带已取出");ItemStack c=CardData.create(cart.get());CardData.clear(handheld);if(!p.getInventory().add(c))p.drop(c,false);return;}
+                if(cart.isPresent()){if(activeCard(s,cart.get().instanceId()))throw new DomainException("save","请先按Esc保存并离开掌机，再取出卡带");ItemStack c=CardData.create(cart.get());CardData.clear(handheld);if(!p.getInventory().add(c))p.drop(c,false);return;}
                 for(int i=0;i<p.getInventory().getContainerSize();i++){ItemStack c=p.getInventory().getItem(i);if(c.is(ConsoleContent.CARTRIDGE.get())){Cartridge data=CardData.read(c).orElseThrow();if(!HardwareCatalog.accepts(HardwareCatalog.model(handheld),data.platform()))continue;CardData.write(handheld,data);c.shrink(1);p.inventoryMenu.broadcastChanges();return;}}
                 throw new DomainException("card","物品栏中需要一张已刻录卡带");
             }
             if(cart.isEmpty()){JsonObject config=object();config.addProperty("hand",hand.name());config.addProperty("model",HardwareCatalog.model(handheld));Wire.send(p,"handheld_config",config);return;}
-            Cartridge c=cart.get();
-            if(!HardwareCatalog.accepts(HardwareCatalog.model(handheld),c.platform()))throw new DomainException("hardware","卡带与掌机机型不兼容");
-            leave(p,s,"切换到掌机");Room r=new Room("handheld/"+c.instanceId(),null,c,p.getUUID(),1);s.rooms.put(r.key,r);synchronize(p.server,r);
+            startHandheld(p,hand,"fullscreen");
         }catch(Exception e){error(p,e instanceof DomainException de?de.code():"handheld",e.getMessage());}
+    }
+    private static void startHandheld(ServerPlayer player,InteractionHand hand,String presentation)throws IOException{
+        ItemStack handheld=player.getItemInHand(hand);if(!handheld.is(ConsoleContent.HANDHELD.get()))throw new DomainException("handheld","请手持游戏机");
+        Cartridge card=CardData.read(handheld).orElseThrow(()->new DomainException("card","掌机尚未装入卡带"));
+        if(!HardwareCatalog.accepts(HardwareCatalog.model(handheld),card.platform()))throw new DomainException("hardware","卡带与掌机机型不兼容");
+        WorldState world=state(player.server);String roomKey="handheld/"+card.instanceId();Room existing=world.rooms.get(roomKey);
+        if(existing!=null){if(existing.device!=null||!existing.session.isController(player.getUUID())||existing.handheldSaveDeadline!=0)throw new DomainException("save","这张卡带的上一会话仍在保存，请稍候");existing.presentations.put(player.getUUID(),presentation);sendStart(player,existing,presentation.equals("fullscreen"));return;}
+        if(world.rooms.values().stream().anyMatch(room->room.session.isController(player.getUUID())||room.card.instanceId().equals(card.instanceId())))throw new DomainException("save","请先按Esc保存并离开当前游戏");
+        Room room=new Room(roomKey,null,card,player.getUUID(),1);room.presentations.put(player.getUUID(),presentation);if(presentation.equals("fullscreen"))room.openOnStart.add(player.getUUID());world.rooms.put(room.key,room);synchronize(player.server,room);
+    }
+    private static void suspendHandheld(ServerPlayer player,Room room){
+        if(room.handheldSaveDeadline!=0)return;room.handheldSaveDeadline=now()+15000;room.requestedLeaves.add(player.getUUID());
+        if(room.pendingJoin==null&&room.pendingLeave==null){room.pendingLeave=player.getUUID();room.handoverStarted=now();requestCheckpoint(player.server,room);}
+    }
+    static Room ownedRoomForSave(ServerPlayer player,WorldState world,JsonObject body){
+        Room room=world.rooms.get(body.get("room").getAsString());
+        if(room==null||!room.session.isController(player.getUUID())||room.session.epoch()!=body.get("epoch").getAsLong())throw new DomainException("session","控制会话已失效");
+        if(validParticipant(player,room))return room;
+        if(room.device==null&&room.session.host().equals(player.getUUID())&&inInventory(player,room.card.instanceId())){suspendHandheld(player,room);if(now()<=room.handheldSaveDeadline)return room;}
+        throw new DomainException("session","保存会话已失效");
     }
     static Room ownedRoom(ServerPlayer p,WorldState s,JsonObject b){
         Room r=s.rooms.get(b.get("room").getAsString());if(r==null||!r.session.isController(p.getUUID())||r.session.epoch()!=b.get("epoch").getAsLong()||!validParticipant(p,r))throw new DomainException("session","控制会话已失效");return r;
     }
     public static boolean validParticipant(ServerPlayer p,Room r){
-        if(r.device!=null)return nearby(p,r.device)&&r.device.powered&&CardData.read(r.device.card).map(c->c.instanceId().equals(r.card.instanceId())).orElse(false);
-        return List.of(p.getMainHandItem(),p.getOffhandItem()).stream().filter(item->item.is(ConsoleContent.HANDHELD.get())).anyMatch(item->CardData.read(item).map(c->c.instanceId().equals(r.card.instanceId())).orElse(false));
+        if(r.device!=null)return nearby(p,r.device)&&r.device.powered&&CardData.read(r.device.media()).map(c->c.instanceId().equals(r.card.instanceId())).orElse(false);
+        return r.handheldSaveDeadline==0&&inHand(p,r.card.instanceId());
     }
     public static boolean mayDownload(ServerPlayer p,String hash,JsonObject b)throws IOException{
         for(int i=0;i<p.getInventory().getContainerSize();i++)if(CardData.read(p.getInventory().getItem(i)).map(c->c.sha256().equals(hash)).orElse(false))return true;
@@ -189,7 +232,8 @@ public final class ConsoleServer {
         WorldState s=state(p.server);if(!b.has("room")||!b.has("epoch"))return false;Room r=s.rooms.get(b.get("room").getAsString());
         return r!=null&&r.card.sha256().equals(hash)&&r.session.epoch()==b.get("epoch").getAsLong()&&r.session.isController(p.getUUID())&&(!r.card.platform().sharedRuntime()||r.session.host().equals(p.getUUID()))&&validParticipant(p,r);
     }
-    private static void sendStart(ServerPlayer p,Room r){JsonObject j=cardJson(r.card);boolean leader=p.getUUID().equals(r.session.host());j.addProperty("room",r.key);j.addProperty("epoch",r.session.epoch());j.addProperty("leader",leader);j.addProperty("shared",r.card.platform().sharedRuntime());j.addProperty("position",r.device==null?Long.MIN_VALUE:r.device.getBlockPos().asLong());j.addProperty("port",r.session.controllers().entrySet().stream().filter(e->e.getValue().equals(p.getUUID())).findFirst().orElseThrow().getKey());if(!r.card.platform().sharedRuntime()||leader)StateMessages.attachLatest(WORLDS.get(p.server),r,j);Wire.send(p,"session_start",j);}
+    private static void sendStart(ServerPlayer p,Room r){sendStart(p,r,false);}
+    private static void sendStart(ServerPlayer p,Room r,boolean open){JsonObject j=cardJson(r.card);j.addProperty("presentation",r.presentations.getOrDefault(p.getUUID(),"fullscreen"));j.addProperty("open",open);boolean leader=p.getUUID().equals(r.session.host());j.addProperty("room",r.key);j.addProperty("epoch",r.session.epoch());j.addProperty("leader",leader);j.addProperty("shared",r.card.platform().sharedRuntime());j.addProperty("position",r.device==null?Long.MIN_VALUE:r.device.getBlockPos().asLong());j.addProperty("port",r.session.controllers().entrySet().stream().filter(e->e.getValue().equals(p.getUUID())).findFirst().orElseThrow().getKey());if(!r.card.platform().sharedRuntime()||leader)StateMessages.attachLatest(WORLDS.get(p.server),r,j);Wire.send(p,"session_start",j);}
     private static void requestCheckpoint(MinecraftServer server,Room r){ServerPlayer host=server.getPlayerList().getPlayer(r.session.host());if(host!=null){JsonObject j=object();j.addProperty("room",r.key);j.addProperty("epoch",r.session.epoch());Wire.send(host,"checkpoint_request",j);}}
     static void saved(MinecraftServer server,WorldState world,Room r,StateVault.Snapshot snapshot){
         if(!world.rooms.containsKey(r.key)||snapshot.frame()<r.frame)return;
@@ -204,9 +248,9 @@ public final class ConsoleServer {
         }
         for(UUID id:departures){ServerPlayer player=server.getPlayerList().getPlayer(id);if(player!=null)Wire.send(player,"session_end",ended);}
         if(joiningId!=null){ServerPlayer joining=server.getPlayerList().getPlayer(joiningId);if(joining!=null&&r.device!=null&&nearby(joining,r.device)){r.session.grantControl(r.session.host(),joiningId,r.pendingPort);changed=true;}}
-        if(changed)synchronize(server,r);
+        if(joiningId!=null)r.openOnStart.add(joiningId);if(changed)synchronize(server,r);
     }
-    private static void synchronize(MinecraftServer server,Room r){r.observedEpoch=r.session.epoch();r.inputs.resetForEpoch();r.ready.clear();r.analog.clear();r.heldInputs.clear();r.crc.clear();r.fingerprint="";r.frame=0;r.carry=0;r.waiting=0;for(UUID id:r.session.controllers().values()){ServerPlayer p=server.getPlayerList().getPlayer(id);if(p!=null)sendStart(p,r);}}
+    private static void synchronize(MinecraftServer server,Room r){r.observedEpoch=r.session.epoch();r.inputs.resetForEpoch();r.ready.clear();r.analog.clear();r.heldInputs.clear();r.crc.clear();r.fingerprint="";r.frame=0;r.carry=0;r.waiting=0;for(UUID id:r.session.controllers().values()){ServerPlayer p=server.getPlayerList().getPlayer(id);if(p!=null)sendStart(p,r,r.openOnStart.remove(id));}}
     private static void leave(ServerPlayer p,WorldState s,String reason){for(Room r:new ArrayList<>(s.rooms.values()))if(r.session.isController(p.getUUID())){List<UUID> previous=List.copyOf(r.session.controllers().values());r.session.leave(p.getUUID());JsonObject j=object();j.addProperty("reason",reason);Wire.send(p,"session_end",j);if(r.session.isClosed()||r.session.controllers().isEmpty()){s.rooms.remove(r.key);for(UUID id:previous){ServerPlayer other=p.server.getPlayerList().getPlayer(id);if(other!=null&&!id.equals(p.getUUID()))Wire.send(other,"session_end",j);}}else synchronize(p.server,r);}}
     private static void stopRoom(MinecraftServer server,WorldState s,Room r,String reason){s.rooms.remove(r.key);JsonObject j=object();j.addProperty("reason",reason);for(UUID id:r.session.controllers().values()){StateMessages.cancel(server,s,id);ServerPlayer p=server.getPlayerList().getPlayer(id);if(p!=null)Wire.send(p,"session_end",j);}}
     private static void stopDevice(DeviceEntity d,String reason){if(d.getLevel() instanceof net.minecraft.server.level.ServerLevel level){WorldState s=WORLDS.get(level.getServer());if(s!=null){Room r=s.rooms.get(key(d));if(r!=null)stopRoom(level.getServer(),s,r,reason);}}}
@@ -215,7 +259,10 @@ public final class ConsoleServer {
         MinecraftServer server=event.getServer();WorldState s=WORLDS.get(server);if(s==null)return;
         if(server.getTickCount()%20==0)try{s.uploads.expire(now());s.states.expire(now());}catch(IOException e){MuxiConsole.LOG.warn("Upload expiration failed",e);}
         for(Room r:new ArrayList<>(s.rooms.values())){
-            for(UUID id:new ArrayList<>(r.session.controllers().values())){ServerPlayer p=server.getPlayerList().getPlayer(id);if(p==null||!validParticipant(p,r)){if(p!=null)leave(p,s,"已离开主机或收起掌机");else stopRoom(server,s,r,"玩家已离线");}}
+            for(UUID id:new ArrayList<>(r.session.controllers().values())){ServerPlayer p=server.getPlayerList().getPlayer(id);if(p==null||!validParticipant(p,r)){
+                if(p!=null&&r.device==null&&r.session.host().equals(id)&&inInventory(p,r.card.instanceId())){suspendHandheld(p,r);if(now()<=r.handheldSaveDeadline)continue;stopRoom(server,s,r,"掌机收起后的保存超时，保留最近一次存档");}
+                else if(p!=null)leave(p,s,"已离开主机或收起掌机");else stopRoom(server,s,r,"玩家已离线");
+            }}
             if(!s.rooms.containsKey(r.key))continue;
             if(r.pendingJoin!=null||r.pendingLeave!=null){if(now()-r.handoverStarted>60000){UUID waiting=r.pendingJoin!=null?r.pendingJoin:r.pendingLeave;ServerPlayer waitingPlayer=server.getPlayerList().getPlayer(waiting);if(waitingPlayer!=null)error(waitingPlayer,"save","存档同步超时，原会话已继续");r.pendingJoin=null;r.pendingLeave=null;if(!r.requestedLeaves.isEmpty()){r.pendingLeave=r.requestedLeaves.iterator().next();r.handoverStarted=now();requestCheckpoint(server,r);continue;}}else continue;}
             if(r.session.epoch()!=r.observedEpoch)synchronize(server,r);

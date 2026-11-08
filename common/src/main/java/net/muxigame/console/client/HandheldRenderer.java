@@ -29,12 +29,23 @@ public final class HandheldRenderer extends BlockEntityWithoutLevelRenderer {
         public BakedModel body(){return originalModel;}
     }
     @Override public void renderByItem(ItemStack item,ItemDisplayContext display,PoseStack pose,MultiBufferSource buffers,int light,int overlay){
-        Minecraft mc=Minecraft.getInstance();BakedModel selected=mc.getItemRenderer().getModel(item,mc.level,mc.player,0);BakedModel body=selected instanceof LiveModel live?live.body():selected;
-        mc.getItemRenderer().renderModelLists(body,item,light,overlay,pose,ItemRenderer.getFoilBufferDirect(buffers,RenderType.entityCutoutNoCull(TextureAtlas.LOCATION_BLOCKS),true,item.hasFoil()));
+        body(item,pose,buffers,light,overlay);
         var state=ConsoleClient.INSTANCE.snapshot();var picture=ConsoleClient.INSTANCE.picture();
         if(picture==null||!state.ready()||!state.room().startsWith("handheld/"))return;
         if(CardData.read(item).filter(c->state.room().equals("handheld/"+c.instanceId())).isEmpty())return;
+        picture(item,picture,pose,buffers);
+    }
+    private static void body(ItemStack item,PoseStack pose,MultiBufferSource buffers,int light,int overlay){
+        Minecraft mc=Minecraft.getInstance();BakedModel selected=mc.getItemRenderer().getModel(item,mc.level,mc.player,0);BakedModel body=selected instanceof LiveModel live?live.body():selected;
+        mc.getItemRenderer().renderModelLists(body,item,light,overlay,pose,ItemRenderer.getFoilBufferDirect(buffers,RenderType.entityCutoutNoCull(TextureAtlas.LOCATION_BLOCKS),true,item.hasFoil()));
+    }
+    private static void picture(ItemStack item,net.minecraft.resources.ResourceLocation picture,PoseStack pose,MultiBufferSource buffers){
         int id=HardwareCatalog.model(item);List<HardwareCatalog.Plane> planes=id==0?List.of(new HardwareCatalog.Plane(4.3f,5.2f,11.7f,10.75f,5.98f)):HardwareCatalog.screens(id);
         for(var plane:planes)DeviceRenderer.screen(pose,buffers,picture,plane);
     }
+    /** Already in authored model coordinates: no BEWLR or hand-presentation recursion, no global picture override. */
+    public static void docked(ItemStack item,net.minecraft.resources.ResourceLocation sourcePicture,PoseStack pose,MultiBufferSource buffers,int light,int overlay){
+        body(item,pose,buffers,light,overlay);if(sourcePicture!=null)picture(item,sourcePicture,pose,buffers);
+    }
+
 }

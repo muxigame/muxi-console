@@ -12,6 +12,14 @@
 
 本目录实现和编译通过不等于场景已通过。`scenarioComplete` 只根据本轮真实结果设置；截图仍须人工/图像查看验收，`visualAcceptance` 与 `physicalOSInput` 始终 false。文件拖入、Checkbox/Button、InputSource 均是正常前端回调测试，不冒称实体鼠标、实体键盘或真实手柄操作。
 
+掌机、底座与薄大屏的新世界专项：根统一runner准备精确候选后，先执行上述 `--check`，再执行 `python -B qa/dock_review.py --run <实际编号run> --build build/qa/<QA名称>/qa-build.json`。工具复用同一Driver的owner/PID代际/租约/双侧JAR哈希检查，不启动或停止Minecraft。普通fixture只提供空GBA外壳、屏/底座/工具，GB卡带仍由真实刻录界面确认授权后上传生成；不直接构造卡带或存档。
+
+该专项按正常生存放置/挖掘/拾取检查屏幕受阻不消耗、四朝向的真实六格占位和拆从片单件掉落；再检查拿起自动世界播放、前端输入、物品右键同worker全屏、F透明操作、Esc保存抑制重开、收热栏保存、底座安装唯一性/完整NBT往返、同卡恢复和正常取回。`dock-review-result.json` 保留分项状态与原始PNG链接；8张照片覆盖实际手持/全屏、底座两时刻低位旋转，以及3×2屏幕前/侧/背。JSON完成和文件存在仍不能代替人工看图，也不证明实体键鼠、物理手柄或完整整合包共存。
+
+首次原结果中的取景失败不改写：补拍入口 `qa/dock_visual.py` 只接受同run、同候选及原实体卡带；首次补验在拍图前失败时，可用 `--name resumed` 写独立输出，必须引用未覆盖的首次失败及原主结果。每张补图前检查同一活动room/worker，最终leave前再检查ready、worker和身份，之后比对新generation、client/vault哈希和自然退出增量。`--pause-after-first` 可先人工查看第一张PNG再继续；不会重开或停止Minecraft。
+
+使用 `python -B qa/dock_gallery.py --run <实际编号run> --build build/qa/<QA名称>/qa-build.json` 生成 `build/dock-review/index.html`。图库只链接原始照片及JSON，核owner/双侧产品SHA、原图路径/哈希/尺寸/PNG解码；原出画和越界照片列历史证据，原主complete=true/48项的scope缺口及独立补验false结果明确保留。图审与实体外设验收不会由图库生成自动提升。
+
 2026-11-08 新模型与浏览器专项使用一个新双客户端 run，按以下顺序执行，保留同一世界和每项原失败；不要与旧 `--scenario` 混合。各入口拒绝覆盖已有结果或同名原图。
 
 ```powershell

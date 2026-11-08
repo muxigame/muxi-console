@@ -78,7 +78,8 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path) -> Path:
         classes = out / (side + "-classes")
         classes.mkdir()
         args = ["--release", "21", "-encoding", "UTF-8", "-proc:none", "-implicit:none", "-cp", classpath, "-d", str(classes),
-                str(sources / "QaOwner.java"), str(sources / entry), str(sources / ("ReviewScene.java" if side == "server" else "NativeReview.java"))]
+                str(sources / "QaOwner.java"), str(sources / entry), str(sources / ("ReviewScene.java" if side == "server" else "NativeReview.java")),
+                str(sources / ("DockScene.java" if side == "server" else "DockActions.java"))]
         argument_file = out / (side + ".args")
         sdk.argfile(argument_file, args)
         command = [str(jdk / "javac.exe"), "-J-Xmx512m", "-J-XX:ActiveProcessorCount=1", "-J-Dfile.encoding=UTF-8", "-J-Duser.language=en", "@" + str(argument_file)]

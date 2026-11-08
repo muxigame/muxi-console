@@ -49,7 +49,11 @@ CMD1..19保持原顺序，FDS追加20，ARCADE追加21。22只表示ARCADE的双
 
 ## 动态屏幕接口
 
-独立屏幕的待机面：x=1.5..14.5、y=3..12.75、z=6.94；动态画面z=6.90，13×9.75严格4:3。各形态内置屏及街机屏使用catalog的 `screen_plane`。正面法线north，随后与机身一起按facing旋转；UV保持前次修复后的方向。
+旧单格屏幕的待机面：x=1.5..14.5、y=3..12.75、z=6.94；动态画面z=6.90，13×9.75严格4:3。各形态内置屏及街机屏使用catalog的 `screen_plane`。正面法线north，随后与机身一起按facing旋转；UV保持前次修复后的方向。
+
+新屏资源为 `block/screen_0..5`，真实宽3格高2格、背板z7..9；`ScreenBlock.PART=0`保留旧屏，1..6对应新片。anchor为正面左下，north右向WEST，整体local x=-32..16、y0..32；活面x=-31.25..15.25、y=.5..31.5，z6.94，动态z6.90，严格3:2外形，具体游戏继续按原比例letterbox。物品图标是独立完整薄屏模型，六片各自保持0..16，不用越界几何冒充占格。
+
+`handheld_dock`底板和插槽最高3/16；客户端直接画实际完整掌机，scale=.7，最低点固定4/16，绕竖轴每tick .5度，没有上下bob。基础模型不内置假的掌机；放入的机型及活动屏幕分别来自真实物品与底座会话。[本轮实图](../build/dock-review/index.html)区分原出画与补验，不用软件预览替代。
 
 掌机屏幕比例为GB/GBC/GG的10:9、GBA的3:2、Lynx的80:51、NGP/NGPC的20:19、WS/WSC的14:9。21单人街机屏为x4.4..11.6、y8.4..13.8、z4.70；22双人街机屏为x3.2..12.8、y7..14.2、z4.30，均4:3。
 
@@ -63,6 +67,6 @@ python -B tools/generate_assets.py --check
 python -B tools/generate_assets.py --check --preview --gallery-plan
 ```
 
-生成器只依赖Python标准库。当前生成174项资源；检查包含逐字节再现、继承/纹理/配方/中英平台键闭包、PNG解码/CRC/zlib、MC图集可达、CMD稳定映射、21个平台机身与媒体的纯坐标差异、掌机屏幕比例和单双街机几何差异。所有模型纹理必须位于MC1.21.1默认blocks atlas可收录的 `textures/block/` 或 `textures/item/` 下。
+生成器只依赖Python标准库。当前生成185项资源；12861项检查包含逐字节再现、继承/纹理/配方/中英平台键闭包、PNG解码/CRC/zlib、MC图集可达、CMD稳定映射、21个平台机身与媒体的纯坐标差异、掌机屏幕比例、单双街机几何、六片覆盖/UV连续/四朝向及旧屏迁移。所有模型纹理必须位于MC1.21.1默认blocks atlas可收录的 `textures/block/` 或 `textures/item/` 下。
 
 `build/assets-preview.png` 是内部软件几何预览，不能作为Minecraft审核图。真实审核要求及分轮结论见 [MODEL-REVIEW.md](MODEL-REVIEW.md)。22种新形态已有逐款Minecraft世界原图，9掌机及VB另有完整主副手图；[图库](../build/model-review/index.html)保留原图、来源和实际动态屏幕结果。

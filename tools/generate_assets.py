@@ -48,8 +48,9 @@ PLATFORMS = [
     ("fds", "Famicom Disk System", "FDS", "CB6C56"),
     ("arcade", "街机", "ARC", "DD9E56"),
 ]
-BLOCKS = ("desk_console", "screen", "cartridge_writer")
+BLOCKS = ("desk_console", "screen", "cartridge_writer", "handheld_dock")
 ITEMS = (*BLOCKS, "handheld", "cartridge", "blank_cartridge", "controller")
+LARGE_SCREEN_PLANE = (-31.25, .5, 15.25, 31.5, 6.94)
 FACES = ("down", "up", "north", "south", "west", "east")
 COLORS = {
     "ink": "203B42", "shell": "DDDACA", "edge": "708C89",
@@ -619,12 +620,59 @@ def model_catalog():
             entries[-1]["cabinet_seats"] = 1
     return {"schema":1,"namespace":NS,"coordinate_units":16,"front":"north",
         "screen_plane":{"from":[1.5,3.0,6.90],"to":[14.5,12.75,6.90],"aspect":[4,3]},
+        "display_layout":{"width_blocks":3,"height_blocks":2,"part_property":"part",
+            "legacy_part":0,"large_parts":[1,2,3,4,5,6],"anchor_part":1,
+            "part_index":"part - 1 = column + row * 3","north_column_direction":"west",
+            "bounds":{"min":[-32,0,6.94],"max":[16,32,9]},
+            "screen_plane":{"from":[-31.25,.5,6.94],"to":[15.25,31.5,6.94],"aspect":[3,2]}},
+        "dock_layout":{"geometry":f"{NS}:block/handheld_dock",
+            "bounds":{"min":[1,0,1.95],"max":[15,3,14]},"slot_top_y":3,
+            "display_min_y":4,"display_motion":"rotation_only","display_source":"stored_handheld_item"},
         "entries":entries,"additional_styles":[{"platform":"arcade","cmd":22,"style":"double",
             "geometry":f"{NS}:block/arcade_cabinet_2p","item":f"{NS}:item/desk_console_arcade_2p",
             "bounds":{"min":[.25,0,1.8],"max":[15.75,15.8,14]},"cabinet_seats":2,
             "controller_ports":2,"screen_plane":{"from":[3.2,7,4.30],"to":[12.8,14.2,4.30],"facing":"north"},
             "control_positions":[[4.2,6.5,2.9],[11.8,6.5,2.9]],
             "review":{"row":4,"column":1,"station":[4,64,28],"image":"22-arcade-2p.png"}}]}
+
+
+def large_screen_geometry(part):
+    """Clip an authored 3x2 panel into six bounded models; no internal bezel seams.
+
+    Part is the new-panel zero-based index. The anchor is the viewer's lower
+    left: north-facing columns grow west, so the combined local X is -32..16.
+    Existing single-block screens retain their separate legacy model/part 0.
+    """
+    if not 0 <= part < 6:
+        raise ValueError("Invalid large-screen tile")
+    column, row = part % 3, part // 3
+    origin_x, origin_y = -16 * column, 16 * row
+    elements = []
+
+    def clipped(start, end, material, **faces):
+        low = [max(start[0], origin_x), max(start[1], origin_y), start[2]]
+        high = [min(end[0], origin_x + 16), min(end[1], origin_y + 16), end[2]]
+        if low[0] >= high[0] or low[1] >= high[1]:
+            return
+        element = box([low[0] - origin_x, low[1] - origin_y, low[2]],
+                      [high[0] - origin_x, high[1] - origin_y, high[2]], material, **faces)
+        if faces.get("north") == "display":
+            x0, y0, x1, y1, _ = LARGE_SCREEN_PLANE
+            element["faces"]["north"]["uv"] = [
+                (x1 - high[0]) * 16 / (x1 - x0), (y1 - high[1]) * 16 / (y1 - y0),
+                (x1 - low[0]) * 16 / (x1 - x0), (y1 - low[1]) * 16 / (y1 - y0)]
+        elements.append(element)
+
+    clipped([-32, 0, 7], [16, 32, 9], "ink")
+    # Only the perimeter has a bezel. The active face spans all six blocks.
+    clipped([-32, 0, 6.98], [-31.25, 32, 7.16], "edge")
+    clipped([15.25, 0, 6.98], [16, 32, 7.16], "edge")
+    clipped([-31.25, 0, 6.98], [15.25, .5, 7.16], "edge")
+    clipped([-31.25, 31.5, 6.98], [15.25, 32, 7.16], "edge")
+    clipped([-31.25, .5, 6.96], [15.25, 31.5, 7.02], "screen", north="display")
+    # A short power light stays in the lower right bezel, not across tile seams.
+    clipped([-29.5, .12, 6.94], [-28.2, .34, 7.0], "amber")
+    return elements
 
 
 def models():
@@ -652,6 +700,22 @@ def models():
         box([1.5, 3, 6.94], [14.5, 12.75, 7], "screen", north="display"),
         box([13.5, 2.7, 6.88], [14.3, 2.92, 7], "amber"),
         box([1.7, 13.15, 6.94], [4.5, 13.48, 7.2], "accent"),
+    ])
+    for part in range(6):
+        result[f"block/screen_{part}"] = base_model(large_screen_geometry(part))
+    result["block/handheld_dock"] = base_model([
+        box([1, 0, 2], [15, .65, 14], "dark"),
+        box([1, .65, 2], [15, 2, 14], "ink"),
+        box([1.4, 2, 2.4], [14.6, 2.45, 13.6], "shell"),
+        box([3, 2.45, 6], [13, 2.7, 10.5], "dark"),
+        box([3, 2.7, 6], [4, 3, 10.5], "edge"),
+        box([12, 2.7, 6], [13, 3, 10.5], "edge"),
+        box([5, 2.7, 8.1], [11, 2.94, 8.7], "connector"),
+        *[box([5.45 + i * .9, 2.93, 8], [5.7 + i * .9, 2.98, 8.8], "dark") for i in range(6)],
+        box([2.5, 1, 1.95], [4, 1.3, 2.06], "amber"),
+        box([5.2, .9, 1.95], [6.7, 1.5, 2.08], "dark"),
+        box([8.5, .9, 1.95], [10, 1.5, 2.08], "dark"),
+        box([10.9, 1, 13.95], [13.4, 1.65, 14], "connector"),
     ])
     result["block/cartridge_writer"] = base_model([
         box([1.5, 0, 2], [14.5, 1, 14], "dark"),
@@ -706,6 +770,13 @@ def models():
     ], kind="item")
     for name in BLOCKS:
         result[f"item/{name}"] = {"parent": f"{NS}:block/{name}"}
+    # The inventory item represents the complete thin panel, not one tiled
+    # corner and not an out-of-bounds 48x32 model.
+    result["item/screen"] = base_model([
+        box([.5, 3, 7], [15.5, 13, 8], "ink"),
+        box([.5, 3, 6.96], [15.5, 13, 7.12], "edge"),
+        box([.75, 3.1666666667, 6.94], [15.25, 12.8333333333, 7.02], "screen", north="display"),
+    ], kind="item")
     result["item/blank_cartridge"] = {"parent": f"{NS}:item/template_cartridge"}
     for name in ("cartridge", "handheld"):
         result[f"item/{name}"] = {"parent": f"{NS}:item/template_{name}"}
@@ -741,6 +812,7 @@ def languages():
         "itemGroup.muxi_console": ("木犀游戏机", "Muxi Console"),
         "block.muxi_console.desk_console": ("木犀桌面游戏机", "Muxi Desktop Console"),
         "block.muxi_console.screen": ("木犀屏幕", "Muxi Screen"),
+        "block.muxi_console.handheld_dock": ("木犀掌机底座", "Muxi Handheld Dock"),
         "block.muxi_console.cartridge_writer": ("卡带刻录机", "Cartridge Writer"),
         "item.muxi_console.handheld": ("木犀掌机", "Muxi Handheld"),
         "item.muxi_console.cartridge": ("游戏卡带", "Game Cartridge"),
@@ -799,7 +871,8 @@ def languages():
         "tooltip.muxi_console.transferable": ("可交给其他玩家使用", "Can be given to another player"),
         "tooltip.muxi_console.handheld": ("手持使用，随时游玩", "Use while held to play anywhere"),
         "tooltip.muxi_console.desk_console": ("插入卡带后使用", "Insert a cartridge, then use"),
-        "tooltip.muxi_console.screen": ("连接附近的桌面游戏机", "Connect to a nearby desktop console"),
+        "tooltip.muxi_console.screen": ("3 × 2 格薄型大屏 · 连接游戏机或掌机底座", "Thin 3 × 2 display · connect a console or handheld dock"),
+        "tooltip.muxi_console.handheld_dock": ("放入掌机后连接大屏，潜行空手使用取出", "Insert a handheld and connect a display; sneak-use with an empty hand to remove"),
         "tooltip.muxi_console.controller": ("使用游戏机加入控制席", "Use a console to take a player seat"),
     }
     for platform, zh, en, _ in PLATFORMS:
@@ -845,7 +918,14 @@ def generated_files():
     for model_id, model in models().items():
         js(f"{ASSETS}/models/{model_id}.json", model)
     for name in BLOCKS:
-        js(f"{ASSETS}/blockstates/{name}.json", {"variants": {
+        if name == "screen":
+            js(f"{ASSETS}/blockstates/{name}.json", {"variants": {
+                f"facing={direction},part={part}":
+                    {"model":f"{NS}:block/{'screen' if part == 0 else 'screen_'+str(part-1)}","y":angle}
+                for direction, angle in (("north",0),("east",90),("south",180),("west",270))
+                for part in range(7)}})
+        else:
+            js(f"{ASSETS}/blockstates/{name}.json", {"variants": {
             (f"facing={direction},model={cmd}" if name == "desk_console" else f"facing={direction}"):
                 {"model":f"{NS}:block/{model}","y":angle}
             for direction, angle in (("north", 0), ("east", 90), ("south", 180), ("west", 270))
@@ -858,6 +938,7 @@ def generated_files():
     recipes = {
         "desk_console": (["IRI", "RCR", "III"], {"I": "iron_ingot", "R": "redstone", "C": "copper_ingot"}, 1),
         "screen": (["III", "GGG", " R "], {"I": "iron_ingot", "G": "glass", "R": "redstone"}, 1),
+        "handheld_dock": (["C C", "IRI", "III"], {"I": "iron_ingot", "R": "redstone", "C": "copper_ingot"}, 1),
         "cartridge_writer": (["IRI", "OCO", "III"], {"I": "iron_ingot", "R": "redstone", "O": "obsidian", "C": "copper_ingot"}, 1),
         "handheld": (["IGI", "RCR"], {"I": "iron_ingot", "G": "glass", "R": "redstone", "C": "copper_ingot"}, 1),
         "blank_cartridge": (["IPI", " R "], {"I": "iron_nugget", "P": "paper", "R": "redstone"}, 2),
@@ -993,6 +1074,51 @@ def check_closure(files):
     if [(e["from"],e["to"]) for e in single["elements"]] == [(e["from"],e["to"]) for e in double["elements"]]:
         raise ValueError("Single- and two-seat arcade cabinets must differ in shape")
     checks += 1
+    # Assemble the authored six tiles in north-facing world coordinates. The
+    # entire active rectangle must have exact area and unbroken texture UVs;
+    # per-block front borders would create six small screens instead of one.
+    screen_states = json.loads(files[f"{ASSETS}/blockstates/screen.json"])["variants"]
+    expected_active_area = 46.5 * 31
+    area = 0
+    for index in range(6):
+        column, row = index % 3, index // 3
+        model = resolved(f"{ASSETS}/models/block/screen_{index}.json")
+        active = [element for element in model["elements"] if element["faces"]["north"]["texture"] == "#display"]
+        if len(active) != 1:
+            raise ValueError("A screen tile must expose one continuous active portion")
+        element = active[0]
+        x0, y0, _ = element["from"]
+        x1, y1, _ = element["to"]
+        world_x0, world_x1 = x0 - 16 * column, x1 - 16 * column
+        world_y0, world_y1 = y0 + 16 * row, y1 + 16 * row
+        expected = [max(-31.25, -16 * column), max(.5, 16 * row),
+                    min(15.25, 16 - 16 * column), min(31.5, 16 + 16 * row)]
+        if [world_x0, world_y0, world_x1, world_y1] != expected:
+            raise ValueError("Screen tiles leave a gap or overrun the large active plane")
+        area += (x1 - x0) * (y1 - y0)
+        uv = element["faces"]["north"]["uv"]
+        if not math.isclose((uv[2] - uv[0]) * (uv[3] - uv[1]),
+                            (x1 - x0) * (y1 - y0) / expected_active_area * 256, rel_tol=1e-12):
+            raise ValueError("Screen standby texture sections do not partition the full image")
+        for direction, angle in (("north", 0), ("east", 90), ("south", 180), ("west", 270)):
+            if screen_states[f"facing={direction},part={index+1}"] != {
+                    "model":f"{NS}:block/screen_{index}","y":angle}:
+                raise ValueError("Large-screen state and authored tile mapping differ")
+            checks += 1
+        checks += 3
+    if not math.isclose(area, expected_active_area, rel_tol=1e-12):
+        raise ValueError("Six-part screen does not fill the full 3:2 active plane")
+    for direction, angle in (("north", 0), ("east", 90), ("south", 180), ("west", 270)):
+        if screen_states[f"facing={direction},part=0"] != {"model":f"{NS}:block/screen","y":angle}:
+            raise ValueError("Existing one-block screens must retain the legacy model")
+        checks += 1
+    dock = resolved(f"{ASSETS}/models/block/handheld_dock.json")
+    if max(element["to"][1] for element in dock["elements"]) > 3:
+        raise ValueError("Dock rises above the low cradle height")
+    dock_geometry = [(element["from"],element["to"]) for element in dock["elements"]]
+    if dock_geometry == [(e["from"],e["to"]) for e in resolved(f"{ASSETS}/models/block/desk_console.json")["elements"]]:
+        raise ValueError("Handheld dock must have its own low geometry")
+    checks += 3
     return checks
 
 

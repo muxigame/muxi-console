@@ -55,6 +55,7 @@ public final class ClientQaMod {
     private String historyLease="";
     private String stateProbe="",stateProbeRequest="";
     private long sharedPcmBytes,sharedPcmNonzeroSamples;
+    private final DockActions dockActions=new DockActions();
     public ClientQaMod() { NeoForge.EVENT_BUS.addListener(this::tick); }
     private void tick(ClientTickEvent.Post event) {
         clientTicks++;
@@ -77,11 +78,13 @@ public final class ClientQaMod {
             probeFuture = null;
         }
         owner.poll(this::dispatch);
+        dockActions.tick(Minecraft.getInstance());
         if(destroying!=null){Minecraft mc=Minecraft.getInstance();if(mc.level==null||mc.level.getBlockState(destroying).isAir()){if(mc.gameMode!=null)mc.gameMode.stopDestroyBlock();destroying=null;}else mc.gameMode.continueDestroyBlock(destroying,Direction.UP);}
     }
     private JsonObject dispatch(JsonObject command) {
         Minecraft client = Minecraft.getInstance();
         String action = command.get("action").getAsString();
+        if(action.startsWith("dock_")){dockActions.command(client,command);return observe(client);}
         try {
             switch (action) {
                 case "observe" -> { }
@@ -231,6 +234,7 @@ public final class ClientQaMod {
         JsonArray pads=new JsonArray();for(var device:net.muxigame.console.client.input.InputProfiles.availableGamepads()){JsonObject pad=new JsonObject();pad.addProperty("id",device.id());pad.addProperty("name",device.name());try{pad.addProperty("guidSha256",java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(device.guid().getBytes(java.nio.charset.StandardCharsets.UTF_8))));}catch(java.security.NoSuchAlgorithmException impossible){throw new IllegalStateException(impossible);}pads.add(pad);}result.add("availableGamepads",pads);
         result.add("shared",shared());JsonObject video=new JsonObject(),audio=new JsonObject();videoHistory.forEach((k,v)->video.addProperty(k.toString(),v));audioHistory.forEach((k,v)->audio.addProperty(k.toString(),v));result.add("sharedVideoHistory",video);result.add("sharedAudioHistory",audio);
         result.add("picture",NativeReview.picture(client));
+        result.add("dock",DockActions.observe(client));
         var state = ConsoleClient.INSTANCE.snapshot();
         result.addProperty("status", state.status()); result.addProperty("room", state.room()); result.addProperty("epoch", state.epoch());
         result.addProperty("port", state.port()); result.addProperty("ready", state.ready()); result.addProperty("frames", state.frames()); result.addProperty("crc", state.frameCrc());

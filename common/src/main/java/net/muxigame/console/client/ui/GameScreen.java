@@ -7,18 +7,21 @@ import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
 /** A non-pausing input surface in both world-TV and fitted fullscreen modes. */
-public final class GameScreen extends Screen {
-    private final ClientActions actions;
+public class GameScreen extends Screen {
+    protected final ClientActions actions;
     private final int port;
     private boolean worldView;
     private boolean closed;
     private boolean fHeld;
-    public GameScreen(ClientActions actions, int port) {
+    public GameScreen(ClientActions actions, int port) { this(actions,port,false); }
+    protected GameScreen(ClientActions actions,int port,boolean worldView) {
         super(Component.translatable("ui.muxi_console.title"));
         if (port < 0 || port > 3) throw new IllegalArgumentException("Player seat outside range");
-        this.actions = Objects.requireNonNull(actions); this.port = port;
+        this.actions = Objects.requireNonNull(actions); this.port = port;this.worldView=worldView;
     }
     public int port() { return port; }
+    @Override protected void init(){net.minecraft.client.KeyMapping.releaseAll();}
+    protected String worldLabel(){return actions instanceof net.muxigame.console.client.ConsoleClient client&&client.handheldSession()?"手持视角":"电视视角";}
     public boolean worldView() { return worldView; }
     @Override public boolean isPauseScreen() { return false; }
     @Override public boolean shouldCloseOnEsc() { return true; }
@@ -32,7 +35,7 @@ public final class GameScreen extends Screen {
                     pictureWidth, pictureHeight);
         }
         graphics.fill(0, height - 24, width, height, 0xd0203b42);
-        graphics.drawString(font, "P" + (port + 1) + "  ·  F 切换" + (worldView ? "全屏" : "电视视角") + "  ·  F8 外接屏幕  ·  Esc 离开",
+        graphics.drawString(font, "P" + (port + 1) + "  ·  F 切换" + (worldView ? "全屏" : worldLabel()) + "  ·  F8 释放操作  ·  Esc 保存离开",
                 10, height - 16, ConsoleScreen.CREAM, false);
         String status = Objects.requireNonNullElse(actions.status(), "");
         if (!status.isBlank()) graphics.drawString(font, font.plainSubstrByWidth(status, width - 20), 10, 10, ConsoleScreen.AMBER, false);
@@ -44,6 +47,10 @@ public final class GameScreen extends Screen {
     }
     @Override public boolean keyReleased(int key, int scanCode, int modifiers) {
         if (key == GLFW.GLFW_KEY_F) fHeld = false;
+        return true;
+    }
+    @Override public boolean mouseClicked(double x,double y,int button){
+        if(button==1&&worldView&&actions instanceof net.muxigame.console.client.ConsoleClient client&&client.handheldSession()){worldView=false;return true;}
         return true;
     }
     @Override public void onClose() {

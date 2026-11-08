@@ -29,6 +29,8 @@
 
 ## 当前候选与产品链
 
+最新掌机/底座/薄屏候选为 `dock-screen-01`，71源/2186项纯检查和12861项资源检查，精确SHA及原生结果见[当前状态](STATUS.md)。58项worker/核心/清单与下述10逐字节相同；本轮没有重跑平台矩阵。下述候选号保留各阶段的实际证据。
+
 10为66个第一方Java源文件，13组共2081项纯检查通过；精确JAR SHA256为 `08493a72b103454f1693658a6c4ce575e9dd58a2ad027254f65b47dbb14e5dde`。新平台已接刻录、服务器复检、机型兼容、输入与持久化。冷恢复测试的全部17个LibretroCore类文件与10内worker逐字节相同，见[绑定结果](../build/cold-load-all-21-02/candidate10-binding.json)；这项比对不代替10的真实MC验收。
 
 - [07实际准入](../build/admission-final-07/checks.log)：21个平台，共89项，包含Lynx BS93与宿主对象拒绝、MAME保留驱动名的 `.mxarc`。

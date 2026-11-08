@@ -91,12 +91,17 @@ public final class InputProfiles {
         return List.copyOf(result);
     }
 
-    public synchronized PortInput sample(Platform platform, long window) {
+    public synchronized PortInput sample(Platform platform, long window) { return sample(platform,window,key->true,false); }
+
+    /** World mode never borrows a key assigned to Minecraft; arrows also provide a safe direction alternative. */
+    public synchronized PortInput sampleWorld(Platform platform,long window,java.util.function.IntPredicate allowed){return sample(platform,window,Objects.requireNonNull(allowed),true);}
+
+    private PortInput sample(Platform platform,long window,java.util.function.IntPredicate allowed,boolean world) {
         Profile profile = profile(platform);
         int mask = 0;
         for (int bit = 0; bit < 16; bit++) {
             int key = profile.keyBinding(bit);
-            if (window != 0 && key >= GLFW.GLFW_KEY_SPACE && GLFW.glfwGetKey(window, key) == GLFW.GLFW_PRESS)
+            if (window != 0 && key >= GLFW.GLFW_KEY_SPACE && allowed.test(key) && GLFW.glfwGetKey(window, key) == GLFW.GLFW_PRESS)
                 mask |= 1 << bit;
         }
         short lx = 0, ly = 0, rx = 0, ry = 0;
@@ -121,7 +126,8 @@ public final class InputProfiles {
                 }
             }
         }
-        if(window!=0){short[] axes={lx,ly,rx,ry};for(int axis=0;axis<4;axis++){boolean negative=held(window,profile.axisBinding(axis*2)),positive=held(window,profile.axisBinding(axis*2+1));if(negative||positive)axes[axis]=(short)(negative==positive?0:negative?-32767:32767);}lx=axes[0];ly=axes[1];rx=axes[2];ry=axes[3];}
+        if(window!=0){short[] axes={lx,ly,rx,ry};for(int axis=0;axis<4;axis++){boolean negative=held(window,profile.axisBinding(axis*2),allowed),positive=held(window,profile.axisBinding(axis*2+1),allowed);if(negative||positive)axes[axis]=(short)(negative==positive?0:negative?-32767:32767);}lx=axes[0];ly=axes[1];rx=axes[2];ry=axes[3];}
+        if(world&&window!=0)return HeldInputPolicy.directions(platform,new PortInput(mask,lx,ly,rx,ry),held(window,GLFW.GLFW_KEY_UP,allowed),held(window,GLFW.GLFW_KEY_DOWN,allowed),held(window,GLFW.GLFW_KEY_LEFT,allowed),held(window,GLFW.GLFW_KEY_RIGHT,allowed));
         if ((mask & 0x30) == 0x30) mask &= ~0x30;
         if ((mask & 0xc0) == 0xc0) mask &= ~0xc0;
         return new PortInput(mask, lx, ly, rx, ry);
@@ -129,7 +135,7 @@ public final class InputProfiles {
     /** Physical standard-controller buttons for the binding screen, independent of the mapping being edited. */
     public synchronized int pressedGamepad(Platform platform){int joystick=resolveJoystick(profile(platform));if(joystick<0)return 0;try(MemoryStack stack=MemoryStack.stackPush()){GLFWGamepadState state=GLFWGamepadState.malloc(stack);if(!GLFW.glfwGetGamepadState(joystick,state))return 0;int pressed=0;for(int b=0;b<=GLFW.GLFW_GAMEPAD_BUTTON_LAST;b++)if(state.buttons(b)==GLFW.GLFW_PRESS)pressed|=1<<b;if(state.axes(GLFW.GLFW_GAMEPAD_AXIS_LEFT_TRIGGER)>.2f)pressed|=1<<15;if(state.axes(GLFW.GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER)>.2f)pressed|=1<<16;return pressed;}}
 
-    private static boolean held(long window,int key){return key>=GLFW.GLFW_KEY_SPACE&&GLFW.glfwGetKey(window,key)==GLFW.GLFW_PRESS;}
+    private static boolean held(long window,int key,java.util.function.IntPredicate allowed){return key>=GLFW.GLFW_KEY_SPACE&&allowed.test(key)&&GLFW.glfwGetKey(window,key)==GLFW.GLFW_PRESS;}
     private static float safeAxis(float value) { return Float.isFinite(value) ? Math.max(-1, Math.min(1, value)) : 0; }
     private static short analog(float value) {
         value = safeAxis(value);

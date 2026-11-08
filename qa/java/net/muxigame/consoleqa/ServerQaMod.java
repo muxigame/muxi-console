@@ -29,6 +29,7 @@ public final class ServerQaMod {
     public static final String ID = "muxi_console_qa_server";
     private final QaOwner owner = new QaOwner(ID, "server");
     private final ReviewScene review = new ReviewScene(owner);
+    private final DockScene dockReview=new DockScene(owner);
     private final Set<UUID> prepared = new HashSet<>();
     private boolean built;
     private final java.util.ArrayDeque<JsonObject> roomHistory=new java.util.ArrayDeque<>();
@@ -45,6 +46,7 @@ public final class ServerQaMod {
     private void sampleRooms(MinecraftServer server){try{JsonArray current=rooms(server);String key=current.toString();if(!key.equals(lastRooms)){lastRooms=key;JsonObject sample=new JsonObject();sample.addProperty("serverTick",server.getTickCount());sample.add("rooms",current);roomHistory.add(sample);while(roomHistory.size()>128)roomHistory.removeFirst();}}catch(java.io.IOException error){throw new IllegalStateException(error);}}
 
     private JsonObject dispatch(MinecraftServer server, JsonObject command) {
+        if(command.get("action").getAsString().startsWith("dock_"))return dockReview.command(server,command);
         return switch (command.get("action").getAsString()) {
             case "prepare" -> prepare(server);
             case "observe" -> observe(server);
@@ -117,6 +119,7 @@ public final class ServerQaMod {
         result.add("browser",review.browserObserve(server));
         result.add("hardware",review.hardwareObserve(server));
         result.add("shared",review.sharedObserve(server));
+        result.add("dock",dockReview.observe(server));
         JsonArray players = new JsonArray();
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             JsonObject row = new JsonObject(); row.addProperty("uuid", player.getUUID().toString()); row.addProperty("name", player.getGameProfile().getName());

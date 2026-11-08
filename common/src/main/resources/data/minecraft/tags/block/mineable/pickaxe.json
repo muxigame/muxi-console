@@ -3,6 +3,7 @@
   "values": [
     "muxi_console:desk_console",
     "muxi_console:screen",
-    "muxi_console:cartridge_writer"
+    "muxi_console:cartridge_writer",
+    "muxi_console:handheld_dock"
   ]
 }

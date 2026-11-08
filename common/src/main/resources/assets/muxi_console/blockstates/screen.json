@@ -1,19 +1,115 @@
 {
   "variants": {
-    "facing=north": {
+    "facing=north,part=0": {
       "model": "muxi_console:block/screen",
       "y": 0
     },
-    "facing=east": {
+    "facing=north,part=1": {
+      "model": "muxi_console:block/screen_0",
+      "y": 0
+    },
+    "facing=north,part=2": {
+      "model": "muxi_console:block/screen_1",
+      "y": 0
+    },
+    "facing=north,part=3": {
+      "model": "muxi_console:block/screen_2",
+      "y": 0
+    },
+    "facing=north,part=4": {
+      "model": "muxi_console:block/screen_3",
+      "y": 0
+    },
+    "facing=north,part=5": {
+      "model": "muxi_console:block/screen_4",
+      "y": 0
+    },
+    "facing=north,part=6": {
+      "model": "muxi_console:block/screen_5",
+      "y": 0
+    },
+    "facing=east,part=0": {
       "model": "muxi_console:block/screen",
       "y": 90
     },
-    "facing=south": {
+    "facing=east,part=1": {
+      "model": "muxi_console:block/screen_0",
+      "y": 90
+    },
+    "facing=east,part=2": {
+      "model": "muxi_console:block/screen_1",
+      "y": 90
+    },
+    "facing=east,part=3": {
+      "model": "muxi_console:block/screen_2",
+      "y": 90
+    },
+    "facing=east,part=4": {
+      "model": "muxi_console:block/screen_3",
+      "y": 90
+    },
+    "facing=east,part=5": {
+      "model": "muxi_console:block/screen_4",
+      "y": 90
+    },
+    "facing=east,part=6": {
+      "model": "muxi_console:block/screen_5",
+      "y": 90
+    },
+    "facing=south,part=0": {
       "model": "muxi_console:block/screen",
       "y": 180
     },
-    "facing=west": {
+    "facing=south,part=1": {
+      "model": "muxi_console:block/screen_0",
+      "y": 180
+    },
+    "facing=south,part=2": {
+      "model": "muxi_console:block/screen_1",
+      "y": 180
+    },
+    "facing=south,part=3": {
+      "model": "muxi_console:block/screen_2",
+      "y": 180
+    },
+    "facing=south,part=4": {
+      "model": "muxi_console:block/screen_3",
+      "y": 180
+    },
+    "facing=south,part=5": {
+      "model": "muxi_console:block/screen_4",
+      "y": 180
+    },
+    "facing=south,part=6": {
+      "model": "muxi_console:block/screen_5",
+      "y": 180
+    },
+    "facing=west,part=0": {
       "model": "muxi_console:block/screen",
+      "y": 270
+    },
+    "facing=west,part=1": {
+      "model": "muxi_console:block/screen_0",
+      "y": 270
+    },
+    "facing=west,part=2": {
+      "model": "muxi_console:block/screen_1",
+      "y": 270
+    },
+    "facing=west,part=3": {
+      "model": "muxi_console:block/screen_2",
+      "y": 270
+    },
+    "facing=west,part=4": {
+      "model": "muxi_console:block/screen_3",
+      "y": 270
+    },
+    "facing=west,part=5": {
+      "model": "muxi_console:block/screen_4",
+      "y": 270
+    },
+    "facing=west,part=6": {
+      "model": "muxi_console:block/screen_5",
       "y": 270
     }
   }
