@@ -11,6 +11,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.network.chat.Component;
@@ -52,14 +53,18 @@ public final class ConsoleServer {
         throw new DomainException("screen","屏幕结构已不完整，请重新放置");
     }
     private static boolean activeCard(WorldState world,UUID instance){return world.rooms.values().stream().anyMatch(room->room.card.instanceId().equals(instance));}
+    /** Normal save/leave keeps the room registered until its checkpoint is committed. */
+    public static void requireCardIdle(Player player,UUID instance){
+        if(player instanceof ServerPlayer server){WorldState world=WORLDS.get(server.server);if(world!=null&&activeCard(world,instance))throw new DomainException("save","卡带正在游玩或保存，请先保存并离开后再插拔");}
+    }
     private static boolean inHand(ServerPlayer player,UUID instance){return List.of(player.getMainHandItem(),player.getOffhandItem()).stream().filter(item->item.is(ConsoleContent.HANDHELD.get())).anyMatch(item->CardData.read(item).map(card->card.instanceId().equals(instance)).orElse(false));}
-    private static boolean inInventory(ServerPlayer player,UUID instance){for(int slot=0;slot<player.getInventory().getContainerSize();slot++){ItemStack item=player.getInventory().getItem(slot);if(item.is(ConsoleContent.HANDHELD.get())&&CardData.read(item).map(card->card.instanceId().equals(instance)).orElse(false))return true;}return false;}
-    private static void requireInactive(WorldState world,DeviceEntity device){if(world.rooms.containsKey(key(device)))throw new DomainException("save","请先按Esc保存并离开游戏，再取出掌机");}
+    private static boolean inInventory(ServerPlayer player,UUID instance){for(int slot=0;slot<player.getInventory().getContainerSize();slot++){ItemStack item=player.getInventory().getItem(slot);if(item.is(ConsoleContent.HANDHELD.get())&&CardData.read(item).map(card->card.instanceId().equals(instance)).orElse(false))return true;}ItemStack carried=player.containerMenu.getCarried();return carried.is(ConsoleContent.HANDHELD.get())&&CardData.read(carried).map(card->card.instanceId().equals(instance)).orElse(false);}
+    private static void requireInactive(WorldState world,DeviceEntity device){if(world.rooms.containsKey(key(device)))throw new DomainException("save","请先保存并离开游戏，再取出掌机");}
     private static void dock(ServerPlayer player,DeviceEntity device,ItemStack held)throws IOException{
         WorldState world=state(player.server);requireInactive(world,device);
         if(!device.dockedHandheld.isEmpty())throw new DomainException("dock","底座已有掌机，请先取出");
         var body=HardwareCatalog.body(HardwareCatalog.model(held));if(HardwareCatalog.model(held)!=0&&(body==null||!body.handheld()))throw new DomainException("hardware","只能安装手持式游戏机");
-        Optional<Cartridge> card=CardData.read(held);if(card.isPresent()&&activeCard(world,card.get().instanceId()))throw new DomainException("save","请先按Esc保存并离开掌机，再放到底座");
+        Optional<Cartridge> card=CardData.read(held);if(card.isPresent()&&activeCard(world,card.get().instanceId()))throw new DomainException("save","请先收起掌机等待保存完成，再放到底座");
         device.dockedHandheld=held.split(1);device.powered=false;device.changed();player.inventoryMenu.broadcastChanges();player.displayClientMessage(Component.literal("掌机已安装；使用底座连接大屏幕"),true);
     }
     private static void ejectDock(ServerPlayer player,WorldState world,DeviceEntity device){
@@ -87,6 +92,7 @@ public final class ConsoleServer {
             if(held.is(ConsoleContent.CARTRIDGE.get())){
                 if(!d.card.isEmpty())throw new DomainException("slot","请先取出当前卡带");
                 Cartridge c=CardData.read(held).orElseThrow(()->new DomainException("card","卡带数据无效"));
+                requireCardIdle(p,c.instanceId());
                 if(!HardwareCatalog.accepts(d.getBlockState().getValue(DeviceBlock.MODEL),c.platform()))throw new DomainException("hardware","此卡带与主机机型不兼容");
                 if(!state(p.server).content.has(c.sha256()))throw new DomainException("rom","服务器没有此卡带内容");
                 stopDevice(d,"卡带已变更");d.card=held.split(1);d.changed();return;
@@ -168,7 +174,7 @@ public final class ConsoleServer {
         switch(b.get("action").getAsString()){
             case "body" -> {if(d.kind()==DeviceBlock.Kind.DOCK)throw new DomainException("hardware","底座保留安装的掌机机型");if(d.powered||!d.card.isEmpty())throw new DomainException("hardware","取出卡带并关机后才能选择机型");int model=b.get("port").getAsInt();if(model<0||model>22)throw new DomainException("hardware","未知机型");if(d.ports>HardwareCatalog.ports(model))throw new DomainException("ports","请先选择具有足够控制接口的机型");p.serverLevel().setBlock(d.getBlockPos(),d.getBlockState().setValue(DeviceBlock.MODEL,model),3);d.changed();}
             case "power" -> {d.powered=!d.powered;if(!d.powered)stopDevice(d,"主机已关闭");d.changed();}
-            case "eject" -> {if(d.kind()==DeviceBlock.Kind.DOCK){ejectDock(p,s,d);break;}stopDevice(d,"卡带已取出");if(!d.card.isEmpty()){ItemStack take=d.card;d.card=ItemStack.EMPTY;if(!p.getInventory().add(take))p.drop(take,false);p.inventoryMenu.broadcastChanges();}d.powered=false;d.changed();}
+            case "eject" -> {if(d.kind()==DeviceBlock.Kind.DOCK){ejectDock(p,s,d);break;}if(!d.card.isEmpty()){CardData.read(d.card).ifPresent(c->requireCardIdle(p,c.instanceId()));int target=p.getInventory().getFreeSlot();if(target<0)throw new DomainException("slot","物品栏已满，卡带仍保留在主机中");p.getInventory().setItem(target,d.card);p.getInventory().setChanged();d.card=ItemStack.EMPTY;p.inventoryMenu.broadcastChanges();}stopDevice(d,"卡带已取出");d.powered=false;d.changed();}
             case "link" -> {Set<BlockPos> linked=new HashSet<>();for(BlockPos pos:BlockPos.betweenClosed(d.getBlockPos().offset(-8,-3,-8),d.getBlockPos().offset(8,3,8))){if(p.serverLevel().getBlockEntity(pos) instanceof DeviceEntity screen && screen.kind()==DeviceBlock.Kind.SCREEN){screen=primary(screen);if(linked.add(screen.getBlockPos())){screen.linkedConsole=d.getBlockPos();screen.changed();}}}p.displayClientMessage(Component.literal("已连接 "+linked.size()+" 个附近屏幕"),true);}
             case "join" -> {
                 Cartridge card=CardData.read(d.media()).orElseThrow(()->new DomainException("card",d.kind()==DeviceBlock.Kind.DOCK?"请先安装已装卡的掌机":"请先插入卡带"));if(!d.powered)throw new DomainException("power","请先开机");
@@ -189,13 +195,18 @@ public final class ConsoleServer {
     }
     public static void handheld(ServerPlayer p,InteractionHand hand){
         try{
-            ItemStack handheld=p.getItemInHand(hand);WorldState s=state(p.server);Optional<Cartridge> cart=CardData.read(handheld);
-            if(p.isShiftKeyDown()){
-                if(cart.isPresent()){if(activeCard(s,cart.get().instanceId()))throw new DomainException("save","请先收起掌机等待保存完成，再潜行取出卡带");ItemStack c=CardData.create(cart.get());CardData.clear(handheld);if(!p.getInventory().add(c))p.drop(c,false);return;}
-                for(int i=0;i<p.getInventory().getContainerSize();i++){ItemStack c=p.getInventory().getItem(i);if(c.is(ConsoleContent.CARTRIDGE.get())){Cartridge data=CardData.read(c).orElseThrow();if(!HardwareCatalog.accepts(HardwareCatalog.model(handheld),data.platform()))continue;CardData.write(handheld,data);c.shrink(1);p.inventoryMenu.broadcastChanges();return;}}
-                throw new DomainException("card","物品栏中需要一张已刻录卡带");
+            ItemStack handheld=p.getItemInHand(hand);state(p.server);
+            if(!handheld.is(ConsoleContent.HANDHELD.get()))throw new DomainException("handheld","请手持游戏机");
+            if(p.isShiftKeyDown()&&CardData.hasInserted(handheld)){
+                HandheldInventory.ejectToInventory(p,handheld);p.inventoryMenu.broadcastChanges();return;
             }
-            if(cart.isEmpty()){JsonObject config=object();config.addProperty("hand",hand.name());config.addProperty("model",HardwareCatalog.model(handheld));Wire.send(p,"handheld_config",config);return;}
+            if(!CardData.hasInserted(handheld)){
+                ItemStack offered=p.getItemInHand(hand==InteractionHand.MAIN_HAND?InteractionHand.OFF_HAND:InteractionHand.MAIN_HAND);
+                if(offered.is(ConsoleContent.CARTRIDGE.get())){HandheldInventory.insertFromHand(p,handheld,offered);p.inventoryMenu.broadcastChanges();return;}
+                if(p.isShiftKeyDown())throw new DomainException("card","请在背包中用卡带右键掌机，或把明确的卡带拿在另一只手中");
+                JsonObject config=object();config.addProperty("hand",hand.name());config.addProperty("model",HardwareCatalog.model(handheld));Wire.send(p,"handheld_config",config);return;
+            }
+            if(CardData.read(handheld).isEmpty())throw new DomainException("card","卡槽数据异常，已保留原内容");
             startHandheld(p,hand,"fullscreen");
         }catch(Exception e){error(p,e instanceof DomainException de?de.code():"handheld",e.getMessage());}
     }

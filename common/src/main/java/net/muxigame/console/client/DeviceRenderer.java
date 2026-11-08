@@ -25,17 +25,21 @@ public final class DeviceRenderer implements BlockEntityRenderer<DeviceEntity> {
         if(device.kind()==DeviceBlock.Kind.SCREEN){if(!device.screenPrimary()||device.linkedConsole==null)return;console=device.linkedConsole.asLong();planes=List.of(ScreenLayout.plane(device));}
         else if(device.kind()==DeviceBlock.Kind.DESK){console=device.getBlockPos().asLong();planes=HardwareCatalog.screens(device.getBlockState().getValue(DeviceBlock.MODEL));}
         else return;
-        if(planes.isEmpty())return;
-        ResourceLocation picture=picture(console);if(picture==null)return;
-        Direction facing=device.getBlockState().getValue(DeviceBlock.FACING);stack.pushPose();stack.translate(.5,0,.5);stack.mulPose(Axis.YP.rotationDegrees(switch(facing){case EAST->-90;case SOUTH->180;case WEST->90;default->0;}));stack.translate(-.5,0,-.5);
-        for(var plane:planes)screen(stack,buffers,picture,plane);
-        if(device.kind()==DeviceBlock.Kind.DESK)HandheldFeedback.draw(stack,buffers,HardwareCatalog.regions(device.getBlockState().getValue(DeviceBlock.MODEL)),ConsoleClient.INSTANCE.deviceInputVisual(console),ConsoleClient.INSTANCE.visualPort());
-        stack.popPose();
+        ResourceLocation picture=picture(console);var media=device.kind()==DeviceBlock.Kind.DESK?device.card:
+            device.getLevel()!=null&&device.getLevel().getBlockEntity(net.minecraft.core.BlockPos.of(console)) instanceof DeviceEntity source?source.media():net.minecraft.world.item.ItemStack.EMPTY;
+        var progress=LcdLoadingRenderer.deviceProgress(console,media);
+        Direction facing=device.getBlockState().getValue(DeviceBlock.FACING);stack.pushPose();
+        try{
+            stack.translate(.5,0,.5);stack.mulPose(Axis.YP.rotationDegrees(switch(facing){case EAST->-90;case SOUTH->180;case WEST->90;default->0;}));stack.translate(-.5,0,-.5);
+            if(device.kind()==DeviceBlock.Kind.DESK)InsertedMediaRenderer.drawDesktop(device.getBlockState().getValue(DeviceBlock.MODEL),device.card,stack,buffers,light,overlay);
+            for(var plane:planes){if(LcdLoadingRenderer.visible(progress))LcdLoadingRenderer.draw(stack,buffers,plane,progress,"device/"+console);else if(picture!=null)screen(stack,buffers,picture,plane);}
+            if(device.kind()==DeviceBlock.Kind.DESK)HandheldFeedback.draw(stack,buffers,HardwareCatalog.regions(device.getBlockState().getValue(DeviceBlock.MODEL)),ConsoleClient.INSTANCE.deviceInputVisual(console),ConsoleClient.INSTANCE.visualPort());
+        }finally{stack.popPose();}
     }
     private static ResourceLocation picture(long console){ResourceLocation picture=console==ConsoleClient.INSTANCE.screenConsole()?ConsoleClient.INSTANCE.picture():null;return picture==null?BrowserLinkClient.INSTANCE.pictureFor(console):picture;}
     private static void dock(DeviceEntity device,float partial,PoseStack stack,MultiBufferSource buffers,int light,int overlay){
         var item=device.dockedHandheld;if(item.isEmpty()||!item.is(ConsoleContent.HANDHELD.get()))return;
-        var body=HardwareCatalog.body(HardwareCatalog.model(item));float[] b=body==null?new float[]{0,3,5.8f,16,12.4f,8.5f}:body.bounds();
+        float[] b=HardwareCatalog.presentationBounds(item);
         float scale=.7f;float centerX=(b[0]+b[3])/32f,centerZ=(b[2]+b[5])/32f;
         // The lowest authored vertex stays at 4/16, one pixel above the 3/16 base: no vertical bob.
         stack.pushPose();stack.translate(.5,.25-scale*b[1]/16f,.5);

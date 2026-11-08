@@ -4,6 +4,8 @@ Front faces are north. Local +X is the viewer's left, so D-pads live at
 the larger X end and action buttons at the smaller X end.
 """
 
+import inserted_media as attachments
+
 PALETTES = {
     'nes':('48494D','D6D5CF','A7A9A9','22242A','C7C8C6','B6333B','393B40'),
     'snes':('87888E','D3D1CF','ADB0B1','33363E','B8BAB9','7770AD','59565E'),
@@ -264,7 +266,7 @@ def _geometry(platform,b,planes,arcade_planes):
     if platform=='nes':
         e=f+[b([1,.4,2],[15,3.6,14],'ink'),b([1,3.6,2],[15,5.4,14],'shell'),
              b([1,5.4,9.1],[15,6.1,14],'edge'),b([3.0,3.5,1.84],[12.9,5.25,2.16],'dark'),
-             b([3.1,3.75,1.78],[12.8,5.15,1.98],'shell'),b([3.6,5.1,1.72],[12.3,5.3,1.93],'edge'),
+             b([3.1,5.05,1.78],[12.8,5.15,4.2],'shell'),b([3.6,5.1,1.72],[12.3,5.3,1.93],'edge'),
              b([10.65,1.2,1.73],[12.0,2.12,2.16],'button'),b([12.3,1.2,1.73],[13.65,2.12,2.16],'button'),
              b([13.95,1.55,1.71],[14.2,1.9,2.1],'red')]
         e+=sockets(b,2,2.5,7.3,1.1,1.8)+top_vents(b,2.2,13.8,6.1,10.0,12,2.8)
@@ -417,7 +419,7 @@ def generic(kind,b,surfaces=None):
         e += button(control_box(b,surfaces,8),1.5,7.9,5.8,.38)+button(control_box(b,surfaces,0),2.8,6.7,5.8,.38)
         e += capsule(control_box(b,surfaces,3),6.1,4.05,7.0,4.3,6.0)
         e += capsule(control_box(b,surfaces,2),8.3,4.05,9.2,4.3,6.0)
-        return e+screen(b,(4.3,5.2,11.7,10.75,5.98))
+        return slot_details('generic',b,e+screen(b,(4.3,5.2,11.7,10.75,5.98)),{'generic':None})
     if kind=='desktop':
         e=deck_feet(b)+[b([1,.4,2],[15,3.5,14],'ink'),b([1.5,3.5,2.5],[14.5,4.2,13.5],'shell'),
              b([3.8,4.2,7.4],[12.2,5.1,11.7],'edge'),b([4.5,5.1,8.9],[11.5,5.3,9.9],'dark'),
@@ -524,8 +526,22 @@ def fine_details(platform,b,e,planes):
     return e
 
 
+def slot_details(platform,b,e,planes):
+    if platform in planes or platform=='vb':
+        slot=attachments.slot(platform);width=slot['width'];cx,_,cz=slot['base'];y=slot['clip']['value']
+        back=max(element['to'][2] for element in e)
+        rear=min(back,cz+.18);front=rear-.58
+        for x in (cx-width/2-.14,cx+width/2+.02):
+            e += [b([x,y-.42,front],[x+.12,y+.07,rear],'dark')]
+        e += [b([cx-width/2-.14,y-.16,rear-.11],[cx+width/2+.14,y+.015,rear],'dark')]
+    elif platform=='arcade':
+        e += [b([6.12,2.7,13.6],[6.32,5.65,13.97],'metal'),b([9.68,2.7,13.6],[9.88,5.65,13.97],'metal'),
+              b([6.12,2.7,13.6],[9.88,2.91,13.97],'dark')]
+    return e
+
+
 def geometry(platform,b,planes,arcade_planes):
-    return fine_details(platform,b,_geometry(platform,b,planes,arcade_planes),planes)
+    return slot_details(platform,b,fine_details(platform,b,_geometry(platform,b,planes,arcade_planes),planes),planes)
 
 
 def monitor_palette(ns='muxi_console'):
@@ -563,4 +579,4 @@ def monitor(b,single=False):
 
 
 def arcade(b,double,planes,surfaces=None):
-    return fine_details('arcade',b,_arcade(b,double,planes,surfaces),{})
+    return slot_details('arcade',b,fine_details('arcade',b,_arcade(b,double,planes,surfaces),{}),{})

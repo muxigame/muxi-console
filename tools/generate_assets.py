@@ -19,6 +19,7 @@ import struct
 import zlib
 
 import pixel_hardware as hardware
+import inserted_media as attachments
 
 ROOT = Path(__file__).resolve().parents[1]
 RESOURCES = ROOT / "common/src/main/resources"
@@ -342,6 +343,9 @@ def model_catalog():
         form = "handheld" if platform in HANDHELD_PLANES else "viewer" if platform == "vb" else "arcade" if platform == "arcade" else "desktop"
         plane = ARCADE_PLANES["single"] if platform == "arcade" else HANDHELD_PLANES.get(platform)
         geometry = platform_geometry(platform)
+        media = media_geometry(platform,cmd)
+        media_bounds={"min":[min(e["from"][axis] for e in media) for axis in range(3)],
+                      "max":[max(e["to"][axis] for e in media) for axis in range(3)]}
         bounds = {"min":[min(e["from"][axis] for e in geometry) for axis in range(3)],
                   "max":[max(e["to"][axis] for e in geometry) for axis in range(3)]}
         entries.append({"platform":platform,"cmd":cmd,"name":en,"zh_name":zh,"form_factor":form,
@@ -349,7 +353,7 @@ def model_catalog():
             "item":f"{NS}:item/{'handheld' if form in ('handheld','viewer') else 'desk_console'}_{platform}",
             "media":f"{NS}:item/cartridge_{platform}","media_kind":"disk" if platform == "fds" else "card" if platform in ("pce","lynx") else "cartridge",
             "controller_ports":DESKTOP_PORTS.get(platform,1),"silhouette":SILHOUETTES[platform],
-            "bounds":bounds,
+            "bounds":bounds,"media_bounds":media_bounds,"media_slot":attachments.slot(platform),
             "control_surfaces":hardware.control_surfaces(platform,box,HANDHELD_PLANES,ARCADE_PLANES),
             "button_regions":hardware.button_regions(platform,box,HANDHELD_PLANES,ARCADE_PLANES),
             "screen_plane":None if plane is None else {"from":[plane[0],plane[1],plane[4]],"to":[plane[2],plane[3],plane[4]],"facing":"north"},
@@ -364,6 +368,9 @@ def model_catalog():
             entries[-1]["control_positions"] = [[8,7.2,3.3]]
             entries[-1]["cabinet_seats"] = 1
     return {"schema":1,"namespace":NS,"coordinate_units":16,"front":"north",
+        "generic_media_slot":attachments.slot("generic"),
+        "generic_desktop_media_slot":attachments.slot("generic_desktop"),
+        "generic_media_bounds":{"min":[4.3,3.45,7.33],"max":[11.7,12.1,8.55]},
         "generic_control_surfaces":hardware.control_surfaces("generic",box,HANDHELD_PLANES,ARCADE_PLANES),
         "controller_control_surfaces":hardware.control_surfaces("controller",box,HANDHELD_PLANES,ARCADE_PLANES),
         "generic_button_regions":hardware.button_regions("generic",box,HANDHELD_PLANES,ARCADE_PLANES),
@@ -381,6 +388,7 @@ def model_catalog():
             "geometry":f"{NS}:block/arcade_cabinet_2p","item":f"{NS}:item/desk_console_arcade_2p",
             "bounds":{"min":[.25,0,1.8],"max":[15.75,15.75,14]},"cabinet_seats":2,
             "controller_ports":2,"screen_plane":{"from":[3.2,7,4.30],"to":[12.8,14.2,4.30],"facing":"north"},
+            "media_slot":attachments.slot("arcade"),
             "control_positions":[[11.8,5.8,2.9],[4.2,5.8,2.9]],
             "control_surfaces":hardware.control_surfaces("arcade",box,HANDHELD_PLANES,ARCADE_PLANES,True),
             "button_regions":hardware.button_regions("arcade",box,HANDHELD_PLANES,ARCADE_PLANES,True),
@@ -1049,6 +1057,27 @@ def check_closure(files):
         if {surface["button"] for surface in double_controls if surface["port"] == port} != set(range(12)):
             raise ValueError(f"Two-seat cabinet has incomplete feedback on port {port}")
         checks += 1
+    # Card models and attachment coordinates are pinned to the actual authored media.
+    for entry in catalog["entries"]:
+        media=resolved(f"{ASSETS}/models/{entry['media'].split(':',1)[1]}.json")["elements"]
+        actual={"min":[min(e["from"][axis] for e in media) for axis in range(3)],
+                "max":[max(e["to"][axis] for e in media) for axis in range(3)]}
+        if actual!=entry["media_bounds"]:raise ValueError("Inserted-media bounds drift from the actual card model")
+        slot=entry["media_slot"]
+        if slot["width"]<=0 or slot["width"]>=16 or slot["clip"]["axis"] not in ("x","y","z") or slot["clip"]["keep"] not in ("above","below") or slot["align"] not in ("top","bottom"):
+            raise ValueError("Invalid attachment slot contract")
+        values=[slot["width"],*slot["base"],*slot["rotation"],slot["depth_scale"],slot["clip"]["value"]]
+        if not all(math.isfinite(value) for value in values) or not 0<slot["depth_scale"]<=2:raise ValueError("Invalid attachment transform")
+        if entry["platform"] in ("nes","pce","fds"):
+            if slot["rotation"]!=[90,0,180] or slot["clip"] ["axis"]!="z" or slot["clip"]["keep"]!="below":
+                raise ValueError("Front-loaded media must place its contacts/read end inside and its label facing up")
+            checks+=1
+        checks+=3
+    generic_media=resolved(f"{ASSETS}/models/item/template_cartridge.json")["elements"]
+    actual={"min":[min(e["from"][axis] for e in generic_media) for axis in range(3)],
+            "max":[max(e["to"][axis] for e in generic_media) for axis in range(3)]}
+    if actual!=catalog["generic_media_bounds"]:raise ValueError("Generic inserted-media source has changed")
+    checks+=1
     # Whole button regions identify the actual cap boxes, including their sides,
     # stepped round ends and D-pad centre. No rectangle may merely approximate a cap.
     regions=[(entry["geometry"],entry["button_regions"]) for entry in [*catalog["entries"],*catalog["additional_styles"]]]

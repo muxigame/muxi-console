@@ -33,6 +33,7 @@ import org.lwjgl.glfw.GLFW;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.ClientChatReceivedEvent;
 
 /** Runs normal UI callbacks and network actions. None of these callbacks represents physical OS input. */
 @Mod(ClientQaMod.ID)
@@ -58,7 +59,8 @@ public final class ClientQaMod {
     private final DockActions dockActions=new DockActions();
     private final HeldActions heldActions=new HeldActions();
     private final PolishActions polishActions=new PolishActions();
-    public ClientQaMod() { NeoForge.EVENT_BUS.addListener(this::tick); }
+    public ClientQaMod() { NeoForge.EVENT_BUS.addListener(this::tick);NeoForge.EVENT_BUS.addListener(this::systemMessage); }
+    private void systemMessage(ClientChatReceivedEvent.System event){if(event.isOverlay())CartridgeActions.message(event.getMessage().getString());}
     private void tick(ClientTickEvent.Post event) {
         clientTicks++;
         sampleShared();
@@ -80,12 +82,14 @@ public final class ClientQaMod {
             probeFuture = null;
         }
         owner.poll(this::dispatch);
+        CartridgeActions.tick(Minecraft.getInstance());
         dockActions.tick(Minecraft.getInstance());
         if(destroying!=null){Minecraft mc=Minecraft.getInstance();if(mc.level==null||mc.level.getBlockState(destroying).isAir()){if(mc.gameMode!=null)mc.gameMode.stopDestroyBlock();destroying=null;}else mc.gameMode.continueDestroyBlock(destroying,Direction.UP);}
     }
     private JsonObject dispatch(JsonObject command) {
         Minecraft client = Minecraft.getInstance();
         String action = command.get("action").getAsString();
+        if(action.startsWith("cartridge_")){try{CartridgeActions.command(client,command);JsonObject result=observe(client);if(action.equals("cartridge_cache"))result.add("cacheCheck",CartridgeActions.cache(client,command.get("hash").getAsString()));return result;}catch(Exception e){throw new IllegalStateException(e);}}
         if(action.startsWith("polish_")){try{JsonObject callback=polishActions.command(client,command);JsonObject result=observe(client);result.add("polishCallback",callback);return result;}catch(Exception e){throw new IllegalStateException(e);}}
         if(action.startsWith("hand_")){JsonObject callback=heldActions.command(client,command);JsonObject result=observe(client);result.add("handCallback",callback);return result;}
         if(action.startsWith("dock_")){dockActions.command(client,command);return observe(client);}
@@ -127,7 +131,7 @@ public final class ClientQaMod {
                 case "writer_drop" -> {
                     if (!(client.screen instanceof WriterScreen writer)) throw new IllegalStateException("The real writer screen must be open");
                     String rom=command.has("rom")?command.get("rom").getAsString():"nes";
-                    writer.onFilesDrop(List.of(switch(rom){case "gb"->gbDiagnostic();case "gba"->extraDiagnostic("original-arm.gba");case "n64"->extraDiagnostic("original-vi.z64");case "arcade"->extraDiagnostic("pong.zip");default->diagnostic();}));
+                    writer.onFilesDrop(List.of(switch(rom){case "gb"->gbDiagnostic();case "gba"->extraDiagnostic("original-arm.gba");case "large_gba"->extraDiagnostic("large-original-arm.gba");case "pce"->extraDiagnostic("original.pce");case "n64"->extraDiagnostic("original-vi.z64");case "arcade"->extraDiagnostic("pong.zip");default->diagnostic();}));
                 }
                 case "writer_confirm" -> {
                     if (!(client.screen instanceof WriterScreen)) throw new IllegalStateException("Writer screen required");
@@ -220,7 +224,7 @@ public final class ClientQaMod {
         return gbDiagnostic;
     }
     private Path extraDiagnostic(String name)throws IOException{
-        if(!name.equals("original-vi.z64")&&!name.equals("original-arm.gba")&&!name.equals("pong.zip"))throw new IOException("Known authored diagnostics only");Path directory=owner.validatedRoot().resolve(System.getProperty("qa.local.role")).resolve("console-qa");Files.createDirectories(directory);Path target=directory.resolve(name);if(!Files.exists(target))try(var input=ClientQaMod.class.getResourceAsStream("/diagnostics/"+name)){if(input==null)throw new IOException("Missing original diagnostic");Files.copy(input,target);}return target;
+        if(!java.util.Set.of("original-vi.z64","original-arm.gba","large-original-arm.gba","original.pce","pong.zip").contains(name))throw new IOException("Known authored diagnostics only");Path directory=owner.validatedRoot().resolve(System.getProperty("qa.local.role")).resolve("console-qa");Files.createDirectories(directory);Path target=directory.resolve(name);if(!Files.exists(target))try(var input=ClientQaMod.class.getResourceAsStream("/diagnostics/"+name)){if(input==null)throw new IOException("Missing original diagnostic");Files.copy(input,target);}return target;
     }
     private static void UUIDCheck(String value){java.util.UUID.fromString(value);}
     private static JsonObject publicRecord(Object value)throws ReflectiveOperationException{
@@ -250,6 +254,7 @@ public final class ClientQaMod {
         result.add("dock",DockActions.observe(client));
         result.add("heldReview",heldActions.observe(client));
         result.add("polish",PolishActions.observe(client));
+        result.add("cartridge",CartridgeActions.observe(client));
         var state = ConsoleClient.INSTANCE.snapshot();
         result.addProperty("status", state.status()); result.addProperty("room", state.room()); result.addProperty("epoch", state.epoch());
         result.addProperty("port", state.port()); result.addProperty("ready", state.ready()); result.addProperty("frames", state.frames()); result.addProperty("crc", state.frameCrc());

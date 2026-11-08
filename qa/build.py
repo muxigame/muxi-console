@@ -26,7 +26,7 @@ def sha(path: Path) -> str:
     return digest.hexdigest()
 
 
-def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool = False) -> Path:
+def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool = False, cartridge_review: bool = False) -> Path:
     if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", name):
         raise ValueError("Use a new lowercase QA build name")
     product, rom, gb_rom = product.resolve(strict=True), rom.resolve(strict=True), gb_rom.resolve(strict=True)
@@ -55,7 +55,7 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
         raise ValueError("Expected the original no-vendor-IPL3 N64 diagnostic")
     gba_rom = REPO / "build/platform-smoke/regression.gba"
     gba = None
-    if pixel_review:
+    if pixel_review or cartridge_review:
         gba = gba_rom.read_bytes()
         baseline = json.loads((REPO / "build/platform-smoke/gba-result.json").read_text(encoding="utf-8"))
         if len(gba) != 65536 or hashlib.sha256(gba).hexdigest() != baseline.get("contentSha256") or baseline.get("exitCode") != 0:
@@ -66,6 +66,13 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
     pong = empty_zip.getvalue()
     out = REPO / "build/qa" / name
     out.mkdir(parents=True, exist_ok=False)
+    large=None;pce=None
+    if cartridge_review:
+        from large_gba import derive
+        large=derive(gba_rom,out/"diagnostics/large-original-arm.gba")
+        large.update(generator="qa/large_gba.py",generatorSha256=sha(REPO/"qa/large_gba.py"))
+        pce_path=REPO/"build/platform-smoke/original.pce";pce=pce_path.read_bytes();pce_result=REPO/"build/platform-smoke/pce-result.json";pce_baseline=json.loads(pce_result.read_text(encoding="utf-8"))
+        if len(pce)!=32768 or hashlib.sha256(pce).hexdigest()!=pce_baseline.get("contentSha256")or pce_baseline.get("exitCode")!=0:raise ValueError("PCE fixture differs from verified first-party diagnostic")
     game = WORKSPACE / "test-environment/resources/client/game"
     server = WORKSPACE / "minecraft/release/server"
     jdk = WORKSPACE / "test-environment/toolchains/java-21/bin"
@@ -75,6 +82,8 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
     pins = {"product.sha256": sha(product), "rom.sha256": sha(rom), "gb-rom.sha256": sha(gb_rom), "n64-rom.sha256": sha(n64_rom), "pong-zip.sha256": hashlib.sha256(pong).hexdigest(), "model-plan.sha256": sha(plan_path)}
     if gba is not None:
         pins["gba-rom.sha256"] = hashlib.sha256(gba).hexdigest()
+    if large is not None:
+        pins["large-gba-rom.sha256"]=large["sha256"];pins["pce-rom.sha256"]=hashlib.sha256(pce).hexdigest()
     manifest = {"schema": 1, "product": {"path": str(product), "sha256": pins["product.sha256"]},
                 "diagnosticRom": {"path": str(rom), "sha256": pins["rom.sha256"]}, "artifacts": {},
                 "gbDiagnosticRom": {"path": str(gb_rom), "sha256": pins["gb-rom.sha256"]},
@@ -87,6 +96,9 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
                 "generator": "tools/gba_diagnostic.py", "generatorSha256": sha(REPO / "tools/gba_diagnostic.py"),
                 "baselineResult": "build/platform-smoke/gba-result.json", "baselineResultSha256": sha(REPO / "build/platform-smoke/gba-result.json"),
                 "baselineTest": "tests/runtime/GbaSmoke.java", "baselineTestSha256": sha(REPO / "tests/runtime/GbaSmoke.java")}
+    if large is not None:
+        large["baseGeneratorSha256"]=manifest["gbaDiagnosticRom"]["generatorSha256"];large["baselineResultSha256"]=manifest["gbaDiagnosticRom"]["baselineResultSha256"];manifest["largeGbaDiagnosticRom"]=large
+        manifest["pceDiagnosticRom"]={"path":str(pce_path),"sha256":pins["pce-rom.sha256"],"bytes":len(pce),"generator":"tools/platform_smoke_software.py","generatorSha256":sha(REPO/"tools/platform_smoke_software.py"),"baselineResult":str(pce_result),"baselineResultSha256":sha(pce_result)}
     input_hashes = {str(path.relative_to(REPO)): sha(path) for path in sources.glob("*.java")}
     for side, entry in (("server", "ServerQaMod.java"), ("client", "ClientQaMod.java")):
         classes = out / (side + "-classes")
@@ -97,9 +109,11 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
         if side == "server":
             args.append(str(sources / "PixelScene.java"))
             args.append(str(sources / "PolishScene.java"))
+            args.append(str(sources / "CartridgeScene.java"))
         else:
             args.append(str(sources / "HeldActions.java"))
             args.append(str(sources / "PolishActions.java"))
+            args.append(str(sources / "CartridgeActions.java"))
         argument_file = out / (side + ".args")
         sdk.argfile(argument_file, args)
         command = [str(jdk / "javac.exe"), "-J-Xmx512m", "-J-XX:ActiveProcessorCount=1", "-J-Dfile.encoding=UTF-8", "-J-Duser.language=en", "@" + str(argument_file)]
@@ -118,6 +132,7 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
         resources["diagnostics/pong.zip"] = pong
         if gba is not None:
             resources["diagnostics/original-arm.gba"] = gba
+        if pce is not None:resources["diagnostics/original.pce"]=pce
         resources["diagnostics/model-review-plan.json"] = plan
         resources["META-INF/neoforge.mods.toml"] = (f'modLoader="javafml"\nloaderVersion="[4,)"\nlicense="Private test fixture; not a product"\n'
                 f'[[mods]]\nmodId="{mod_id}"\nversion="0.1.0"\ndisplayName="Muxi Console {side} QA"\n'
@@ -128,11 +143,16 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
                 info = zipfile.ZipInfo(path, (2026, 1, 1, 0, 0, 0))
                 info.compress_type = zipfile.ZIP_DEFLATED
                 jar.writestr(info, body)
+            if large is not None:
+                info=zipfile.ZipInfo("diagnostics/large-original-arm.gba",(2026,1,1,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED
+                with jar.open(info,"w")as target,Path(large["path"]).open("rb")as source:
+                    for block in iter(lambda:source.read(32768),b""):target.write(block)
         manifest["artifacts"][side] = {"path": str(artifact), "sha256": sha(artifact), "modId": mod_id}
     if sha(product) != pins["product.sha256"] or sha(rom) != pins["rom.sha256"] or sha(gb_rom) != pins["gb-rom.sha256"] or sha(n64_rom) != pins["n64-rom.sha256"] or sha(plan_path) != pins["model-plan.sha256"] or any(sha(REPO / path) != digest for path, digest in input_hashes.items()):
         raise RuntimeError("QA inputs changed during compilation")
     if gba is not None and (sha(gba_rom) != pins["gba-rom.sha256"] or sha(REPO / "tools/gba_diagnostic.py") != manifest["gbaDiagnosticRom"]["generatorSha256"] or sha(REPO / "build/platform-smoke/gba-result.json") != manifest["gbaDiagnosticRom"]["baselineResultSha256"] or sha(REPO / "tests/runtime/GbaSmoke.java") != manifest["gbaDiagnosticRom"]["baselineTestSha256"]):
         raise RuntimeError("Original GBA fixture inputs changed during compilation")
+    if large is not None and(sha(Path(large["path"]))!=large["sha256"]or sha(REPO/"qa/large_gba.py")!=large["generatorSha256"]or sha(pce_path)!=pins["pce-rom.sha256"]or sha(pce_result)!=manifest["pceDiagnosticRom"]["baselineResultSha256"]or sha(REPO/"tools/platform_smoke_software.py")!=manifest["pceDiagnosticRom"]["generatorSha256"]):raise RuntimeError("Cartridge diagnostic inputs changed during compilation")
     manifest["sources"] = input_hashes
     report = out / "qa-build.json"
     report.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -147,5 +167,6 @@ if __name__ == "__main__":
     parser.add_argument("--rom", type=Path, default=REPO / "build/runtime-smoke/two-port-battery.nes")
     parser.add_argument("--gb-rom", type=Path, default=REPO / "build/platform-smoke/original.gb")
     parser.add_argument("--pixel-review", action="store_true")
+    parser.add_argument("--cartridge-review",action="store_true")
     options = parser.parse_args()
-    build(options.name, options.product, options.rom, options.gb_rom, options.pixel_review)
+    build(options.name, options.product, options.rom, options.gb_rom, options.pixel_review,options.cartridge_review)

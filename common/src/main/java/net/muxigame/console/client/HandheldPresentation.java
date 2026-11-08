@@ -31,7 +31,7 @@ public final class HandheldPresentation {
         }
         event.setCanceled(true);
         var item=mc.player.getItemInHand(event.getHand());int model=HardwareCatalog.model(item);
-        var body=HardwareCatalog.body(model);float[] bounds=body==null?new float[]{0,3,5.8f,16,12.4f,8.5f}:body.bounds();
+        float[] bounds=HardwareCatalog.presentationBounds(item);var body=HardwareCatalog.body(model);float[] shell=body==null?new float[]{0,3,5.8f,16,12.4f,8.5f}:body.bounds();
         boolean right=isMain==(mc.player.getMainArm()==HumanoidArm.RIGHT),two=isMain&&mc.player.getOffhandItem().isEmpty();
         float side=right?1:-1,equip=event.getEquipProgress();
         float sway=(float)Math.sin(Math.sqrt(event.getSwingProgress())*Math.PI),bob=(float)Math.sin(Math.sqrt(event.getSwingProgress())*Math.PI*2);
@@ -39,11 +39,12 @@ public final class HandheldPresentation {
         float width=(bounds[3]-bounds[0])/16,height=(bounds[4]-bounds[1])/16;
         float scale=Math.min((two?.83f:.61f)/Math.max(width,.01f),(two?.64f:.49f)/Math.max(height,.01f));
         float centerX=two?0:side*.31f,centerY=-.16f-equip*.55f+bob*.02f,depth=-.94f-sway*.04f;
-        float support=width*scale/2-.085f;
+        float support=(shell[3]-shell[0])/16*scale/2-.085f;
+        float gripY=centerY+((shell[1]+shell[4])-(bounds[1]+bounds[4]))/32*scale-(shell[4]-shell[1])/16*scale*.30f;
         boolean leftDrawn=false,rightDrawn=false;
-        if(two){leftDrawn=arm(event,-1,centerX-support,centerY-height*scale*.30f,sway);rightDrawn=arm(event,1,centerX+support,centerY-height*scale*.30f,sway);}
-        else if(right)rightDrawn=arm(event,side,centerX+side*(width*scale*.25f),centerY-height*scale*.30f,sway);
-        else leftDrawn=arm(event,side,centerX+side*(width*scale*.25f),centerY-height*scale*.30f,sway);
+        if(two){leftDrawn=arm(event,-1,centerX-support,gripY,sway);rightDrawn=arm(event,1,centerX+support,gripY,sway);}
+        else if(right)rightDrawn=arm(event,side,centerX+side*(width*scale*.25f),gripY,sway);
+        else leftDrawn=arm(event,side,centerX+side*(width*scale*.25f),gripY,sway);
         pose.pushPose();
         int highlighted;
         try{

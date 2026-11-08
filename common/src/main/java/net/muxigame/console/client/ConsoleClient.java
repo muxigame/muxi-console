@@ -13,6 +13,8 @@ import net.muxigame.console.mc.*;
 import net.muxigame.console.runtime.*;
 import net.muxigame.console.client.ui.*;
 import net.muxigame.console.client.input.InputProfiles;
+import net.muxigame.console.client.transfer.LoadProgress;
+import net.muxigame.console.client.transfer.RomTransfer;
 import net.muxigame.console.compat.BrowserLinkClient;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -37,11 +39,14 @@ public final class ConsoleClient implements ClientActions {
     private volatile PortInput visualInput = PortInput.IDLE;
     private long inputSubmissions;
     private UUID observedHandheld,attemptedHandheld,suppressedHandheld;private boolean controlsReleased;
+    public record ProgressSnapshot(UUID card,String stage,long bytes,long total,int percent,String text,boolean loading,String error){}
+    private static final ProgressSnapshot IDLE_PROGRESS=new ProgressSnapshot(null,"idle",0,0,-1,"",false,"");
+    private volatile ProgressSnapshot terminalProgress=IDLE_PROGRESS;private volatile long terminalProgressUntil;
     private static final class Session {
         final JsonObject context;final String room;final long epoch,position;final int port;final Platform platform;final String hash;final long size;final UUID card;final boolean shared,leader;volatile boolean hasPicture;
         volatile ProcessConsoleRuntime runtime;final PcmPlayer audio=new PcmPlayer();final java.util.concurrent.atomic.AtomicInteger queued=new java.util.concurrent.atomic.AtomicInteger();volatile boolean ready,inputPending,closeRecorded,leaving;volatile long tick=-1,sequence=0,frame=0,lastInputTick=-1,lastCheckpointFrame=0;
-        CompletableFuture<Void> checkpoint;SaveUpload saveUpload;
-        Session(JsonObject j){context=j.deepCopy();room=j.get("room").getAsString();epoch=j.get("epoch").getAsLong();position=j.get("position").getAsLong();port=j.get("port").getAsInt();platform=Platform.fromId(j.get("platform").getAsString());hash=j.get("hash").getAsString();size=j.get("size").getAsLong();card=UUID.fromString(j.get("instance").getAsString());shared=platform.sharedRuntime();leader=j.get("leader").getAsBoolean();}
+        final LoadProgress progress;CompletableFuture<Void> checkpoint;SaveUpload saveUpload;
+        Session(JsonObject j){context=j.deepCopy();room=j.get("room").getAsString();epoch=j.get("epoch").getAsLong();position=j.get("position").getAsLong();port=j.get("port").getAsInt();platform=Platform.fromId(j.get("platform").getAsString());hash=j.get("hash").getAsString();size=j.get("size").getAsLong();card=UUID.fromString(j.get("instance").getAsString());shared=platform.sharedRuntime();leader=j.get("leader").getAsBoolean();progress=new LoadProgress(card);}
     }
     private static final class Upload {
         final JsonObject writer;final Path file,temporary;final RomDescriptor descriptor;UUID id;long offset;
@@ -57,6 +62,10 @@ public final class ConsoleClient implements ClientActions {
     private static JsonObject object(){return new JsonObject();}
     private RuntimeFiles files()throws IOException{if(runtimeFiles==null)runtimeFiles=new RuntimeFiles(mc().gameDirectory.toPath());return runtimeFiles;}
     public String status(){return status;}
+    private static ProgressSnapshot progress(LoadProgress.Snapshot p){return new ProgressSnapshot(p.card(),p.stage(),p.bytes(),p.total(),p.percent(),p.text(),p.loading(),p.error());}
+    public ProgressSnapshot progressSnapshot(){Session s=active;return s!=null?progress(s.progress.snapshot()):System.nanoTime()<terminalProgressUntil?terminalProgress:IDLE_PROGRESS;}
+    /** A progress display cannot attach to a different cartridge or a stowed handheld. */
+    public ProgressSnapshot heldProgress(UUID card){Held held=heldCartridge();ProgressSnapshot p=progressSnapshot();return held!=null&&held.card.instanceId().equals(card)&&card.equals(p.card())?p:IDLE_PROGRESS;}
     public void selectionChanged(){if(upload==null)status="选择文件并确认授权后，即可上传刻录";}
     public void receive(Wire.Message message){
         if(SharedPlayClient.INSTANCE.receive(message))return;
@@ -106,17 +115,19 @@ public final class ConsoleClient implements ClientActions {
         UUID request=UUID.randomUUID();CompletableFuture<Wire.Message> result=new CompletableFuture<>();downloads.put(request,result);JsonObject j=object();j.addProperty("request",request.toString());j.addProperty("hash",hash);j.addProperty("offset",0);if(room!=null&&!room.isEmpty()){j.addProperty("room",room);j.addProperty("epoch",epoch);}mc().execute(()->Wire.command("rom_read",j));
         return result.orTimeout(15,TimeUnit.SECONDS).thenApply(m->m.operation().equals("rom_denied")?Optional.<byte[]>empty():Optional.of(m.data())).whenComplete((v,e)->downloads.remove(request));
     }
+    private boolean loading(Session s){return active==s&&!s.leaving;}
+    private Wire.Message readPiece(Session s,String operation,JsonObject request)throws Exception{
+        RomTransfer.requireActive(()->loading(s));UUID id=UUID.randomUUID();var result=new CompletableFuture<Wire.Message>();downloads.put(id,result);request.addProperty("request",id.toString());
+        mc().execute(()->{if(loading(s))Wire.command(operation,request);else result.cancel(false);});
+        try{return result.get(15,TimeUnit.SECONDS);}finally{downloads.remove(id);}
+    }
     private Path rom(Session s)throws Exception{
-        Path cache=files().root().resolve("roms");Files.createDirectories(cache);if(Files.isSymbolicLink(cache)||!cache.toRealPath().equals(cache.toAbsolutePath().normalize()))throw new IOException("卡带缓存路径不安全");Path target=cache.resolve(s.hash+"."+s.platform.extensions().iterator().next());
-        if(Files.isRegularFile(target,LinkOption.NOFOLLOW_LINKS)&&!Files.isSymbolicLink(target)&&Files.size(target)==s.size&&Hashing.sha256(target).equals(s.hash))return target;
-        Path temp=Files.createTempFile(cache,"receive-",".tmp");
-        try(var out=Files.newOutputStream(temp)){
-            long offset=0;while(offset<s.size){if(active!=s)throw new IOException("会话已取消");UUID id=UUID.randomUUID();var result=new CompletableFuture<Wire.Message>();downloads.put(id,result);JsonObject j=object();j.addProperty("request",id.toString());j.addProperty("room",s.room);j.addProperty("epoch",s.epoch);j.addProperty("hash",s.hash);j.addProperty("offset",offset);mc().execute(()->Wire.command("rom_read",j));Wire.Message reply;
-                try{reply=result.get(15,TimeUnit.SECONDS);}finally{downloads.remove(id);}if(reply.operation().equals("rom_denied"))throw new IOException("服务器拒绝提供此卡带内容");
-                if(reply.body().get("offset").getAsLong()!=offset||reply.body().get("size").getAsLong()!=s.size||reply.data().length==0||reply.data().length>s.size-offset)throw new IOException("卡带下载格式无效");out.write(reply.data());offset+=reply.data().length;
-            }
-        }catch(Exception e){Files.deleteIfExists(temp);throw e;}
-        if(!Hashing.sha256(temp).equals(s.hash)){Files.deleteIfExists(temp);throw new IOException("卡带下载校验失败");}Files.move(temp,target,StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.ATOMIC_MOVE);return target;
+        return RomTransfer.receive(files().root().resolve("roms"),s.hash,s.platform.extensions().iterator().next(),s.size,offset->{
+            JsonObject j=object();j.addProperty("room",s.room);j.addProperty("epoch",s.epoch);j.addProperty("hash",s.hash);j.addProperty("offset",offset);Wire.Message reply=readPiece(s,"rom_read",j);
+            if(reply.operation().equals("rom_denied"))throw new IOException("服务器拒绝提供此卡带内容");
+            if(!reply.operation().equals("rom_chunk"))throw new IOException("卡带下载格式无效");
+            return new RomTransfer.Chunk(reply.body().get("offset").getAsLong(),reply.body().get("size").getAsLong(),reply.body().get("hash").getAsString(),reply.data());
+        },()->loading(s),s.progress);
     }
     private void start(JsonObject context){
         Session existing=active;boolean open=!context.has("open")||context.get("open").getAsBoolean();
@@ -124,16 +135,17 @@ public final class ConsoleClient implements ClientActions {
             if(open){controlsReleased=false;suppressedHandheld=null;showGame(existing);}return;
         }
         boolean sameRoom=existing!=null&&existing.room.equals(context.get("room").getAsString());
-        stop();Session s=new Session(context);active=s;if(!sameRoom)controlsReleased=false;status="正在准备 "+s.platform.id().toUpperCase(Locale.ROOT)+"…";
+        stop();Session s=new Session(context);active=s;terminalProgress=IDLE_PROGRESS;terminalProgressUntil=0;if(!sameRoom)controlsReleased=false;status="正在准备 "+s.platform.id().toUpperCase(Locale.ROOT)+"…";
         boolean held=context.has("presentation")&&context.get("presentation").getAsString().equals("held");
         if(held)controlsReleased=true;
         if(open&&!held){controlsReleased=false;suppressedHandheld=null;showGame(s);}
-        restoredStateHash="";if(s.shared&&!s.leader){status="正在连接主机画面与控制席…";SharedPlayClient.INSTANCE.start(context);return;}
+        restoredStateHash="";if(s.shared&&!s.leader){s.progress.begin(LoadProgress.Stage.SHARED,0);status="正在连接主机画面与控制席…";SharedPlayClient.INSTANCE.start(context);return;}
         emulator.execute(()->{try{
             if(s.context.has("saveError"))throw new IOException(s.context.get("saveError").getAsString());
-            Path rom=rom(s);RuntimeFiles.Selected config=files().select(s.platform,rom,s.card);ProcessConsoleRuntime runtime=ProcessConsoleRuntime.open(config.launch());s.runtime=runtime;ownedWorkers.add(runtime.workerPid());liveRuntimes.put(runtime.workerPid(),runtime);
-            restoredStateHash="";if(s.context.has("state")){JsonObject saved=s.context.getAsJsonObject("state");if(!saved.get("fingerprint").getAsString().equals(config.fingerprint()))throw new IOException("存档使用了不同版本的模拟器核心，请恢复原核心后再读取");runtime.loadState(downloadState(s,saved));restoredStateHash=saved.get("hash").getAsString();restoredStates++;}
-            if(active!=s){close(s);return;}s.ready=true;JsonObject j=s.context.deepCopy();j.addProperty("fingerprint",config.fingerprint());j.addProperty("fps",runtime.info().fps());mc().execute(()->{if(active==s){status="等待其他控制器准备…";Wire.command("ready",j);}});
+            Path rom=rom(s);RomTransfer.requireActive(()->loading(s));s.progress.begin(LoadProgress.Stage.STARTING,0);RuntimeFiles.Selected config=files().select(s.platform,rom,s.card);RomTransfer.requireActive(()->loading(s));ProcessConsoleRuntime runtime=ProcessConsoleRuntime.open(config.launch());s.runtime=runtime;ownedWorkers.add(runtime.workerPid());liveRuntimes.put(runtime.workerPid(),runtime);
+            if(!loading(s)){close(s);return;}
+            if(s.context.has("state")){JsonObject saved=s.context.getAsJsonObject("state");if(!saved.get("fingerprint").getAsString().equals(config.fingerprint()))throw new IOException("存档使用了不同版本的模拟器核心，请恢复原核心后再读取");byte[] restored=downloadState(s,saved);RomTransfer.requireActive(()->loading(s));s.progress.begin(LoadProgress.Stage.RESTORING,0);runtime.loadState(restored);if(loading(s)){restoredStateHash=saved.get("hash").getAsString();restoredStates++;}}
+            if(!loading(s)){close(s);return;}s.ready=true;s.progress.begin(LoadProgress.Stage.WAITING,0);JsonObject j=s.context.deepCopy();j.addProperty("fingerprint",config.fingerprint());j.addProperty("fps",runtime.info().fps());mc().execute(()->{if(loading(s)){status="等待其他控制器准备…";Wire.command("ready",j);}});
         }catch(Exception e){failed(s,e);}});
     }
     private void frames(JsonObject b){
@@ -174,7 +186,7 @@ public final class ConsoleClient implements ClientActions {
     public int visualPort(){Session s=active;return s!=null&&s.ready&&!s.leaving&&!controlsReleased&&mc().screen instanceof GameScreen?s.port:-1;}
     public void clearInputVisual(){visualInput=PortInput.IDLE;}
 
-    public void openModelFullscreen(){Session s=active;if(s!=null&&s.ready&&!s.leaving){controlsReleased=false;mc().setScreen(new GameScreen(this,s.port));}}
+    public void openModelFullscreen(){Session s=active;if(s!=null&&!s.leaving){controlsReleased=false;mc().setScreen(new GameScreen(this,s.port));}}
     public void tick(){
         if(mc().player==null||mc().level==null||mc().getConnection()==null){observedHandheld=null;attemptedHandheld=null;suppressedHandheld=null;if(active!=null)stop();return;}
         Held held=heldCartridge();UUID selected=held==null?null:held.card.instanceId();
@@ -205,11 +217,11 @@ public final class ConsoleClient implements ClientActions {
     public void setInputSource(java.util.function.Supplier<PortInput> source){inputSource=source;clearInputVisual();}
     public void device(JsonObject context,String action,int port){JsonObject j=context.deepCopy();j.addProperty("action",action);j.addProperty("port",port);Wire.command("device_action",j);}
     public void leave(){net.muxigame.console.client.input.NativeControls.clear();clearInputVisual();Session s=active;if(s!=null&&s.room.startsWith("handheld/"))suppressedHandheld=s.card;if(s!=null&&mc().getConnection()!=null&&s.ready){if(!s.leaving){s.leaving=true;inputSource=null;status="正在保存并离开…";Wire.command("leave_request",s.context.deepCopy());}return;}if(s!=null&&mc().getConnection()!=null)Wire.command("leave",object());stop();}
-    public void stop(){net.muxigame.console.client.input.NativeControls.clear();Session s=active;active=null;inputSource=null;clearInputVisual();displayedFrames=0;frameCrc="";SharedPlayClient.INSTANCE.stop();BrowserLinkClient.INSTANCE.stop();downloads.values().forEach(f->f.cancel(false));downloads.clear();if(s!=null){if(s.checkpoint!=null)s.checkpoint.completeExceptionally(new IOException("会话已停止"));emulator.execute(()->close(s));}}
+    public void stop(){net.muxigame.console.client.input.NativeControls.clear();Session s=active;active=null;inputSource=null;clearInputVisual();displayedFrames=0;frameCrc="";SharedPlayClient.INSTANCE.stop();BrowserLinkClient.INSTANCE.stop();downloads.values().forEach(f->f.cancel(false));downloads.clear();if(s!=null){s.progress.cancel();terminalProgress=progress(s.progress.snapshot());terminalProgressUntil=System.nanoTime()+TimeUnit.SECONDS.toNanos(5);if(s.checkpoint!=null)s.checkpoint.completeExceptionally(new IOException("会话已停止"));emulator.execute(()->close(s));}}
     private byte[] downloadState(Session s,JsonObject metadata)throws Exception{
-        long size=metadata.get("size").getAsLong();if(size<1||size>32L*1024*1024)throw new IOException("存档大小超出当前范围");ByteArrayOutputStream output=new ByteArrayOutputStream((int)size);
-        for(long offset=0;offset<size;){if(active!=s)throw new IOException("存档读取已取消");UUID id=UUID.randomUUID();CompletableFuture<Wire.Message> wait=new CompletableFuture<>();downloads.put(id,wait);JsonObject request=s.context.deepCopy();request.addProperty("request",id.toString());request.addProperty("generation",metadata.get("generation").getAsString());request.addProperty("offset",offset);mc().execute(()->Wire.command("state_read",request));Wire.Message response;
-            try{response=wait.get(15,TimeUnit.SECONDS);}finally{downloads.remove(id);}if(response.operation().equals("state_denied"))throw new IOException("服务器拒绝或无法提供存档");if(response.body().get("offset").getAsLong()!=offset||response.data().length<1||response.data().length>size-offset)throw new IOException("存档分块格式无效");output.write(response.data());offset+=response.data().length;
+        long size=metadata.get("size").getAsLong();if(size<1||size>32L*1024*1024)throw new IOException("存档大小超出当前范围");ByteArrayOutputStream output=new ByteArrayOutputStream((int)size);s.progress.begin(LoadProgress.Stage.RESTORING,size);
+        for(long offset=0;offset<size;){RomTransfer.requireActive(()->loading(s));JsonObject request=s.context.deepCopy();request.addProperty("generation",metadata.get("generation").getAsString());request.addProperty("offset",offset);Wire.Message response=readPiece(s,"state_read",request);
+            RomTransfer.requireActive(()->loading(s));if(response.operation().equals("state_denied"))throw new IOException("服务器拒绝或无法提供存档");if(!response.operation().equals("state_chunk")||response.body().get("offset").getAsLong()!=offset||response.data().length<1||response.data().length>24576||response.data().length>size-offset)throw new IOException("存档分块格式无效");output.write(response.data());offset+=response.data().length;s.progress.advance(response.data().length);
         }byte[] state=output.toByteArray();if(!Hashing.sha256(state).equals(metadata.get("hash").getAsString()))throw new IOException("服务器存档校验失败");return state;
     }
     private CompletableFuture<Void> checkpoint(Session s){
@@ -222,7 +234,7 @@ public final class ConsoleClient implements ClientActions {
     }
     private void close(Session s){if(s.closeRecorded)return;s.audio.close();ProcessConsoleRuntime r=s.runtime;if(r==null)return;boolean closedNormally=false;try{r.close();closedNormally=true;}catch(IOException e){MuxiConsole.LOG.warn("Worker close failed",e);}finally{s.closeRecorded=true;if(r.wasForcedShutdown())forcedWorkerExits++;else if(closedNormally&&r.exitCode().orElse(-1)==0&&r.nativeTemporaryFilesCleaned())normalWorkerExits++;else failedWorkerExits++;MuxiConsole.LOG.info("Worker closure pid={} exit={} forced={} nativeTempCleaned={}",r.workerPid(),r.exitCode().orElse(-1),r.wasForcedShutdown(),r.nativeTemporaryFilesCleaned());if(!r.isAlive()){ownedWorkers.remove(r.workerPid());liveRuntimes.remove(r.workerPid());}}}
     private void failed(Session s,Exception failure){
-        mc().execute(()->{if(active!=s)return;status=failure.getMessage();JsonObject j=s.context.deepCopy();j.addProperty("reason",status==null?failure.getClass().getSimpleName():status);Wire.command("runtime_failed",j);stop();});
+        mc().execute(()->{if(active!=s)return;status=UserErrors.describe(failure);lastError=status;s.progress.fail(status);JsonObject j=s.context.deepCopy();j.addProperty("reason",status);Wire.command("runtime_failed",j);stop();});
     }
     private void updatePicture(AvFrame frame){
         VideoOrientation.Image oriented=VideoOrientation.apply(frame.width(),frame.height(),frame.rgba(),frame.rotation());if(oriented.width()<1||oriented.height()<1)return;
@@ -230,7 +242,7 @@ public final class ConsoleClient implements ClientActions {
         BrowserLinkClient.INSTANCE.frame(displayedFrames,w,h,oriented.rgba());
         SharedPlayClient.INSTANCE.frame(displayedFrames,w,h,oriented.rgba());
         if(texture==null||pictureWidth!=w||pictureHeight!=h){if(texture!=null)mc().getTextureManager().release(picture);NativeImage image=new NativeImage(w,h,false);texture=new DynamicTexture(image);picture=mc().getTextureManager().register("muxi-console-game",texture);pictureWidth=w;pictureHeight=h;}
-        NativeImage image=texture.getPixels();byte[] rgba=oriented.rgba();for(int y=0;y<h;y++)for(int x=0;x<w;x++){int i=(y*w+x)*4;int pixel=(rgba[i+3]&255)<<24|(rgba[i+2]&255)<<16|(rgba[i+1]&255)<<8|(rgba[i]&255);image.setPixelRGBA(x,y,pixel);}texture.upload();Session current=active;if(current!=null)current.hasPicture=true;
+        NativeImage image=texture.getPixels();byte[] rgba=oriented.rgba();for(int y=0;y<h;y++)for(int x=0;x<w;x++){int i=(y*w+x)*4;int pixel=(rgba[i+3]&255)<<24|(rgba[i+2]&255)<<16|(rgba[i+1]&255)<<8|(rgba[i]&255);image.setPixelRGBA(x,y,pixel);}texture.upload();Session current=active;if(current!=null){current.hasPicture=true;current.progress.begin(LoadProgress.Stage.COMPLETE,0);}
     }
     public SharedPlayClient.Lease sharedLease(){Session s=active;return s!=null&&s.shared?new SharedPlayClient.Lease(s.room,s.epoch,s.port,s.leader):null;}
     private Session sharedGuest(String room,long epoch){Session s=active;return s!=null&&s.shared&&!s.leader&&s.room.equals(room)&&s.epoch==epoch?s:null;}

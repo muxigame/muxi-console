@@ -3,12 +3,14 @@ package net.muxigame.console.client.ui;
 import com.google.gson.JsonObject;
 import java.util.Objects;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.muxigame.console.domain.Platform;
 
 public final class DeviceScreen extends ConsoleScreen {
     private final JsonObject context;
     private final ClientActions actions;
+    private Button leave;
     public DeviceScreen(JsonObject context, ClientActions actions) {
         super(Component.translatable("ui.muxi_console.title"));
         this.context = Objects.requireNonNull(context).deepCopy(); this.actions = Objects.requireNonNull(actions);
@@ -26,6 +28,7 @@ public final class DeviceScreen extends ConsoleScreen {
             var body=net.muxigame.console.mc.HardwareCatalog.body(id);
             button(left+14,top+180,panelWidth-28,"机型："+(body==null?"通用主机":body.name())+" · 点击切换",ignored->act("body",(id+1)%23));
         }
+        if(context.has("card")){leave=button(left+14,top+172,panelWidth-28,"保存并离开游戏",ignored->{if(currentSession())actions.leave();});leave.active=currentSession();}
         int seatWidth = (panelWidth - 28 - gap * 3) / 4;
         for (int port = 0; port < 4; port++) {
             int seat = port;
@@ -36,11 +39,13 @@ public final class DeviceScreen extends ConsoleScreen {
         button(left + 14, top + panelHeight - 36, 76, "关闭", ignored -> onClose());
     }
     private void act(String action, int port) { actions.device(context.deepCopy(), action, port); }
+    private boolean currentSession(){return actions instanceof net.muxigame.console.client.ConsoleClient client&&client.screenConsole()==context.get("position").getAsLong();}
     private Platform currentPlatform() {
         try { return Platform.fromId(context.getAsJsonObject("card").get("platform").getAsString()); }
         catch (RuntimeException error) { return Platform.NES; }
     }
     @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        if(leave!=null)leave.active=currentSession();
         panel(graphics, dock()?"装入掌机，通过底座连接大屏，再选择控制席":"插入卡带，连接屏幕，再选择你的控制席");
         line(graphics, "选择控制席", left + 14, top + 124, panelWidth - 28, CREAM);
         line(graphics, Objects.requireNonNullElse(actions.status(), ""), left + 14, top + panelHeight - 55, panelWidth - 28, AMBER);

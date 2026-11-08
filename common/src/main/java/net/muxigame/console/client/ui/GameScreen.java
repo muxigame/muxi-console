@@ -46,12 +46,21 @@ public class GameScreen extends Screen {
         return 4.0/3;
     }
     private static JsonArray rect(float x,float y,float w,float h){JsonArray a=new JsonArray();a.add(x);a.add(y);a.add(w);a.add(h);return a;}
+    private void loading(GuiGraphics g,float[] video,ConsoleClient.ProgressSnapshot progress){
+        int x=Math.round(video[0]),y=Math.round(video[1]),w=Math.max(1,Math.round(video[2]-video[0])),h=Math.max(1,Math.round(video[3]-video[1]));
+        g.pose().pushPose();g.pose().translate(0,0,600);g.fill(x,y,x+w,y+h,0xff0b1317);g.enableScissor(x,y,x+w,y+h);
+        try{
+            var lines=font.split(Component.literal(progress.text()),Math.max(1,w-12));int count=Math.min(lines.size(),Math.max(1,(h-18)/font.lineHeight)),top=y+(h-count*font.lineHeight)/2;
+            for(int i=0;i<count;i++){var line=lines.get(i);g.drawString(font,line,x+(w-font.width(line))/2,top+i*font.lineHeight,progress.error().isEmpty()?0xffd4e5e9:0xffffb8a7,false);}
+            if(progress.percent()>=0&&w>20&&h>24){int left=x+8,right=x+w-8,bottom=y+h-8;g.fill(left,bottom,right,bottom+2,0xff253b44);g.fill(left,bottom,left+(right-left)*progress.percent()/100,bottom+2,0xff5dc7ff);}
+        }finally{g.disableScissor();g.pose().popPose();}
+    }
     @Override public void render(GuiGraphics g,int mouseX,int mouseY,float partial){
         g.fill(0,0,width,height,0xff101315);
         double aspect=aspect();int renderedModel=-1,highlighted=0;float[] video;JsonArray content;
         var item=HandheldRenderer.heldForSession();boolean model=mode==Mode.MODEL&&!item.isEmpty();
         if(model){
-            renderedModel=HardwareCatalog.model(item);var b=HardwareCatalog.body(renderedModel);float[] bounds=b==null?new float[]{0,3,5.8f,16,12.4f,8.5f}:b.bounds();
+            renderedModel=HardwareCatalog.model(item);float[] bounds=HardwareCatalog.presentationBounds(item);
             float unit=Math.min((width-24f)/(bounds[3]-bounds[0]),(height-24f)/(bounds[4]-bounds[1]));
             float cx=(bounds[0]+bounds[3])/2,cy=(bounds[1]+bounds[4])/2,cz=(bounds[2]+bounds[5])/2;
             float w=(bounds[3]-bounds[0])*unit,h=(bounds[4]-bounds[1])*unit;
@@ -67,7 +76,10 @@ public class GameScreen extends Screen {
             video=VideoLayout.fit(3,3,width-3,height-3,aspect);int x=Math.round(video[0]),y=Math.round(video[1]),w=Math.max(1,Math.round(video[2]-video[0])),h=Math.max(1,Math.round(video[3]-video[1]));
             g.fill(x-2,y-2,x+w+2,y+h+2,0xff59646a);g.fill(x-1,y-1,x+w+1,y+h+1,0xff080a0b);actions.renderPicture(g,x,y,w,h);content=rect(x,y,w,h);
         }
-        JsonObject out=new JsonObject();out.addProperty("sequence",++sequence);out.addProperty("mode",mode==Mode.MODEL?"model":"screen");out.addProperty("surfaceWidth",width);out.addProperty("surfaceHeight",height);out.addProperty("renderedModel",renderedModel);out.addProperty("modelRendered",model);out.addProperty("videoAspect",aspect);out.add("contentRect",content);out.add("videoRect",rect(video[0],video[1],video[2]-video[0],video[3]-video[1]));out.addProperty("highlightedSurfaces",highlighted);out.addProperty("widgetCount",children().size());out.addProperty("buttons",actions instanceof ConsoleClient c?c.localInputVisual().buttons():0);presentation=out;
+        ConsoleClient.ProgressSnapshot progress=actions instanceof ConsoleClient c?c.progressSnapshot():null;
+        if(!model&&progress!=null&&(progress.loading()||!progress.error().isEmpty()))loading(g,video,progress);
+        JsonObject out=new JsonObject();out.addProperty("sequence",++sequence);out.addProperty("mode",mode==Mode.MODEL?"model":"screen");out.addProperty("surfaceWidth",width);out.addProperty("surfaceHeight",height);out.addProperty("renderedModel",renderedModel);out.addProperty("modelRendered",model);out.addProperty("videoAspect",aspect);out.add("contentRect",content);out.add("videoRect",rect(video[0],video[1],video[2]-video[0],video[3]-video[1]));out.addProperty("highlightedSurfaces",highlighted);out.addProperty("widgetCount",children().size());out.addProperty("buttons",actions instanceof ConsoleClient c?c.localInputVisual().buttons():0);
+        if(progress!=null){JsonObject load=new JsonObject();load.addProperty("stage",progress.stage());load.addProperty("bytes",progress.bytes());load.addProperty("total",progress.total());load.addProperty("percent",progress.percent());load.addProperty("text",progress.text());load.addProperty("loading",progress.loading());load.addProperty("error",progress.error());out.add("progress",load);}presentation=out;
     }
     @Override public boolean keyPressed(int key,int scan,int modifiers){
         if(key==GLFW.GLFW_KEY_ESCAPE){onClose();return true;}

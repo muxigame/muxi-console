@@ -3,6 +3,58 @@
   "namespace": "muxi_console",
   "coordinate_units": 16,
   "front": "north",
+  "generic_media_slot": {
+    "width": 5.6,
+    "base": [
+      8,
+      13.3,
+      8.35
+    ],
+    "rotation": [
+      0,
+      180,
+      0
+    ],
+    "align": "top",
+    "depth_scale": 1,
+    "clip": {
+      "axis": "y",
+      "keep": "above",
+      "value": 11.85
+    }
+  },
+  "generic_desktop_media_slot": {
+    "width": 5.4,
+    "base": [
+      8,
+      3.4,
+      9.4
+    ],
+    "rotation": [
+      0,
+      0,
+      0
+    ],
+    "align": "bottom",
+    "depth_scale": 1,
+    "clip": {
+      "axis": "y",
+      "keep": "above",
+      "value": 5.24
+    }
+  },
+  "generic_media_bounds": {
+    "min": [
+      4.3,
+      3.45,
+      7.33
+    ],
+    "max": [
+      11.7,
+      12.1,
+      8.55
+    ]
+  },
   "generic_control_surfaces": [
     {
       "button": 11,
@@ -1391,6 +1443,38 @@
           14.025
         ]
       },
+      "media_bounds": {
+        "min": [
+          3.45,
+          1.5000000000000002,
+          7.05
+        ],
+        "max": [
+          12.55,
+          14.05,
+          8.8
+        ]
+      },
+      "media_slot": {
+        "width": 7.6,
+        "base": [
+          8,
+          3.8,
+          5.9
+        ],
+        "rotation": [
+          90,
+          0,
+          180
+        ],
+        "align": "bottom",
+        "depth_scale": 0.75,
+        "clip": {
+          "axis": "z",
+          "keep": "below",
+          "value": 2.05
+        }
+      },
       "control_surfaces": [],
       "button_regions": [],
       "screen_plane": null,
@@ -1435,6 +1519,38 @@
           13.425
         ]
       },
+      "media_bounds": {
+        "min": [
+          2.25,
+          3.3999999999999995,
+          6.83
+        ],
+        "max": [
+          13.75,
+          12.15,
+          9.05
+        ]
+      },
+      "media_slot": {
+        "width": 5.9,
+        "base": [
+          8,
+          4.6,
+          8.75
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "align": "bottom",
+        "depth_scale": 1,
+        "clip": {
+          "axis": "y",
+          "keep": "above",
+          "value": 6.02
+        }
+      },
       "control_surfaces": [],
       "button_regions": [],
       "screen_plane": null,
@@ -1478,6 +1594,38 @@
           15.37,
           8.2886
         ]
+      },
+      "media_bounds": {
+        "min": [
+          4.3,
+          3.45,
+          7.33
+        ],
+        "max": [
+          11.7,
+          12.1,
+          8.55
+        ]
+      },
+      "media_slot": {
+        "width": 5.5,
+        "base": [
+          8,
+          9.4,
+          8.12
+        ],
+        "rotation": [
+          0,
+          180,
+          0
+        ],
+        "align": "bottom",
+        "depth_scale": 1,
+        "clip": {
+          "axis": "y",
+          "keep": "above",
+          "value": 12.4
+        }
       },
       "control_surfaces": [
         {
@@ -2055,6 +2203,38 @@
           8.0082
         ]
       },
+      "media_bounds": {
+        "min": [
+          4.25,
+          3.2,
+          7.255
+        ],
+        "max": [
+          11.75,
+          12.35,
+          8.625
+        ]
+      },
+      "media_slot": {
+        "width": 5.3,
+        "base": [
+          8,
+          9.4,
+          7.89
+        ],
+        "rotation": [
+          0,
+          180,
+          0
+        ],
+        "align": "bottom",
+        "depth_scale": 1,
+        "clip": {
+          "axis": "y",
+          "keep": "above",
+          "value": 12.5
+        }
+      },
       "control_surfaces": [
         {
           "button": 4,
@@ -2630,6 +2810,38 @@
           11.55,
           7.9830000000000005
         ]
+      },
+      "media_bounds": {
+        "min": [
+          3.95,
+          5.1,
+          7.2299999999999995
+        ],
+        "max": [
+          12.05,
+          10.45,
+          8.65
+        ]
+      },
+      "media_slot": {
+        "width": 6.0,
+        "base": [
+          8,
+          8.1,
+          7.83
+        ],
+        "rotation": [
+          0,
+          180,
+          0
+        ],
+        "align": "bottom",
+        "depth_scale": 1,
+        "clip": {
+          "axis": "y",
+          "keep": "above",
+          "value": 11.15
+        }
       },
       "control_surfaces": [
         {
@@ -3265,6 +3477,38 @@
           13.825000000000001
         ]
       },
+      "media_bounds": {
+        "min": [
+          3.0,
+          3.3499999999999996,
+          6.78
+        ],
+        "max": [
+          13.0,
+          12.2,
+          9.1
+        ]
+      },
+      "media_slot": {
+        "width": 6.0,
+        "base": [
+          8,
+          3.4,
+          9.1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "align": "bottom",
+        "depth_scale": 1,
+        "clip": {
+          "axis": "y",
+          "keep": "above",
+          "value": 4.76
+        }
+      },
       "control_surfaces": [],
       "button_regions": [],
       "screen_plane": null,
@@ -3308,6 +3552,38 @@
           5.72,
           13.725
         ]
+      },
+      "media_bounds": {
+        "min": [
+          2.25,
+          3.7,
+          6.800000000000001
+        ],
+        "max": [
+          13.75,
+          12.2,
+          9.1
+        ]
+      },
+      "media_slot": {
+        "width": 6.2,
+        "base": [
+          8,
+          4.35,
+          9.45
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "align": "bottom",
+        "depth_scale": 1,
+        "clip": {
+          "axis": "y",
+          "keep": "above",
+          "value": 5.64
+        }
       },
       "control_surfaces": [],
       "button_regions": [],
@@ -3353,6 +3629,38 @@
           14.025
         ]
       },
+      "media_bounds": {
+        "min": [
+          4.05,
+          2.3,
+          6.9799999999999995
+        ],
+        "max": [
+          11.95,
+          13.25,
+          8.9
+        ]
+      },
+      "media_slot": {
+        "width": 4.6,
+        "base": [
+          8,
+          3.3,
+          8.5
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "align": "bottom",
+        "depth_scale": 1,
+        "clip": {
+          "axis": "y",
+          "keep": "above",
+          "value": 4.54
+        }
+      },
       "control_surfaces": [],
       "button_regions": [],
       "screen_plane": null,
@@ -3396,6 +3704,38 @@
           11.85,
           8.4642
         ]
+      },
+      "media_bounds": {
+        "min": [
+          4.4,
+          3.55,
+          7.08
+        ],
+        "max": [
+          11.6,
+          12.0,
+          8.8
+        ]
+      },
+      "media_slot": {
+        "width": 4.6,
+        "base": [
+          8,
+          7.25,
+          8.31
+        ],
+        "rotation": [
+          0,
+          180,
+          0
+        ],
+        "align": "bottom",
+        "depth_scale": 1,
+        "clip": {
+          "axis": "y",
+          "keep": "above",
+          "value": 11.45
+        }
       },
       "control_surfaces": [
         {
@@ -3886,6 +4226,38 @@
           14.025
         ]
       },
+      "media_bounds": {
+        "min": [
+          3.9000000000000004,
+          2.1499999999999995,
+          6.88
+        ],
+        "max": [
+          12.1,
+          13.4,
+          9.0
+        ]
+      },
+      "media_slot": {
+        "width": 4.6,
+        "base": [
+          8,
+          3.4,
+          7.5
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "align": "bottom",
+        "depth_scale": 1,
+        "clip": {
+          "axis": "y",
+          "keep": "above",
+          "value": 4.82
+        }
+      },
       "control_surfaces": [],
       "button_regions": [],
       "screen_plane": null,
@@ -3929,6 +4301,38 @@
           4.18,
           13.025
         ]
+      },
+      "media_bounds": {
+        "min": [
+          2.8499999999999996,
+          4.0,
+          7.64
+        ],
+        "max": [
+          13.15,
+          11.7,
+          8.24
+        ]
+      },
+      "media_slot": {
+        "width": 6.4,
+        "base": [
+          8,
+          1.8,
+          3.8
+        ],
+        "rotation": [
+          90,
+          0,
+          180
+        ],
+        "align": "bottom",
+        "depth_scale": 1,
+        "clip": {
+          "axis": "z",
+          "keep": "below",
+          "value": 3.0
+        }
       },
       "control_surfaces": [],
       "button_regions": [],
@@ -3974,6 +4378,38 @@
           14.025
         ]
       },
+      "media_bounds": {
+        "min": [
+          3.7,
+          2.7,
+          6.53
+        ],
+        "max": [
+          12.3,
+          12.85,
+          9.35
+        ]
+      },
+      "media_slot": {
+        "width": 4.0,
+        "base": [
+          8,
+          3.55,
+          7.0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "align": "bottom",
+        "depth_scale": 1,
+        "clip": {
+          "axis": "y",
+          "keep": "above",
+          "value": 4.84
+        }
+      },
       "control_surfaces": [],
       "button_regions": [],
       "screen_plane": null,
@@ -4018,6 +4454,38 @@
           13.825000000000001
         ]
       },
+      "media_bounds": {
+        "min": [
+          3.5999999999999996,
+          2.95,
+          6.68
+        ],
+        "max": [
+          12.4,
+          12.6,
+          9.2
+        ]
+      },
+      "media_slot": {
+        "width": 4.35,
+        "base": [
+          8,
+          3.3,
+          6.75
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "align": "bottom",
+        "depth_scale": 1,
+        "clip": {
+          "axis": "y",
+          "keep": "above",
+          "value": 4.8
+        }
+      },
       "control_surfaces": [],
       "button_regions": [],
       "screen_plane": null,
@@ -4061,6 +4529,38 @@
           11.85,
           8.404200000000001
         ]
+      },
+      "media_bounds": {
+        "min": [
+          3.6500000000000004,
+          4.6000000000000005,
+          7.555
+        ],
+        "max": [
+          12.35,
+          11.1,
+          8.325
+        ]
+      },
+      "media_slot": {
+        "width": 4.8,
+        "base": [
+          8,
+          8.7,
+          8.25
+        ],
+        "rotation": [
+          0,
+          180,
+          0
+        ],
+        "align": "bottom",
+        "depth_scale": 1,
+        "clip": {
+          "axis": "y",
+          "keep": "above",
+          "value": 11.15
+        }
       },
       "control_surfaces": [
         {
@@ -4841,6 +5341,38 @@
           8.2342
         ]
       },
+      "media_bounds": {
+        "min": [
+          4.5,
+          4.25,
+          7.28
+        ],
+        "max": [
+          11.5,
+          11.3,
+          8.6
+        ]
+      },
+      "media_slot": {
+        "width": 4.4,
+        "base": [
+          8,
+          8.9,
+          8.07
+        ],
+        "rotation": [
+          0,
+          180,
+          0
+        ],
+        "align": "bottom",
+        "depth_scale": 1,
+        "clip": {
+          "axis": "y",
+          "keep": "above",
+          "value": 12.05
+        }
+      },
       "control_surfaces": [
         {
           "button": 4,
@@ -5274,6 +5806,38 @@
           8.1862
         ]
       },
+      "media_bounds": {
+        "min": [
+          4.35,
+          4.1,
+          7.255
+        ],
+        "max": [
+          11.65,
+          11.45,
+          8.625
+        ]
+      },
+      "media_slot": {
+        "width": 4.5,
+        "base": [
+          8,
+          8.9,
+          8.02
+        ],
+        "rotation": [
+          0,
+          180,
+          0
+        ],
+        "align": "bottom",
+        "depth_scale": 1,
+        "clip": {
+          "axis": "y",
+          "keep": "above",
+          "value": 12.05
+        }
+      },
       "control_surfaces": [
         {
           "button": 4,
@@ -5706,6 +6270,38 @@
           12.0,
           7.8986
         ]
+      },
+      "media_bounds": {
+        "min": [
+          4.3,
+          4.6499999999999995,
+          7.38
+        ],
+        "max": [
+          11.7,
+          10.9,
+          8.5
+        ]
+      },
+      "media_slot": {
+        "width": 4.3,
+        "base": [
+          8,
+          8.85,
+          7.72
+        ],
+        "rotation": [
+          0,
+          180,
+          0
+        ],
+        "align": "bottom",
+        "depth_scale": 1,
+        "clip": {
+          "axis": "y",
+          "keep": "above",
+          "value": 11.55
+        }
       },
       "control_surfaces": [
         {
@@ -6200,6 +6796,38 @@
           7.8386000000000005
         ]
       },
+      "media_bounds": {
+        "min": [
+          4.15,
+          4.45,
+          7.3549999999999995
+        ],
+        "max": [
+          11.85,
+          11.1,
+          8.525
+        ]
+      },
+      "media_slot": {
+        "width": 4.4,
+        "base": [
+          8,
+          9.0,
+          7.65
+        ],
+        "rotation": [
+          0,
+          180,
+          0
+        ],
+        "align": "bottom",
+        "depth_scale": 1,
+        "clip": {
+          "axis": "y",
+          "keep": "above",
+          "value": 11.6
+        }
+      },
       "control_surfaces": [
         {
           "button": 13,
@@ -6693,6 +7321,38 @@
           13.5
         ]
       },
+      "media_bounds": {
+        "min": [
+          3.6500000000000004,
+          4.2,
+          7.205
+        ],
+        "max": [
+          12.35,
+          11.35,
+          8.675
+        ]
+      },
+      "media_slot": {
+        "width": 4.4,
+        "base": [
+          8,
+          10.2,
+          11.45
+        ],
+        "rotation": [
+          0,
+          180,
+          0
+        ],
+        "align": "bottom",
+        "depth_scale": 1,
+        "clip": {
+          "axis": "y",
+          "keep": "above",
+          "value": 12.7
+        }
+      },
       "control_surfaces": [],
       "button_regions": [],
       "screen_plane": null,
@@ -6780,6 +7440,38 @@
           14.025
         ]
       },
+      "media_bounds": {
+        "min": [
+          3,
+          2.6,
+          7.1
+        ],
+        "max": [
+          13,
+          13.2,
+          8.4
+        ]
+      },
+      "media_slot": {
+        "width": 6.4,
+        "base": [
+          8,
+          1.95,
+          4.75
+        ],
+        "rotation": [
+          90,
+          0,
+          180
+        ],
+        "align": "bottom",
+        "depth_scale": 0.55,
+        "clip": {
+          "axis": "z",
+          "keep": "below",
+          "value": 2.1
+        }
+      },
       "control_surfaces": [],
       "button_regions": [],
       "screen_plane": null,
@@ -6823,6 +7515,38 @@
           15.75,
           14
         ]
+      },
+      "media_bounds": {
+        "min": [
+          3.0,
+          3.8499999999999996,
+          7.3549999999999995
+        ],
+        "max": [
+          13.0,
+          11.7,
+          8.525
+        ]
+      },
+      "media_slot": {
+        "width": 3.3,
+        "base": [
+          8,
+          2.9,
+          14.0
+        ],
+        "rotation": [
+          0,
+          180,
+          0
+        ],
+        "align": "bottom",
+        "depth_scale": 1,
+        "clip": {
+          "axis": "z",
+          "keep": "above",
+          "value": 13.85
+        }
       },
       "control_surfaces": [
         {
@@ -7536,6 +8260,26 @@
           4.3
         ],
         "facing": "north"
+      },
+      "media_slot": {
+        "width": 3.3,
+        "base": [
+          8,
+          2.9,
+          14.0
+        ],
+        "rotation": [
+          0,
+          180,
+          0
+        ],
+        "align": "bottom",
+        "depth_scale": 1,
+        "clip": {
+          "axis": "z",
+          "keep": "above",
+          "value": 13.85
+        }
       },
       "control_positions": [
         [

@@ -2,6 +2,20 @@
 
 本目录从空白编写，只读取本仓新产品 API 和统一 runner 文档。两个 QA JAR 分侧安装，Java 包为 `net.muxigame.consoleqa`，不会包含任何产品 class，也不发布。
 
+## 当前准备：实体整卡槽与真实加载进度
+
+`qa/build.py --cartridge-review`只在私有QA中加入大卡诊断：保持已验证`regression.gba`全部65536字节，末尾仅补FF到8388608字节；固定原ROM、原生成器、基线结果、QA派生生成器及派生文件哈希。不会修改或向产品加入ROM。另用本仓已验证原创NES、GB、小GBA和PCE，正常上传声明并刻录六张卡（GB额外一张用于旧格式）；不造卡UUID、ROM或存档。当前准备/编译不等价原生通过，实际结果以对应新run为准。
+
+root给实际新run后先`qa/drive.py --check`，依次运行`qa/cartridge_review.py --run <实际run> --build <QA报告> --phase inventory|cold|hardware`。三阶段分别写不可覆盖的独立结果，阶段自然结束后看图，不使用`input()`暂停或并发命令通道。inventory使用原生InventoryScreen和正常PICKUP/SWAP回调验证双向装取、容量1、满槽/非卡/不兼容/满背包与忙卡保护，完整NBT和UUID必须保持。忙卡检查须实际执行保存阶段点击并收到真实服务器拒绝，不能靠status推断通过。legacy仅把一张已真实发行且未加sentinel的GB卡消耗后移入空掌机旧flat字段，明确是历史格式fixture，不产生新身份；正常取一次/再取无复制/重新装入新CONTAINER。明确另一手快插使用实际主副手和普通useItem，Shift防止该测试步骤自动开局。
+
+cold真实丢弃拾取转交8MiB卡给guest，持卡本身不得下载；实际选中已装掌机才开始冷加载。世界LCD、MODEL、SCREEN三图均要求截图前后`0<bytes<total`，并联合真正LCD/全屏render audit，不写假进度、不人为限速。首画面后加载层消失，真实普通前端映射输入改变诊断，普通保存后再启动验证零新增ROM分块和实际存档恢复。hardware继续用guest的原大卡和真实缓存，采手持/原生物品栏/MODEL/底座露卡；图标很小，不夸大能看清标签。NES/PCE正常插原卡，实际管理面板“保存并离开游戏”后才取卡，不能以电源停止替代保存。真实卡用于电脑屏只允许连接显示来源，不能消费卡、建独立room或启动worker。最终核server实际world/muxi-console/content与states磁盘SHA、六卡唯一位置和全部worker自然关闭。所有图为新候选原始Minecraft帧，不沿用或编辑旧图；未验实体OS键鼠/手柄。
+
+本轮`client-2/runs/muxi-console-cartridge-01`保留两份脚本原中止：inventory的GUI关闭重采键导致合法自动开局先触发忙卡保护，原false含16/17已过检查、1图；`--phase inventory --continue-inventory --source-sha256 e9323121930be66d8648de0c59846376d5728427d53c25ba386faf64e4fbb693`仅接该精确范围及同卡实际清理状态，独立续办8项/1新图，实际slot/full拒绝、明确另一手及saving忙拒绝/GB盘hash闭合。满包保护不以noRoom为必要条件；游戏合法自动启动后须正常保存。
+
+cold原固定拾取位置未达到真实抛物落点，原false含1项已过、0图；未重丢或重烧，实际同UUID实体在观测坐标普通拾取，独立`cartridge-pickup-result.json`保留3项证据。`--phase cold --continue-cold`严格接原cold SHA、pickup SHA和原六卡集，22项/5图完成所有未执行要求。原primary流程已改用真实落点，旧失败不覆盖。hardware独立32项/8图，拍图前后必须同room/epoch/card/worker且ready/有首帧，转动期间自然等待不代替存活验证；管理面板正常保存和六卡唯一取回完成。联合共83条检查记录，其中82条通过、原合并断言1条false保留，不能写原轮零失败或将重复检查当独立测试。15张原图由`qa/cartridge_gallery.py`核同run/候选及六份JSON精确SHA引用，输出`build/cartridge-review/index.html`；原false、真实pickup和两个续办来源分别标明。
+
+实际大卡冷下载342个分块，世界/MODEL/SCREEN截图前后分别2–7%、15–21%、29–34%，截图时显示4%/16%/31%；同卡缓存重启没有新增ROM分块。最终host/guest各4个worker自然退出，强制/失败均0，双方worker为空。加载中取消/坏缓存/坏块等异常另外由391项纯文件检查及源码审查覆盖，本轮不冒称原生故障注入或实体手柄验收。
+
 ## 当前：整颗按钮、两种全屏与电脑显示器
 
 使用新产品精确SHA构建分侧QA，仍以 `qa/build.py --pixel-review` 嵌入本仓既有原创GB/GBA诊断；root统一runner给实际编号run后先 `qa/drive.py --check`，再按 `screens → models → play` 执行 `qa/polish_review.py --run <实际run> --build <QA报告> --phase <阶段> --pause-after-first`。先`screens`做2×2×1四向生存放拆/阻挡不耗/唯一掉落、旧3×2及受阻part0实际NBT加载迁移、前侧背原图；首显示器暂停供图审。随后`models`采新22机体和10款便携形态。屏阶段结束仅配置未装卡GBA槽2及其自定义tag；模型阶段后普通空机fixture还原GB槽7，不覆盖已发行卡带。`play`正常声明刻录自写GB/GBA，检查精确短提示及消失、原生Options→Controls→KeyBinds真实改键/保存/重读、MODEL/SCREEN同worker切换和原比例最大化、Esc回普通持有不中断、完整按钮六向实际baked quad着色/松开、输入隔离与底座/安全保存。首MODEL全屏图也先暂停核取景。展示前通过本run正常Tutorial选项步骤结束原生新手提示，FOV45，不改产品或修饰原图。

@@ -1,6 +1,10 @@
 # 逐平台模型：Minecraft原图审核
 
-## 当前双全屏、完整钮帽与电脑屏轮
+## 当前实际插卡与加载进度轮
+
+[当前15张原图](../build/cartridge-review/index.html)绑定cartridge-slots-02（SHA `7552f29a5225dd0987533c871fd7f736933744139fc3e1bd3e0323ce92545ccd`）与runId `59d60c9d9dd14113a22f9a6c4be8776e`，包含原生库存2图、真实冷加载/完成/缓存5图、可见插槽/底座/管理页8图。root逐张查看，独立模型owner另审13图。3种加载视图文字正向、位于LCD或纯屏框内且只有一层；完成后真实画面替换进度。NES/PCE贴合前插口，GBA卡帽不被MODEL裁切，底座两角度无遮挡且卡有厚度/接壳；短GBA卡不能在背照读到完整标签，不把壳体刻印当卡标签。其余22姿态/兼容高卡/裁切以132项几何与资源检查覆盖，不冒称本轮逐机运行。原QA中止与联合范围见[本轮审核](CARTRIDGE-SLOTS.md)，以下各轮为历史。
+
+## 双全屏、完整钮帽与电脑屏轮（前一轮）
 
 当前候选monitor-polish-04绑定SHA `d8bc6f5fed1963f4b518c2f9fbb389a7e1255e744a9a13aa15be9ffc126f4cd2`。[当前图库](../build/monitor-polish-review/index.html)按同run/同产品逐文件核原图；22款新增细节机体与10款便携持有已逐张复核，显示器四朝向及正侧背、普通隐藏HUD的连续面板图均已查看。完整钮帽、原生控制、短提示及MODEL/SCREEN全屏的当前实际结果、保留失败与补图范围见[本轮审核](MONITOR-POLISH.md)，不以旧图替代。以下各轮均为历史。
 

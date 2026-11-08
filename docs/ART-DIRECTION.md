@@ -71,6 +71,10 @@ VB没有伪装成电视的中央屏。catalog的 `screen_planes` 给出两个眼
 
 ## 手持与按键反馈
 
+当前实际插卡接口由catalog的每机`media_slot`（position/rotation/scale及clip轴/保留半面）与每卡`media_bounds`提供，均用1/16方块坐标；通用掌机和通用桌机有不同slot。`InsertedMediaRenderer`读取`CardData.inserted`或`DeviceEntity.card`的实际卡Stack，裁切变换后的原baked quad及其UV/材质，不画另一个假卡；NES/PCE/FDS的前插姿态为[90,0,180]，接点朝机内、标签朝上。`HardwareCatalog.presentationBounds`合并原壳与可见卡边界，MODEL按合并范围适配，手臂仍以机壳下角定位。
+
+`LcdLoadingRenderer`使用当前同UUID的`ProgressSnapshot`在真实LCD画临时进度；MODEL复用此路径，SCREEN才画二维进度，完成即由真实画面替换。当前380资源/29546检查、132项几何检查与[15张新原图](../build/cartridge-review/index.html)的逐项范围见[本轮审核](CARTRIDGE-SLOTS.md)；未把所有平台的纯几何检查冒称逐机运行。
+
 `HandheldPresentation`在实际RenderHandEvent中画玩家皮肤手臂；主手掌机且副手空时双手支撑，其余按实际持手单手支撑，遵从Minecraft惯用手。它直接绘制原baked机体（包含钮帽重着色）与动态内屏，共用同一模型变换；不复制一套假的平面掌机。只读snapshot记录真实左右手绘制分支与高光quad数，仍须实图确认接触位置和遮挡。
 
 当前反馈以catalog的`button_regions`为权威：每项包含公开RetroPad按钮位0..15、port及完整钮帽立方体的`from`/`to`边界。通用0与控制器分别使用root的`generic_button_regions`、`controller_button_regions`，连同22机体共300个完整钮帽区域。同一像素圆角、十字键或胶囊可由多个区域组成；Lynx重复AB和WS/WSC两组方向区保留其实际逻辑映射。桌机外壳与VB眼罩不虚构游戏AB键。
@@ -95,8 +99,8 @@ python -B tools/generate_assets.py --check
 python -B tools/generate_assets.py --check --preview --gallery-plan
 ```
 
-生成器只依赖Python标准库。本轮输出380项资源、28773项检查通过；检查覆盖逐字节再现、继承/纹理/配方/中英平台及原生按键语言闭包、PNG解码/CRC/zlib、MC图集可达、CMD稳定映射、机体与媒体差异、掌机比例、单双街机几何，以及新四片覆盖/UV连续/四朝向、旧六片和单片兼容信息。另检查49个实际硬件/媒体的物理接合、13个动态视口无遮挡、通用0坐标契约，以及224控制表面、300完整钮帽区域与实际几何的对应关系。这些资源检查不等于Minecraft图审或迁移实测通过，原生结果另列。
+生成器只依赖Python标准库。本轮输出380项资源、29546项检查通过；检查覆盖逐字节再现、继承/纹理/配方/中英平台及原生按键语言闭包、PNG解码/CRC/zlib、MC图集可达、CMD稳定映射、机体与媒体差异、掌机比例、单双街机几何，以及新四片覆盖/UV连续/四朝向、旧六片和单片兼容信息。另检查49个实际硬件/媒体的物理接合、13个动态视口无遮挡、通用0坐标契约，以及224控制表面、300完整钮帽区域与实际几何的对应关系。这些资源检查不等于Minecraft图审或迁移实测通过，原生结果另列。
 
 设备材质、细部蚀刻及白色反馈PNG由本仓生成。所有模型纹理必须位于MC1.21.1默认blocks atlas可收录的`textures/block/`或`textures/item/`下。`build/assets-preview.png`是内部软件几何预览，不能作为Minecraft审核图。
 
-历史审核要求与分轮结论见[MODEL-REVIEW.md](MODEL-REVIEW.md)。[前轮手持图库](../build/held-feel-review/index.html)收32次当时的手臂、薄掌机、小按钮、单面反馈与底座采图；[前轮像素设备图库](../build/pixel-realistic-review/index.html)的53图及[更早模型图库](../build/model-review/index.html)保留来源和历史边界。[当前62次原始采图](../build/monitor-polish-review/index.html)包含60张合格取景与2张保留遮挡图，完整钮帽、原生键位、双全屏及电脑显示器均按本轮证据核对；底座补图只证明完整背侧/低位展示，不冒称正面LCD。实际续办和未验边界见[本轮审核](MONITOR-POLISH.md)。
+历史审核要求与分轮结论见[MODEL-REVIEW.md](MODEL-REVIEW.md)。[前轮手持图库](../build/held-feel-review/index.html)收32次当时的手臂、薄掌机、小按钮、单面反馈与底座采图；[前轮像素设备图库](../build/pixel-realistic-review/index.html)的53图及[更早模型图库](../build/model-review/index.html)保留来源和历史边界。[前轮62次原始采图](../build/monitor-polish-review/index.html)包含60张合格取景与2张保留遮挡图，完整钮帽、原生键位、双全屏及电脑显示器均按本轮证据核对；底座补图只证明完整背侧/低位展示，不冒称正面LCD。实际续办和未验边界见[本轮审核](MONITOR-POLISH.md)。
