@@ -155,7 +155,7 @@ def run(run_path, profile_path, plan_path, profile_bytes, result_name="console-f
         # The canonical agent's looseDiamonds counter sees only minecraft:overworld.
         # Query actual Item.count through vanilla scoreboard arithmetic in the real dimension.
         objective = "mcqa" + marker["runId"][:10]; dim = initial["host"]["dimension"]
-        selector = '@e[type=minecraft:item,x=1024,y=89,z=1024,dx=14,dy=6,dz=11,nbt={Item:{id:"minecraft:diamond"}}]'
+        selector = '@e[type=minecraft:item,x=1024,y=-2048,z=1024,dx=31,dy=4095,dz=31,nbt={Item:{id:"minecraft:diamond"}}]'
         server_command(f"scoreboard objectives add {objective} dummy")
         server_command(f"scoreboard players set total {objective} 0")
         server_command(f"execute in {dim} as {selector} store result score @s {objective} run data get entity @s Item.count")

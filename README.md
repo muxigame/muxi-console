@@ -4,9 +4,9 @@
 
 目标：Minecraft 1.21.1、NeoForge 21.1.250、Java 21；modId `muxi_console`，Java 包 `net.muxigame.console`。原创代码、界面、模型、像素贴图、构建脚本和测试按[MIT](LICENSE)开源，公开仓库为[GitHub · muxigame/muxi-console](https://github.com/muxigame/muxi-console)。第三方模拟器及依赖保留自己的许可证，MIT不替代它们的源码和许可证交付要求。源码公开与正式二进制/服务器发布分别核验；下文开发候选及历史运行记录不代表已上线。
 
-当前发行候选为 **0.1.0**，Windows x86-64 / Minecraft 1.21.1 / NeoForge 21.1.250 / Java 21。支持21平台、22款原创设备、上传刻录卡带、多人控制、双全屏和浏览器屏幕联动；存档按机器与游戏内容分别保存，借卡不带进度，同机换同内容卡可续玩。掌机单卡槽、实际外露卡、真实加载进度、27格薄卡册、居中物品图标和2×2×1电脑显示器均保留。第三方游戏ROM及原厂BIOS由玩家依法自行准备。
+当前预览版本为 **0.1.0**，Windows x86-64 / Minecraft 1.21.1 / NeoForge 21.1.250 / Java 21。支持21平台、22款原创设备、上传刻录卡带、多人控制、双全屏和浏览器屏幕联动；存档按机器与游戏内容分别保存，借卡不带进度，同机换同内容卡可续玩。掌机单卡槽、实际外露卡、真实加载进度、27格薄卡册、居中物品图标和2×2×1电脑显示器均保留。第三方游戏ROM及原厂BIOS由玩家依法自行准备。
 
-0.1.0包内附15个第三方核心的完整对应源码、固定子模块、构建说明和原始许可证；源码附件不会被模拟工作进程加载。18组3163项检查、390资源/30489项校验以及重建MD/PCE的90项输入与冷恢复检查已通过。发行候选531648674字节，SHA256 `370f59645046e97386f5b89b3ba44d13085e37f29dccd44f4b7dec130ccc2f44`；最终整合包验证及线上发布尚在进行。历史开发与图像验收边界见[状态](docs/STATUS.md)、[机器存档审核](docs/MACHINE-SAVES.md)和[完整范围](docs/PLATFORM-COMPLETION.md)。本地build目录及历史原图不随Git仓库发布。
+0.1.0包内附15个第三方核心的完整对应源码、固定子模块、构建说明和原始许可证；源码附件不会被模拟工作进程加载。18组3163项检查、390资源/30489项校验以及重建MD/PCE的90项输入与冷恢复检查已通过。发行候选531648674字节，SHA256 `370f59645046e97386f5b89b3ba44d13085e37f29dccd44f4b7dec130ccc2f44`；真实整合包两客户端已完成掌机、卡册、刻录机和普通物品掉落检查，测试环境正常退出；线上发布正在进行。历史开发与图像验收边界见[状态](docs/STATUS.md)、[机器存档审核](docs/MACHINE-SAVES.md)和[完整范围](docs/PLATFORM-COMPLETION.md)。本地build目录及历史原图不随Git仓库发布。
 
 功能目标：玩家上传自己有权使用的 ROM，服务器校验和存储，刻录成可转交的实体卡带；原创主机、掌机、电视、控制器与刻录机；多人控制、键位绑定和 GLFW 手柄。游戏内权利声明默认 false，换文件重置；投诉与客服在云平台，不增加游戏内客服表单。已取得的本地 ROM 缓存不能远程撤回。
 
@@ -43,6 +43,8 @@ python -B tools/generate_assets.py --check
 python -B tools/fetch_cores.py --offline
 python -B tools/build.py --name <新的构建名称> --tests
 ```
+
+从固定源码重新构建两核心后，维护者运行 `python -B tools/export_rebuilt_sources.py` 导出不含无关主机环境的公开源码资料，再运行 `python -B tools/release_sources.py --prepare` 和 `--verify`，最后使用 `tools/build.py --name <新名称> --tests --release` 正式打包。现有成功产物会拒绝覆盖，不需对本轮冻结缓存重跑。独立worker构建及交付源码的重建方法见[构建说明](docs/BUILD.md)。
 
 核心获取参数见 `python -B tools/fetch_cores.py --help`；只读校验不更新 pin，初次获取必须显式选核心。运行测试必须从总仓统一分配 `client-N/runs/`，不在本仓创建 Minecraft 安装。默认编译预算512MiB/单CPU，纯测试128MiB/单CPU，独立模拟工作进程256MiB/单CPU。
 
