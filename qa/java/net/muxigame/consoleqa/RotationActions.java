@@ -27,6 +27,24 @@ final class RotationActions {
         if(mc.player==null||mc.level==null||(mc.screen==null&&!nativeRelease))throw new IllegalStateException("Actual connected input screen required");
         if(mc.screen instanceof GameScreen game)lastGame=game;
         switch(j.get("action").getAsString()){
+            case "rotation_layout_button"->{
+                GameScreen game=game(mc);var candidates=game.children().stream().filter(Button.class::isInstance).map(Button.class::cast).filter(b->b.visible&&b.active&&b.getMessage().getString().equals("布局")).toList();
+                if(candidates.size()!=1)throw new IllegalStateException("One actual visible dual-screen layout button is required");
+                Button button=candidates.getFirst();double x=button.getX()+button.getWidth()/2.0,y=button.getY()+button.getHeight()/2.0;
+                game.mouseClicked(x,y,0);game.mouseReleased(x,y,0);lastInput=new JsonObject();lastInput.addProperty("action","actual layout button click");
+            }
+            case "rotation_untouchable"->{
+                GameScreen game=game(mc);JsonObject view=game.presentationSnapshot();
+                if(view.get("rotation").getAsInt()!=0||!view.get("mode").getAsString().equals("screen")||!view.get("arrangement").getAsString().equals("side_by_side"))throw new IllegalStateException("Original-direction independent side-by-side screens required");
+                JsonObject top=null,bottom=null;for(var item:view.getAsJsonArray("screens")){var row=item.getAsJsonObject();if(row.get("id").getAsString().equals("top"))top=row;if(row.get("id").getAsString().equals("bottom"))bottom=row;}
+                if(top==null||bottom==null)throw new IllegalStateException("Actual top and bottom screen rectangles required");
+                JsonArray a=top.getAsJsonArray("rect"),b=bottom.getAsJsonArray("rect");String target=j.get("target").getAsString();double x,y;
+                if(target.equals("top")){x=a.get(0).getAsDouble()+a.get(2).getAsDouble()/2;y=a.get(1).getAsDouble()+a.get(3).getAsDouble()/2;}
+                else if(target.equals("gap")){double right=a.get(0).getAsDouble()+a.get(2).getAsDouble(),left=b.get(0).getAsDouble();if(left<=right)throw new IllegalStateException("An actual gap between source screens is required");x=(right+left)/2;y=b.get(1).getAsDouble()+b.get(3).getAsDouble()/2;}
+                else throw new IllegalArgumentException("Only actual top-screen and gap probes are supported");
+                if(j.get("pressed").getAsBoolean())game.mouseClicked(x,y,0);else game.mouseReleased(x,y,0);
+                lastInput=new JsonObject();lastInput.addProperty("target",target);lastInput.addProperty("screenX",x);lastInput.addProperty("screenY",y);lastInput.addProperty("pressed",j.get("pressed").getAsBoolean());
+            }
             case "rotation_button"->{
                 GameScreen game=game(mc);List<Button> buttons=game.children().stream().filter(Button.class::isInstance).map(Button.class::cast).filter(b->b.visible&&b.active).toList();
                 var candidates=buttons.stream().filter(b->b.getMessage().getString().contains("旋转")||b.getMessage().getString().contains("↻")).toList();
@@ -76,7 +94,7 @@ final class RotationActions {
         out.addProperty("chatBindingKey",mc.options.keyChat.getKey().getValue());out.addProperty("commandBindingKey",mc.options.keyCommand.getKey().getValue());
         if(mc.screen instanceof ChatScreen)try{var field=ChatScreen.class.getDeclaredField("input");field.setAccessible(true);var edit=(net.minecraft.client.gui.components.EditBox)field.get(mc.screen);out.addProperty("chatInput",edit.getValue());}catch(ReflectiveOperationException missing){throw new IllegalStateException("Actual native chat input is required",missing);}
         ConsoleClient.INSTANCE.saveOwner().ifPresent(owner->{Path file=mc.gameDirectory.toPath().resolve("config/muxi-console-display.json").toAbsolutePath().normalize();try{
-            if(Files.isRegularFile(file,LinkOption.NOFOLLOW_LINKS)&&file.toRealPath().equals(file)&&Files.size(file)<=262144){byte[] bytes=Files.readAllBytes(file);JsonObject stored=JsonParser.parseString(new String(bytes,java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();String key=ConsoleClient.INSTANCE.inputFeedback().platform().id()+"/"+owner.contentSHA();JsonObject prefs=new JsonObject();prefs.addProperty("schema",stored.get("schema").getAsInt());prefs.addProperty("key",key);prefs.addProperty("sha256",Hashing.sha256(bytes));if(stored.getAsJsonObject("games").has(key))prefs.add("savedRotation",stored.getAsJsonObject("games").get(key));out.add("preferences",prefs);}
+            if(Files.isRegularFile(file,LinkOption.NOFOLLOW_LINKS)&&file.toRealPath().equals(file)&&Files.size(file)<=262144){byte[] bytes=Files.readAllBytes(file);JsonObject stored=JsonParser.parseString(new String(bytes,java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();String key=ConsoleClient.INSTANCE.inputFeedback().platform().id()+"/"+owner.contentSHA();JsonObject prefs=new JsonObject();prefs.addProperty("schema",stored.get("schema").getAsInt());prefs.addProperty("key",key);prefs.addProperty("sha256",Hashing.sha256(bytes));if(stored.getAsJsonObject("games").has(key))prefs.add("savedRotation",stored.getAsJsonObject("games").get(key));JsonObject layouts=stored.has("layouts")?stored.getAsJsonObject("layouts"):null;prefs.addProperty("savedArrangement",layouts!=null&&layouts.has(key)?layouts.get(key).getAsString():"stacked");out.add("preferences",prefs);}
         }catch(Exception error){throw new IllegalStateException("Read-only display preference evidence failed",error);}});
         try{out.add("hud",(JsonObject)Class.forName("net.muxigame.console.client.ConsoleGameHud").getMethod("snapshot").invoke(null));out.addProperty("hudAvailable",true);}catch(ReflectiveOperationException missing){out.addProperty("hudAvailable",false);}
         return out;

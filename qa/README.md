@@ -2,6 +2,14 @@
 
 本目录从空白编写，只读取本仓新产品 API 和统一 runner 文档。两个 QA JAR 分侧安装，Java 包为 `net.muxigame.consoleqa`，不会包含任何产品 class，也不发布。
 
+## 双屏独立左右布局专项
+
+2026-11-09最终`dual-layout-02`主包`e9096a96…9b709f7`在统一`console-dual-layout-01`通过75条记录、5实审原图，62组5005项通过；一个NDS worker及三MC自然0/native清空，908MB payload与唯一准备已清。运行库原字节保持，精确范围见[双屏布局](../docs/FULLSCREEN-ROTATION.md)。
+
+使用当前主包、原运行库及下节同一原创NDS诊断输入构建新QA。统一runner启动后，唯一通道所有者运行 `python -B qa/dual_layout_review.py --run <规范绝对run> --build <新QA报告>`，结果另存`dual-layout-result.json`，不覆写旋转专项。工具编译不代表已在Minecraft通过。
+
+正常刻录并插入原NDS卡，纯屏中点击真实“布局”按钮，确认上屏左/下屏右且各自原方向、原比例；两种布局不改变独立旋转值。侧布局四方向分别以真实下屏黄/蓝变化验证触摸、上屏和中缝普通点击不得传成下屏触摸；同worker继续推进。原生右键回机身仍保持物理双屏位置，再回纯屏恢复偏好；实际配置读回布局/旋转，Esc重新进入也保留。窄回归F3、原生聊天及第二客户端收信，最终正常保存并核world状态。5张关键原图中4张另按真实viewport rect读取PNG中心颜色，原图仍须逐张人工检查，不能把几何字段当GPU呈现验收。
+
 ## 四向旋转与Minecraft聊天/F3专项
 
 2026-11-09最终`rotation-world-02`主包`d036c2cc…6b27be`在统一`console-rotation-02`通过87条记录，6原图实审；包含真实T、/的press→KeyboardHandler.charTyped→release，分别确认初始空和单斜杠，再发送消息给第二客户端。一个NDS worker及三MC自然0/native清空，908MB payload与唯一准备已回收。61组4882项通过，运行库1.0.1与Wii候选原字节相同。首候选84条保留，最终精确范围见[旋转与全屏](../docs/FULLSCREEN-ROTATION.md)。

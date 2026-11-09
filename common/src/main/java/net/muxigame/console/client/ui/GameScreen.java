@@ -15,6 +15,7 @@ import net.muxigame.console.client.*;
 import net.muxigame.console.client.input.NativeControls;
 import net.muxigame.console.domain.VideoLayout;
 import net.muxigame.console.domain.ViewRotation;
+import net.muxigame.console.domain.DualScreenLayout;
 import net.muxigame.console.mc.HardwareCatalog;
 import net.muxigame.console.runtime.AvFrame;
 import org.lwjgl.glfw.GLFW;
@@ -27,7 +28,8 @@ public class GameScreen extends Screen {
     private Mode mode;
     private final String displayKey;
     private int rotation;
-    private Button rotate;
+    private boolean sideBySide;
+    private Button rotate,layout;
     private boolean widgetMouseDown;
     private final Set<Integer> inputKeys=new HashSet<>();
     private JsonObject presentation=new JsonObject();
@@ -41,6 +43,7 @@ public class GameScreen extends Screen {
         this.actions=Objects.requireNonNull(actions);this.port=port;
         displayKey=actions instanceof ConsoleClient client?GameDisplayPreferences.key(client):null;
         rotation=GameDisplayPreferences.rotation(displayKey);
+        sideBySide=GameDisplayPreferences.sideBySide(displayKey);
         mode=actions instanceof ConsoleClient c&&c.handheldSession()?Mode.MODEL:Mode.SCREEN;
     }
     protected GameScreen(ClientActions actions,int port,boolean ignored){this(actions,port);}
@@ -56,8 +59,12 @@ public class GameScreen extends Screen {
         rotate=addRenderableWidget(Button.builder(Component.literal("旋转"),ignored->{
             clearInputKeys();rotation=ViewRotation.normalize(rotation+1);GameDisplayPreferences.remember(displayKey,rotation);refreshRotationTooltip();
         }).bounds(width-40,4,36,20).build());refreshRotationTooltip();
+        layout=addRenderableWidget(Button.builder(Component.literal("布局"),ignored->{
+            clearInputKeys();sideBySide=!sideBySide;GameDisplayPreferences.rememberLayout(displayKey,sideBySide);refreshLayoutTooltip();
+        }).bounds(width-80,4,36,20).build());layout.visible=false;refreshLayoutTooltip();
     }
     private void refreshRotationTooltip(){if(rotate!=null)rotate.setTooltip(Tooltip.create(Component.literal("顺时针旋转90° · 当前"+ViewRotation.degrees(rotation)+"°")));}
+    private void refreshLayoutTooltip(){if(layout!=null)layout.setTooltip(Tooltip.create(Component.literal("双屏布局："+(sideBySide?"左右":"上下")+" · 点击切换")));}
     @Override public void removed(){net.minecraft.client.KeyMapping.releaseAll();clearInputKeys();if(actions instanceof ConsoleClient c)c.clearInputVisual();}
     @Override public boolean isPauseScreen(){return false;}
     @Override public void renderBackground(GuiGraphics g,int x,int y,float partial){}
@@ -71,6 +78,13 @@ public class GameScreen extends Screen {
         return new float[]{(float)value.x0(),(float)value.y0(),(float)value.x1(),(float)value.y1()};
     }
     private static JsonArray bounds(float[] area){return rect(area[0],area[1],area[2]-area[0],area[3]-area[1]);}
+    private static float[] area(ViewRotation.Rect rect){return new float[]{(float)rect.x0(),(float)rect.y0(),(float)rect.x1(),(float)rect.y1()};}
+    private void renderSurface(GuiGraphics g,ConsoleClient client,AvFrame.Surface source,float[] area,int atlasWidth,int atlasHeight){
+        int x=Math.round(area[0]),y=Math.round(area[1]),w=Math.max(1,Math.round(area[2]-area[0])),h=Math.max(1,Math.round(area[3]-area[1]));
+        g.fill(x-2,y-2,x+w+2,y+h+2,0xff59646a);g.fill(x-1,y-1,x+w+1,y+h+1,0xff080a0b);
+        g.blit(client.picture(),x,y,w,h,(float)source.x(),(float)source.y(),source.width(),source.height(),atlasWidth,atlasHeight);
+        shownSurfaces.add(new ShownSurface(source,new float[]{x,y,x+w,y+h}));
+    }
     private void loading(GuiGraphics g,float[] video,ConsoleClient.ProgressSnapshot progress){
         int x=Math.round(video[0]),y=Math.round(video[1]),w=Math.max(1,Math.round(video[2]-video[0])),h=Math.max(1,Math.round(video[3]-video[1]));
         g.pose().pushPose();g.pose().translate(0,0,600);g.fill(x,y,x+w,y+h,0xff0b1317);g.enableScissor(x,y,x+w,y+h);
@@ -83,8 +97,14 @@ public class GameScreen extends Screen {
     @Override public void render(GuiGraphics g,int mouseX,int mouseY,float partial){
         shownSurfaces.clear();
         var canvas=ViewRotation.canvas(width,height,rotation);int viewWidth=canvas.width(),viewHeight=canvas.height();
-        double aspect=aspect();int renderedModel=-1,highlighted=0;float[] video,content;
+        double aspect=aspect();int renderedModel=-1,highlighted=0;float[] video,content;boolean arranged=false;
         var item=HandheldRenderer.heldForSession();boolean model=mode==Mode.MODEL&&!item.isEmpty();
+        ConsoleClient sourceClient=actions instanceof ConsoleClient c?c:null;
+        var sources=sourceClient==null?List.<AvFrame.Surface>of():sourceClient.surfaces();
+        var topScreen=sources.stream().filter(s->s.id().equals("top")).findFirst().orElse(null);
+        var bottomScreen=sources.stream().filter(s->s.id().equals("bottom")).findFirst().orElse(null);
+        boolean dual=topScreen!=null&&bottomScreen!=null;
+        if(layout!=null)layout.visible=!model&&dual;
         g.pose().pushPose();
         g.pose().translate(width/2f,height/2f,0);g.pose().mulPose(Axis.ZP.rotationDegrees(ViewRotation.degrees(rotation)));g.pose().translate(-viewWidth/2f,-viewHeight/2f,0);
         try{
@@ -108,6 +128,11 @@ public class GameScreen extends Screen {
             g.flush();Lighting.setupForFlatItems();var pose=g.pose();pose.pushPose();
             try{pose.translate(viewWidth/2f,viewHeight/2f,400);pose.scale(unit*16,-unit*16,unit*16);pose.mulPose(Axis.YP.rotationDegrees(180));pose.translate(-cx/16,-cy/16,-cz/16);highlighted=HandheldRenderer.presented(item,pose,g.bufferSource(),LightTexture.FULL_BRIGHT);g.flush();}
             finally{pose.popPose();Lighting.setupFor3DItems();}
+        }else if(sideBySide&&dual&&sourceClient.picture()!=null&&minecraft.getTextureManager().getTexture(sourceClient.picture()) instanceof DynamicTexture texture&&texture.getPixels()!=null){
+            var pair=DualScreenLayout.fit(new ViewRotation.Rect(3,3,viewWidth-3,viewHeight-3),topScreen.nativeWidth()/(double)topScreen.nativeHeight(),bottomScreen.nativeWidth()/(double)bottomScreen.nativeHeight(),6);
+            int aw=texture.getPixels().getWidth(),ah=texture.getPixels().getHeight();
+            renderSurface(g,sourceClient,topScreen,area(pair.first()),aw,ah);renderSurface(g,sourceClient,bottomScreen,area(pair.second()),aw,ah);
+            content=area(pair.content());video=content;aspect=pair.content().width()/pair.content().height();arranged=true;
         }else{
             video=VideoLayout.fit(3,3,viewWidth-3,viewHeight-3,aspect);int x=Math.round(video[0]),y=Math.round(video[1]),w=Math.max(1,Math.round(video[2]-video[0])),h=Math.max(1,Math.round(video[3]-video[1]));
             g.fill(x-2,y-2,x+w+2,y+h+2,0xff59646a);g.fill(x-1,y-1,x+w+1,y+h+1,0xff080a0b);actions.renderPicture(g,x,y,w,h);content=new float[]{x,y,x+w,y+h};
@@ -123,6 +148,8 @@ public class GameScreen extends Screen {
         if(!model&&progress!=null&&(progress.loading()||!progress.error().isEmpty()))loading(g,actual(video,viewWidth,viewHeight),progress);
         JsonObject out=new JsonObject();out.addProperty("sequence",++sequence);out.addProperty("mode",mode==Mode.MODEL?"model":"screen");out.addProperty("surfaceWidth",width);out.addProperty("surfaceHeight",height);out.addProperty("rotation",rotation);out.addProperty("rotationDegrees",ViewRotation.degrees(rotation));out.addProperty("virtualWidth",viewWidth);out.addProperty("virtualHeight",viewHeight);out.addProperty("showWorld",true);out.addProperty("renderedModel",renderedModel);out.addProperty("modelRendered",model);out.addProperty("videoAspect",ViewRotation.aspect(aspect,rotation));out.add("contentRect",bounds(actual(content,viewWidth,viewHeight)));out.add("videoRect",bounds(actual(video,viewWidth,viewHeight)));out.add("virtualVideoRect",bounds(video));out.addProperty("highlightedSurfaces",highlighted);out.addProperty("widgetCount",children().size());out.addProperty("buttons",actions instanceof ConsoleClient c?c.localInputVisual().buttons():0);
         if(rotate!=null)out.add("rotationButtonRect",rect(rotate.getX(),rotate.getY(),rotate.getWidth(),rotate.getHeight()));
+        out.addProperty("arrangement",arranged?"side_by_side":"stacked");out.addProperty("preferredArrangement",sideBySide?"side_by_side":"stacked");
+        if(layout!=null&&layout.visible)out.add("layoutButtonRect",rect(layout.getX(),layout.getY(),layout.getWidth(),layout.getHeight()));
         JsonArray screens=new JsonArray();for(var shown:shownSurfaces){var source=shown.source();float[] area=shown.rect();JsonObject entry=new JsonObject();entry.addProperty("id",source.id());entry.addProperty("touchable",source.touchable());entry.addProperty("nativeWidth",source.nativeWidth());entry.addProperty("nativeHeight",source.nativeHeight());entry.add("sourceRect",rect(source.x(),source.y(),source.width(),source.height()));entry.add("virtualRect",bounds(area));entry.add("rect",bounds(actual(area,viewWidth,viewHeight)));screens.add(entry);}out.add("screens",screens);
         if(progress!=null){JsonObject load=new JsonObject();load.addProperty("stage",progress.stage());load.addProperty("bytes",progress.bytes());load.addProperty("total",progress.total());load.addProperty("percent",progress.percent());load.addProperty("text",progress.text());load.addProperty("loading",progress.loading());load.addProperty("error",progress.error());out.add("progress",load);}presentation=out;
         super.render(g,mouseX,mouseY,partial);ConsoleGameHud.renderOverlays(g,mouseX,mouseY,partial);
