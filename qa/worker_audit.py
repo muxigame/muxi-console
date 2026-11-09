@@ -17,7 +17,7 @@ def watch(run,build,expect_link=False):
     d=Driver(run,build);root=d.root;marker=d.marker;parents={p["pid"]:(role,p)for role,p in marker["processes"].items()}
     path=root/"console-qa/emulator-workers.json"
     if path.exists():raise ValueError("Existing worker audit is immutable; use a new run")
-    with zipfile.ZipFile(d.build["product"]["path"])as product:runtime=__import__("hashlib").sha256(product.read("worker/runtime.jar")).hexdigest()
+    with zipfile.ZipFile(d.build.get("runtimeArtifact",d.build["product"])["path"])as product:runtime=__import__("hashlib").sha256(product.read("worker/runtime.jar")).hexdigest()
     kernel=ctypes.WinDLL("kernel32",use_last_error=True)
     kernel.OpenProcess.argtypes=[wintypes.DWORD,wintypes.BOOL,wintypes.DWORD];kernel.OpenProcess.restype=wintypes.HANDLE
     kernel.GetExitCodeProcess.argtypes=[wintypes.HANDLE,ctypes.POINTER(wintypes.DWORD)];kernel.GetExitCodeProcess.restype=wintypes.BOOL

@@ -51,7 +51,9 @@ def read_json(path):
 
 
 class Driver:
-    def __init__(self, run: Path, build: Path):
+    def __init__(self, run: Path, build: Path, *, allow_single=False, expect_jei=None):
+        self.allow_single = allow_single
+        self.expect_jei = expect_jei
         supplied = run.absolute()
         self.root = supplied.resolve(strict=True)
         if supplied != self.root:
@@ -73,10 +75,12 @@ class Driver:
         marker = read_json(self.root / "local-mc-owner.json")
         if marker.get("projectRoot") not in (str(REPO), str(WORKSPACE / "better-mc-remake")) or marker.get("instanceRoot") != str(self.root) or not marker.get("offlineLoopback") or marker.get("productionMutation"):
             raise ValueError("Independent loopback runner ownership mismatch")
-        if not re.fullmatch(r"[a-f0-9]{32}", marker.get("runId", "")) or set(marker.get("roles", [])) != {"server", "host", "guest"}:
+        self.roles = tuple(role for role in ("server", "host", "guest") if role in marker.get("roles", []))
+        expected_roles = {"server", "host"} if self.allow_single else {"server", "host", "guest"}
+        if not re.fullmatch(r"[a-f0-9]{32}", marker.get("runId", "")) or set(marker.get("roles", [])) != expected_roles:
             raise ValueError("Expected a two-real-client run")
         product = self.build["product"]
-        for role in ("server", "host", "guest"):
+        for role in self.roles:
             process = marker["processes"][role]
             actual_created = environment.process_created(process["pid"])
             if actual_created is None or abs(actual_created - process["processCreateTime"]) > 0.1 or Path(process["root"]).resolve() != self.root / role:
@@ -94,12 +98,26 @@ class Driver:
             opposite = self.build["artifacts"]["client" if role == "server" else "server"]
             if (self.root / role / "mods" / Path(opposite["path"]).name).exists():
                 raise ValueError("Opposite-side QA mod must not be installed")
+            for key, installed, scope in (("runtimeArtifact", role != "server", "client"),
+                                           ("jeiArtifact", self.expect_jei is not False, "both")):
+                extra = self.build.get(key)
+                if extra is None:
+                    continue
+                path = self.root / role / "mods" / Path(extra["path"]).name
+                if installed:
+                    if not path.is_file() or sha(path) != extra["sha256"] or path.stat().st_size != extra["bytes"]:
+                        raise ValueError("Actual split runtime/JEI bytes differ: " + str(path))
+                    accepted_extra_scopes = {"both", "server" if role == "server" else "client"} if key == "jeiArtifact" else {scope}
+                    if not any(r.get("file") == path.name and r.get("sha256") == extra["sha256"] and r.get("scope") in accepted_extra_scopes for r in marker["inputArtifacts"]):
+                        raise ValueError("Runner did not pin the exact split/JEI scope")
+                elif path.exists():
+                    raise ValueError("Unexpected runtime/JEI in explicitly excluded role: " + role)
         if hasattr(self, "marker") and marker["runId"] != self.marker["runId"]:
             raise ValueError("Run identity changed")
         return marker
 
     def command(self, role, action, body=None, timeout=60):
-        if role not in ("server", "host", "guest") or not 1 <= timeout <= 60:
+        if role not in self.roles or not 1 <= timeout <= 60:
             raise ValueError("Invalid QA command role/timeout")
         marker = self.verify()
         self.counter += 1

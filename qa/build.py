@@ -11,6 +11,7 @@ import subprocess
 import sys
 import zipfile
 import io
+import tomllib
 
 REPO = Path(__file__).resolve().parents[1]
 WORKSPACE = REPO.parent
@@ -26,11 +27,26 @@ def sha(path: Path) -> str:
     return digest.hexdigest()
 
 
-def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool = False, cartridge_review: bool = False, plan_path: Path | None = None, link_review: bool = False, media_probe: Path | None = None, expansion_diagnostics: Path | None = None, large_rom_mib: int = 8, gba_link_review: bool = False, nds_link_review: bool = False, n3ds_link_review: bool = False, latency_review: bool = False, latency_probe: Path | None = None) -> Path:
+def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool = False, cartridge_review: bool = False, plan_path: Path | None = None, link_review: bool = False, media_probe: Path | None = None, expansion_diagnostics: Path | None = None, large_rom_mib: int = 8, gba_link_review: bool = False, nds_link_review: bool = False, n3ds_link_review: bool = False, latency_review: bool = False, latency_probe: Path | None = None, runtime: Path | None = None, jei: Path | None = None, recipe_review: bool = False) -> Path:
     if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", name):
         raise ValueError("Use a new lowercase QA build name")
     if large_rom_mib not in (8,32) or large_rom_mib!=8 and not cartridge_review:raise ValueError('Large fixture must be an explicit cartridge review at 8 or 32MiB')
     product, rom, gb_rom = product.resolve(strict=True), rom.resolve(strict=True), gb_rom.resolve(strict=True)
+    runtime_artifact=None;jei_artifact=None
+    if runtime is not None:
+        runtime=runtime.resolve(strict=True)
+        if not runtime.is_relative_to(REPO/'build'):raise ValueError('Runtime must be a frozen repository build artifact')
+        with zipfile.ZipFile(runtime)as pack:
+            meta=tomllib.loads(pack.read('META-INF/neoforge.mods.toml').decode('utf-8'))
+            if {r['modId']for r in meta['mods']}!={'muxi_console_runtime'}or any(n.endswith('.class')for n in pack.namelist()):raise ValueError('Expected the independent class-free runtime resource mod')
+            worker=pack.read('worker/runtime.jar');pins_runtime=json.loads(pack.read('META-INF/muxi/extract-hashes.json'))
+            if hashlib.sha256(worker).hexdigest()!=pins_runtime['worker/runtime.jar']:raise ValueError('Runtime worker payload differs from its extraction manifest')
+        runtime_artifact=dict(path=str(runtime),bytes=runtime.stat().st_size,sha256=sha(runtime),version=str(meta['mods'][0]['version']),workerSha256=hashlib.sha256(worker).hexdigest(),modId='muxi_console_runtime',scope='client')
+    if jei is not None:
+        jei=jei.resolve(strict=True);clean=WORKSPACE/'minecraft/release/client/mods'
+        if jei.parent!=clean or jei.name!='jei-1.21.1-neoforge-19.32.0.359.jar' or jei.stat().st_size!=1616910 or sha(jei)!='0169e38d4771b1a0a6bd9fc92734297105fff2f6ad8a4ed73ad38139b824ea54':raise ValueError('Use the exact formally distributed JEI client artifact')
+        jei_artifact=dict(path=str(jei),bytes=jei.stat().st_size,sha256=sha(jei),version='19.32.0.359',modId='jei',scope='both')
+    if recipe_review and (runtime_artifact is None or jei_artifact is None):raise ValueError('Recipe review requires explicit split runtime and exact JEI')
     if REPO / "build" not in product.parents or REPO / "build/runtime-smoke" not in rom.parents:
         raise ValueError("QA inputs must be the new repository's product and original runtime diagnostic")
     if any(os.environ.get(key) for key in ("JAVA_TOOL_OPTIONS", "_JAVA_OPTIONS", "JDK_JAVA_OPTIONS")):
@@ -66,7 +82,7 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
         raise ValueError("Expected the original no-vendor-IPL3 N64 diagnostic")
     gba_rom = REPO / "build/platform-smoke/regression.gba"
     gba = None
-    if pixel_review or cartridge_review:
+    if pixel_review or cartridge_review or recipe_review:
         gba = gba_rom.read_bytes()
         baseline = json.loads((REPO / "build/platform-smoke/gba-result.json").read_text(encoding="utf-8"))
         if len(gba) != 65536 or hashlib.sha256(gba).hexdigest() != baseline.get("contentSha256") or baseline.get("exitCode") != 0:
@@ -219,10 +235,14 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
     jdk = WORKSPACE / "test-environment/toolchains/java-21/bin"
     metadata = sdk.client_metadata(game, "BatterMC5Remake")
     classpath = str(product) + os.pathsep + sdk.javac_classpath(server, game, "21.1.250", sdk.client_libraries(game, "BatterMC5Remake", metadata))
+    if runtime is not None:classpath=str(runtime)+os.pathsep+classpath
+    if jei is not None:classpath=str(jei)+os.pathsep+classpath
     sources = REPO / "qa/java/net/muxigame/consoleqa"
     pins = {"product.sha256": sha(product), "rom.sha256": sha(rom), "gb-rom.sha256": sha(gb_rom), "n64-rom.sha256": sha(n64_rom), "pong-zip.sha256": hashlib.sha256(pong).hexdigest(), "model-plan.sha256": sha(plan_path)}
     if gba is not None:
         pins["gba-rom.sha256"] = hashlib.sha256(gba).hexdigest()
+    if runtime_artifact is not None:pins['runtime.sha256']=runtime_artifact['sha256']
+    if jei_artifact is not None:pins['jei.sha256']=jei_artifact['sha256']
     for label,(path,content) in link_media.items():pins[f"link-{label}-rom.sha256"]=hashlib.sha256(content).hexdigest()
     for label,(path,content)in gba_link_media.items():pins[f"gba-link-{label}-rom.sha256"]=hashlib.sha256(content).hexdigest()
     for label,(path,content)in nds_link_media.items():pins[f"nds-link-{label}-rom.sha256"]=hashlib.sha256(content).hexdigest()
@@ -244,6 +264,9 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
                 "arcadeDiagnostic": {"source": "qa/build.py empty ZIP; MAME's built-in non-ROM Pong machine", "zipSha256": pins["pong-zip.sha256"]},
                 "modelReviewPlan": {"path": str(plan_path), "sha256": sha(plan_path)},
                 "minecraftTested": False, "physicalOSInput": False, "productionPublished": False}
+    if runtime_artifact is not None:manifest['runtimeArtifact']=runtime_artifact
+    if jei_artifact is not None:manifest['jeiArtifact']=jei_artifact
+    if recipe_review:manifest['recipeReview']={'hardwareCount':25,'portableCount':12,'desktopCount':13,'realJeiUiRequired':True,'runtimeClientOnly':True}
     if gba is not None:
         manifest["gbaDiagnosticRom"] = {"path": str(gba_rom), "sha256": pins["gba-rom.sha256"],
                 "generator": "tools/gba_diagnostic.py", "generatorSha256": sha(REPO / "tools/gba_diagnostic.py"),
@@ -301,6 +324,10 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
             args.append(str(sources / "TransferActions.java"))
             args.append(str(sources / "ExpansionActions.java"))
             args.append(str(sources / "LatencyBridge.java"))
+            args.append(str(sources / "RecipeBridge.java"))
+            if recipe_review:
+                args.append(str(sources / "RecipeActions.java"))
+                args.append(str(sources / "RecipeProbePlugin.java"))
             if latency_review:
                 args.append(str(sources / "LatencyActions.java"))
                 args.append(str(sources / "LatencyTimer.java"))
@@ -315,6 +342,7 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
         resources = {path.relative_to(classes).as_posix(): path.read_bytes() for path in classes.rglob("*.class")}
         if any(not path.startswith("net/muxigame/consoleqa/") for path in resources):
             raise RuntimeError("QA must never contain product classes")
+        if recipe_review:resources['diagnostics/recipe-review.enabled']=b'1'
         resources["console-qa-pins.properties"] = "".join(key + "=" + value + "\n" for key, value in pins.items()).encode("ascii")
         resources["diagnostics/two-port-battery.nes"] = rom.read_bytes()
         resources["diagnostics/original.gb"] = gb_rom.read_bytes()
@@ -358,6 +386,7 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
     if any(sha(path)!=digest for path,digest in n3ds_link_inputs.items()):raise RuntimeError('Original 3DS link inputs changed during QA compilation')
     if any(sha(path)!=digest for path,digest in expansion_inputs.items()):raise RuntimeError('Original expansion inputs changed during QA compilation')
     if any(sha(path)!=digest for path,digest in latency_inputs.items()):raise RuntimeError('Original latency proof/source changed during QA compilation')
+    if runtime_artifact is not None and sha(runtime)!=runtime_artifact['sha256']or jei_artifact is not None and sha(jei)!=jei_artifact['sha256']:raise RuntimeError('Split runtime/JEI changed during QA compilation')
     if any(sha(p)!=digest for p,digest in gba_link_inputs.items()):raise ValueError("GBA link QA source/baseline changed while compiling")
     if any(sha(p)!=digest for p,digest in nds_link_inputs.items()):raise ValueError('DS link baseline/source changed during QA build')
     manifest["sources"] = input_hashes
@@ -385,5 +414,8 @@ if __name__ == "__main__":
     parser.add_argument('--large-rom-mib',type=int,choices=(8,32),default=8,help='Only FF padding after the original 64KiB GBA program; 32MiB for slow resumable transfer QA')
     parser.add_argument('--latency-review',action='store_true',help='Only the verified first-party realtime GBA and audible NES regression fixtures')
     parser.add_argument('--latency-probe',type=Path,help='Explicit >=30s paced GBA inputs.json; defaults to the preserved original baseline-03')
+    parser.add_argument('--runtime',type=Path,help='Exact class-free client runtime pack; omitted for legacy fat candidates')
+    parser.add_argument('--jei',type=Path,help='Exact current clean-source JEI artifact, never a copied integration addon')
+    parser.add_argument('--recipe-review',action='store_true',help='Actual optional JEI U/R/search plus authored GB/GBA preservation')
     options = parser.parse_args()
-    build(options.name, options.product, options.rom, options.gb_rom, options.pixel_review,options.cartridge_review,options.model_plan,options.link_review,options.media_probe,options.expansion_diagnostics,options.large_rom_mib,options.gba_link_review,options.nds_link_review,options.n3ds_link_review,options.latency_review,options.latency_probe)
+    build(options.name, options.product, options.rom, options.gb_rom, options.pixel_review,options.cartridge_review,options.model_plan,options.link_review,options.media_probe,options.expansion_diagnostics,options.large_rom_mib,options.gba_link_review,options.nds_link_review,options.n3ds_link_review,options.latency_review,options.latency_probe,options.runtime,options.jei,options.recipe_review)

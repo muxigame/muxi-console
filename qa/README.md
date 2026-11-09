@@ -2,6 +2,20 @@
 
 本目录从空白编写，只读取本仓新产品 API 和统一 runner 文档。两个 QA JAR 分侧安装，Java 包为 `net.muxigame.consoleqa`，不会包含任何产品 class，也不发布。
 
+## 0.2.2候选：真实JEI配方发现与独立运行包
+
+固定 `build/recipe-split-01`：主模组1254470B／`e3a8f1308624b64f6e0dd62d92b511aa5c3bfa9213673de6de60bfe19090c569`，客户端运行包158785083B／`a237f798f8f03b158e9d1a61c9dd724217e5ec51b47c8ba3bcd139454b3d75e6`。QA03报告 `build/qa/recipe-native-03/qa-build.json` SHA `c900fd3572934c2fd3fc52c4bddfe7a67087d50c848d7bb2bf356036d02078af`；源码附件不进测试profile。此处是最小模组集验收，不代表新版已发布或完整整合包已测。
+
+统一 `client-2/runs/console-recipe-native-01` 的服务端只安装Console主包，JEI按正式整包双端安装，运行包仅客户端安装。真实Minecraft键盘回调触发U/R（包括NeoForge监听），实际JEI GUI列出掌机12款、桌面13款；`gba/nds/3ds/wii`均返回可见子型，GBA的R页显示紫染料。QA的JEI观察插件不注册或替换任何配方、成分或转移处理器；只读实际页面。搜索使用正式JEI过滤器API，不称实体键鼠输入。
+
+原 `recipe-result.json` 保留false（SHA `aee9f0c1fae11a80ce25c829096b9d3c9879d0df036e2aaa6f8924631badecfa`，前10项通过、3原图）：JEI加号合法选了背包中另一枚匿名核心，脚本曾误要求必须选命名核心。原物完整、未取合成结果、未烧卡。严格续办 `recipe-continuation-result.json`（SHA `d77201d3c5c063f89ab4dab8c898fc2d192e5ad079d51df72af852e8da6f65b6`，35/35、4新图）绑定原false及实际原槽观察SHA，正常归还那两件材料，再用原命名核心手工合成；没有重演U、搜索或加号。加号只证明实际匿名核心转移，命名核心的谓词匹配与手工合成组件保全分开验证。
+
+同机实际运行GB后重塑为兼容GBC，完整components、Machine UUID、已插整卡与原checkpoint恢复均核；再换GBA原诊断，真实映射A使实际LCD蓝转红并正常保存。两个游戏的世界存档SHA与磁盘字节一致，原两张正常发行卡各恰一次，不兼容重塑拒绝不丢内容。三worker均由独立保留Windows句柄确认signaled/exit0/native清空；三MC正常0，自动清理906087350B。7张原PNG已由root逐张审对应目标，两张U图仅拍当前首屏，全数12/13来自实际GUI列表观测。
+
+随后独立 `client-2/runs/console-recipe-no-jei-01` 双端移除JEI、服务端无运行包，一真实客户端加载主包＋运行包并连接成功：`recipe-without-jei-result.json` 2/2，SHA `78660e93184f355d459a1a3ad5c9bf66700a3a44901d27c1d0ba52e9ad114043`。此轮不发ROM、不造场景、不启动worker；两MC正常0/native审计空，自动清理449137431B。两轮唯一profile都按原owner、精确SHA、PID代际、已关闭run/租约及未知文件门正常退役，测试准备区已空。
+
+入口新增 `qa/build.py --runtime <精确运行包> --jei <干净源正式JEI> --recipe-review --model-plan <25款计划>`；`prepare_profile.py`将运行包限定客户端，JEI双端，显式 `--without-jei` 则双端都不装JEI。`recipe_review.py --phase jei|no-jei --execute`只驱动已运行、精确主包/运行包/JEI/QA及owner/PID绑定的实例；no-jei显式一客户端模式，旧默认仍要求双客户端。实际执行副本与调用源pin保存在上述QA03目录。没有实体手柄、听感或商业游戏新兼容性声明。
+
 ## 当前开发：刻录槽、重塑、分组键位与配件手持
 
 固定候选08（SHA `701c5ea2ae005abf7ba4a1b5258a3445d6d03682cd5cd8551f8abf71687d0b0a`；41组4311项纯检查）已在统一 `client-2/runs/console-upgrade-native-02` 正常闭合。QA报告 SHA `542ed3517e5e007780247a1c4dc326ede19e6bc9530a4d370502140dc571df6e`，绑定真实Wire v2的144项GB串口基线。产品之后的源码修改不由此候选验收继承。

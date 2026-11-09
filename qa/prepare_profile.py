@@ -129,7 +129,7 @@ def retire_profile(path: Path, digest: str):
     return {"profile":str(path),"sha256":digest,"normallyClosedRuns":closed}
 
 
-def prepare(name: str, build_path: Path, retire: Path | None = None, retire_sha256: str | None = None):
+def prepare(name: str, build_path: Path, retire: Path | None = None, retire_sha256: str | None = None, without_jei: bool = False):
     if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", name):
         raise ValueError("Use a new lowercase preparation name")
     build_path = release.checked_child(build_path.absolute(), REPO / "build/qa")
@@ -152,6 +152,15 @@ def prepare(name: str, build_path: Path, retire: Path | None = None, retire_sha2
             raise ValueError("Fixed browser JAR changed: " + filename)
         mods.append(source)
     products = {"product": Path(build["product"]["path"]), **{side: Path(row["path"]) for side, row in build["artifacts"].items()}}
+    extras = {}
+    for key, mod_id in (("runtimeArtifact", "muxi_console_runtime"), ("jeiArtifact", "jei")):
+        if key not in build or key == "jeiArtifact" and without_jei:
+            continue
+        row = build[key]; source = Path(row["path"])
+        ordinary(source, REPO / "build" if key == "runtimeArtifact" else clean)
+        if source.stat().st_size != row["bytes"] or release.hashes(source)["sha256"] != row["sha256"] or release.mod_ids(source) != {mod_id}:
+            raise ValueError("Exact optional runtime/JEI artifact changed")
+        extras[key] = source
     for key, source in products.items():
         ordinary(source, REPO / "build")
         expected = build["product"] if key == "product" else build["artifacts"][key]
@@ -173,8 +182,9 @@ def prepare(name: str, build_path: Path, retire: Path | None = None, retire_sha2
     if config_pin["size"] != 139:
         raise ValueError("Expected the reviewed public MCEF configuration")
     required = {"minecraft", "neoforge", "muxi_console", "mcef", "webdisplays", "muxi_console_qa_client", "muxi_console_qa_server"}
+    required.update("muxi_console_runtime" if key == "runtimeArtifact" else "jei" for key in extras)
     dependencies = {}
-    for source in [products["product"], products["server"], products["client"], *mods]:
+    for source in [products["product"], products["server"], products["client"], *mods, *extras.values()]:
         meta = metadata(source)
         dependencies[source.name] = meta.get("dependencies", {})
         for declarations in dependencies[source.name].values():
@@ -182,6 +192,7 @@ def prepare(name: str, build_path: Path, retire: Path | None = None, retire_sha2
                 if (row.get("type") == "required" or row.get("mandatory") is True) and row["modId"] not in required:
                     raise ValueError("Unexpected required dependency: " + row["modId"])
     copy_bytes = sum(row[2]["size"] for row in native_rows) + config_pin["size"] + sum(release.hashes(p)["size"] * (2 if key == "product" else 1) for key, p in products.items()) + sum(release.hashes(p)["size"] * 2 for p in mods)
+    copy_bytes += sum(p.stat().st_size * (2 if key == "jeiArtifact" else 1) for key, p in extras.items())
     if shutil.disk_usage(release_root).free < copy_bytes + 10 * 1024**3:
         raise ValueError("Preparation exceeds the normal disk reserve")
     root.mkdir(exist_ok=False)
@@ -211,6 +222,9 @@ def prepare(name: str, build_path: Path, retire: Path | None = None, retire_sha2
     for side in ("client", "server"):
         for source in [products["product"], products[side], *mods]:
             copy(side, "mods/" + source.name, source)
+        for key, source in extras.items():
+            if key == "jeiArtifact" or side == "client":
+                copy(side, "mods/" + source.name, source)
     for relative, source, expected in native_rows:
         copy("client", relative, source, expected)
     copy("client", config_relative, config, config_pin)
@@ -235,6 +249,8 @@ def prepare(name: str, build_path: Path, retire: Path | None = None, retire_sha2
               "serverFiles": len(profile["serverFiles"]), "publicMcefNativeFiles": len(native_rows), "runtimeWritableBytes": writable,
               "qaBuild": str(build_path), "qaBuildSha256": release.hashes(build_path)["sha256"], "dependencies": dependencies,
               "minecraftStarted": False, "currentPointerChanged": False, "productionWrites": False, "releaseApproved": False}
+    if extras or without_jei:
+        result.update(optionalArtifacts={key: build[key] for key in extras}, withoutJei=without_jei)
     if retired is not None:
         result["retiredPreparation"]=retired
     release.write_json(root / "preparation-result.json", result)
@@ -247,5 +263,6 @@ if __name__ == "__main__":
     parser.add_argument("--build", required=True, type=Path)
     parser.add_argument("--retire-profile", type=Path)
     parser.add_argument("--retire-profile-sha256")
+    parser.add_argument("--without-jei", action="store_true", help="Explicit optional-integration boot: omit JEI on both sides")
     options = parser.parse_args()
-    print(json.dumps(prepare(options.name, options.build, options.retire_profile, options.retire_profile_sha256), ensure_ascii=False, indent=2))
+    print(json.dumps(prepare(options.name, options.build, options.retire_profile, options.retire_profile_sha256, options.without_jei), ensure_ascii=False, indent=2))
