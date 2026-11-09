@@ -2,9 +2,10 @@
   "schema": 3,
   "scope": "Exact upstream snapshots, recursive fixed gitlinks, unmodified notices, all reviewed Java/native workers, independent link adapters and immutable system resources; release-ready flags remain independently reviewed",
   "delivery": {
-    "method": "complete source embedded in the same binary JAR",
-    "jarEntry": "META-INF/muxi/source-bundle.zip",
-    "notAnExternalSourceOffer": true
+    "method": "complete source attachment alongside runtime binary",
+    "attachment": "muxi-console-runtime-1.0.0-sources.zip",
+    "releaseUrl": "https://github.com/muxigame/muxi-console/releases/tag/v0.2.2",
+    "notAnOnRequestOffer": true
   },
   "firstParty": {
     "license": "MIT",
@@ -241,8 +242,13 @@
       },
       {
         "path": "docs/BUILD.md",
-        "bytes": 6691,
-        "sha256": "e542bfb3345bd09fea7e47d2282c15befbcfe4439b96ee0d997472f5f6df6366"
+        "bytes": 9610,
+        "sha256": "b0e08792f0cf1417521563a429fe6a4d594be3db597337df9cf7b550e9381381"
+      },
+      {
+        "path": "tools/package_runtime.py",
+        "bytes": 8592,
+        "sha256": "c857f30627ad1f2bdb0abccec97095559c5d3ee0f6d3afd52826fd6cba3c0ffb"
       },
       {
         "path": "tools/rebuild_cores.py",
@@ -251,8 +257,8 @@
       },
       {
         "path": "tools/release_sources.py",
-        "bytes": 48645,
-        "sha256": "0ae3b679356249ad67a49678d0339932fdb4cbe877d9d437a12bd80f37c8cafd"
+        "bytes": 50064,
+        "sha256": "8d0f105e3126f4b678bd8211c284a07e016f5c170b1b862ec9f5d3f27b409798"
       },
       {
         "path": "third-party/worker-dependencies.json",

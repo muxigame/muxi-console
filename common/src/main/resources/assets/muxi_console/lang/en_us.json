@@ -102,6 +102,8 @@
   "ui.muxi_console.writer.slot": "Blank card",
   "ui.muxi_console.core": "Console core",
   "ui.muxi_console.reshape_hint": "Craft a console core with its dye to choose hardware. An installed cartridge must remain compatible.",
+  "jei.muxi_console.hardware_core": "Cores are crafting materials and cannot play games directly. Craft a core with the shown dye in your inventory or at a crafting table to make the selected hardware.",
+  "jei.muxi_console.hardware_reshape": "You can also reshape existing hardware of the same kind. Its machine identity, cartridge and progress are preserved. An inserted cartridge must be compatible with the new hardware; otherwise save and leave, then remove the cartridge in your inventory first.",
   "tooltip.muxi_console.slot": "Cartridge slot",
   "tooltip.muxi_console.slot_empty": "Empty",
   "tooltip.muxi_console.core": "Crafting core; cannot play games directly",

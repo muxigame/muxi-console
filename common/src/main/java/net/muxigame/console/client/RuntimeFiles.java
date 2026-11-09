@@ -13,7 +13,21 @@ import net.muxigame.console.runtime.*;
 public final class RuntimeFiles {
     private static final Gson GSON=new Gson();private static final long MAX_EXTRACT=512L*1024*1024;
     private final Path base,runtimeRoot;private final JsonObject hashes,sizes,workerDependencies;
-    private static JsonObject resource(String path)throws IOException{try(InputStream input=RuntimeFiles.class.getResourceAsStream(path)){if(input==null)throw new IOException("运行时清单缺失："+path);byte[] bytes=input.readNBytes(131073);if(bytes.length>131072)throw new IOException("运行时清单过大");return GSON.fromJson(new String(bytes,StandardCharsets.UTF_8),JsonObject.class);}catch(JsonParseException|IllegalStateException bad){throw new IOException("运行时清单无效",bad);}}
+    /** Resolve the companion mod explicitly: a named Java module cannot assume another mod's resources are its own. */
+    private static InputStream packaged(String path)throws IOException{
+        String name=path.startsWith("/")?path.substring(1):path;
+        if(name.isEmpty()||name.startsWith("/")||name.contains("\\")||name.contains("..")||name.contains(":"))throw new IOException("运行时资源路径无效");
+        var mods=net.neoforged.fml.ModList.get();
+        var runtime=mods==null?null:mods.getModFileById("muxi_console_runtime");
+        if(runtime!=null){
+            Path file=runtime.getFile().findResource(name);
+            if(!Files.isRegularFile(file))throw new IOException("模拟器运行库资源缺失："+name);
+            return Files.newInputStream(file);
+        }
+        // Retain the old bundled layout for existing offline tools; released clients require the companion mod.
+        return RuntimeFiles.class.getResourceAsStream("/"+name);
+    }
+    private static JsonObject resource(String path)throws IOException{try(InputStream input=packaged(path)){if(input==null)throw new IOException("运行时清单缺失："+path);byte[] bytes=input.readNBytes(131073);if(bytes.length>131072)throw new IOException("运行时清单过大");return GSON.fromJson(new String(bytes,StandardCharsets.UTF_8),JsonObject.class);}catch(JsonParseException|IllegalStateException bad){throw new IOException("运行时清单无效",bad);}}
     public RuntimeFiles(Path gameDirectory)throws IOException{
         base=gameDirectory.resolve("muxi-console").toAbsolutePath().normalize();runtimeRoot=gameDirectory.resolve("natives/muxi-console").toAbsolutePath().normalize();safeDirectory(base);safeDirectory(runtimeRoot);
         hashes=resource("/META-INF/muxi/extract-hashes.json");sizes=resource("/META-INF/muxi/extract-sizes.json");workerDependencies=resource("/META-INF/muxi/worker-dependencies.json");
@@ -42,7 +56,7 @@ public final class RuntimeFiles {
     public Path extract(String name)throws IOException{
         if(!hashes.has(name))throw new IOException("当前平台没有打包此模拟器："+name);String expected=hashes.get(name).getAsString();long expectedBytes=sizes.get(name).getAsLong();Path file=runtimeRoot.resolve(name).normalize();if(!file.startsWith(runtimeRoot))throw new IOException("运行时路径无效");safeDirectory(file.getParent());
         if(Files.exists(file,LinkOption.NOFOLLOW_LINKS)){if(!Files.isRegularFile(file,LinkOption.NOFOLLOW_LINKS)||Files.isSymbolicLink(file))throw new IOException("运行时文件路径不安全");if(Files.size(file)==expectedBytes&&Hashing.sha256(file).equals(expected))return file;}
-        try(InputStream input=RuntimeFiles.class.getResourceAsStream("/"+name)){
+        try(InputStream input=packaged(name)){
             if(input==null)throw new IOException("打包文件缺失："+name);Path temp=Files.createTempFile(file.getParent(),"extract-",".tmp");
             try{var digest=Hashing.sha256Digest();long count=0;try(OutputStream output=Files.newOutputStream(temp,StandardOpenOption.WRITE,StandardOpenOption.TRUNCATE_EXISTING)){byte[] buffer=new byte[32768];for(int n;(n=input.read(buffer))!=-1;){count+=n;if(count>expectedBytes)throw new IOException("运行时文件超出清单大小");digest.update(buffer,0,n);output.write(buffer,0,n);}}if(count!=expectedBytes||!HexFormat.of().formatHex(digest.digest()).equals(expected))throw new IOException("运行时文件校验失败");try{Files.move(temp,file,StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.ATOMIC_MOVE);}catch(AtomicMoveNotSupportedException unsupported){Files.move(temp,file,StandardCopyOption.REPLACE_EXISTING);}}finally{Files.deleteIfExists(temp);}
         }return file;

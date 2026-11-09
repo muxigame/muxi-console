@@ -11,6 +11,7 @@ import tarfile
 from urllib.parse import urljoin
 from urllib.request import Request, urlopen
 import zipfile
+from package_runtime import SOURCE_ATTACHMENT, SOURCE_RELEASE_URL
 
 ROOT = Path(__file__).resolve().parents[1]
 CACHE = ROOT.parent / "test-environment/cache/muxi-console/third-party-source"
@@ -42,7 +43,8 @@ MINGW_NOTICES={
     "COPYING.winpthreads.txt":(2883,"63263614cdd29f2f93cba85e992f041b31f9fc7b4033692f31269489a8a1b177"),
     "COPYING.winstorecompat.txt":(1099,"fa7368d1f93d890c173177475d8ec7aff265a7d08f1f364d66f74d138978ce36"),
 }
-REVIEWED_BUILD = ("LICENSE","tools/build_worker.py","docs/BUILD.md","tools/rebuild_cores.py","tools/release_sources.py","third-party/worker-dependencies.json","tools/build_link_adapter.py","tools/build_gba_link_adapter.py","tools/build_melondsds.py","tools/export_melondsds_sources.py","tools/build_ds_link_adapter.py","tools/export_ds_link_sources.py","tools/expansion_sources.py","tools/fetch_expansion_cores.py","tools/prepare_dolphin_system.py","tools/build_3ds_link_adapter.py","tools/export_3ds_link_sources.py","tools/build_dolphin.py","tools/export_dolphin_sources.py")
+REVIEWED_BUILD = ("LICENSE","tools/build_worker.py","docs/BUILD.md","tools/package_runtime.py","tools/rebuild_cores.py","tools/release_sources.py","third-party/worker-dependencies.json","tools/build_link_adapter.py","tools/build_gba_link_adapter.py","tools/build_melondsds.py","tools/export_melondsds_sources.py","tools/build_ds_link_adapter.py","tools/export_ds_link_sources.py","tools/expansion_sources.py","tools/fetch_expansion_cores.py","tools/prepare_dolphin_system.py","tools/build_3ds_link_adapter.py","tools/export_3ds_link_sources.py","tools/build_dolphin.py","tools/export_dolphin_sources.py")
+SOURCE_DELIVERY = {"method": "complete source attachment alongside runtime binary", "attachment": SOURCE_ATTACHMENT, "releaseUrl": SOURCE_RELEASE_URL, "notAnOnRequestOffer": True}
 
 def reviewed_first_party():
     runtime=sorted((ROOT/"common/src/main/java/net/muxigame/console/runtime").glob("*.java"))
@@ -256,6 +258,26 @@ def file_record(path, relative=None):
     return {"path": relative or path.relative_to(ROOT).as_posix(), "bytes": path.stat().st_size, "sha256": digest(path)}
 
 
+def bundle_bytes(bundle, name, body):
+    info = zipfile.ZipInfo(name, (2026, 1, 1, 0, 0, 0))
+    info.compress_type = zipfile.ZIP_STORED
+    info.create_system = 3
+    info.external_attr = 0o100644 << 16
+    bundle.writestr(info, body)
+
+
+def bundle_file(bundle, name, path):
+    # File mtimes and source-host permissions must not force players to replace an unchanged runtime.
+    info = zipfile.ZipInfo(name, (2026, 1, 1, 0, 0, 0))
+    info.compress_type = zipfile.ZIP_STORED
+    info.create_system = 3
+    info.external_attr = 0o100644 << 16
+    info.file_size = path.stat().st_size
+    with path.open("rb") as source, bundle.open(info, "w", force_zip64=True) as target:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            target.write(chunk)
+
+
 def source_pin(pin):
     """Source-relevant pins exclude later release approval and runtime-test flags."""
     platform=pin["platforms"]["windows-x86_64"];delivery=pin.get("sourceDelivery",{})
@@ -432,15 +454,15 @@ def prepare():
     pending = [name for name, entry in entries.items() if entry["delivery"] != "complete-snapshot"]
     all_sources=[*(e["source"] for e in entries.values() if "source" in e),*dependencies.values(),*(e["source"] for e in auxiliary.values())]
     licenses = sorted({"third-party/licenses/README.md",*(row["licenseFile"] for row in toolchain_notices), *(license for entry in all_sources for source in flatten(entry) for license in source["licenseFiles"])})
-    manifest = {"schema": 3, "scope": "Exact upstream snapshots, recursive fixed gitlinks, unmodified notices, all reviewed Java/native workers, independent link adapters and immutable system resources; release-ready flags remain independently reviewed", "delivery": {"method": "complete source embedded in the same binary JAR", "jarEntry": "META-INF/muxi/source-bundle.zip", "notAnExternalSourceOffer": True}, "firstParty": {"license": "MIT", "workerJavaFiles": len(REVIEWED_RUNTIME), "reviewedRuntimeFiles":sorted(REVIEWED_RUNTIME),"protocolSource": "common/src/main/java/net/muxigame/console/runtime/Wire.java", "files": first_party_records}, "cores": entries, "dependencies": dependencies,"auxiliary":auxiliary,"resources":resources, "licenseFiles": [file_record(ROOT / p) for p in licenses], "pendingCores": pending,"pendingArtifacts":pending, "completeForAllPackagedCores": not pending,"completeForAllPackagedArtifacts":not pending}
+    manifest = {"schema": 3, "scope": "Exact upstream snapshots, recursive fixed gitlinks, unmodified notices, all reviewed Java/native workers, independent link adapters and immutable system resources; release-ready flags remain independently reviewed", "delivery": SOURCE_DELIVERY, "firstParty": {"license": "MIT", "workerJavaFiles": len(REVIEWED_RUNTIME), "reviewedRuntimeFiles":sorted(REVIEWED_RUNTIME),"protocolSource": "common/src/main/java/net/muxigame/console/runtime/Wire.java", "files": first_party_records}, "cores": entries, "dependencies": dependencies,"auxiliary":auxiliary,"resources":resources, "licenseFiles": [file_record(ROOT / p) for p in licenses], "pendingCores": pending,"pendingArtifacts":pending, "completeForAllPackagedCores": not pending,"completeForAllPackagedArtifacts":not pending}
     manifest["compilerRuntimeNotices"]={"llvm20":{"source":"https://github.com/llvm/llvm-project/tree/llvmorg-20.1.7","notices":llvm_notices,"scope":"LLVM-MinGW statically linked runtime library notices retained in addition to each core's own full source and notices; compiler toolchain archives are not shipped as binaries"},"mingwW64":{"toolchain":MINGW_TOOLCHAIN,"notices":mingw_notices,"scope":"Exact original notices supplied with the fixed compiler's x86-64 MinGW runtime, winpthreads and compatibility libraries; retaining all notices does not assert every optional runtime component is linked"}}
     manifest["thirdPartyPatches"]=patch_records
     manifest["thirdPartyNativeSources"]=gpl_native_records
     MANIFEST.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     bundle = CACHE / "muxi-console-third-party-sources.zip"
-    readme = """Complete source delivery for muxi-console
+    readme = f"""Complete source delivery for muxi-console
 
-This ZIP is embedded at META-INF/muxi/source-bundle.zip in the same mod JAR as the corresponding DLLs and Java worker. It is complete source delivery, not a promise to provide sources on request. Read source_manifest.json for exact binary/source hashes, upstream revisions and license scope. pendingArtifacts must be empty for release. Source completeness is separate from runtime compatibility and release approval.
+This ZIP is the complete {SOURCE_ATTACHMENT} attachment distributed alongside the runtime binary at {SOURCE_RELEASE_URL} . It contains the corresponding source for all shipped DLLs, system resources and the Java worker. The runtime JAR retains its source manifest, original licenses and exact attachment identity; players do not need to download source archives to run the emulator. This is complete source delivery, not a promise to provide sources on request. Read source_manifest.json for exact binary/source hashes, upstream revisions and license scope. pendingArtifacts must be empty for release. Source completeness is separate from runtime compatibility and release approval.
 
 archives/: immutable upstream source snapshots. Strip each tar archive's single directory prefix. Then install its recursively listed submodule archives at installPath relative to its parent source root. Revisions are the exact parent gitlinks, never current HEAD. nonGitlinkDeclarations are stale vendored manifests, not missing source. All source headers, original copyrights, LICENSE/COPYING and vendor files are retained in these complete trees.
 
@@ -454,10 +476,10 @@ JNA is distributed under the LGPL-2.1-or-later alternative; its original dual-li
 """
     temporary = bundle.with_suffix(".zip.part")
     with zipfile.ZipFile(temporary, "w", zipfile.ZIP_STORED) as zip:
-        zip.writestr("README-SOURCES.txt", readme); zip.write(MANIFEST, "source_manifest.json")
-        for record in first_party_records: zip.write(ROOT / record["path"], "first-party/" + record["path"])
-        for record in patch_records:zip.write(ROOT/record["path"],"third-party-patches/"+record["path"])
-        for record in gpl_native_records:zip.write(ROOT/record["path"],"third-party-native-sources/"+record["path"])
+        bundle_bytes(zip, "README-SOURCES.txt", readme.encode("utf-8")); bundle_file(zip, "source_manifest.json", MANIFEST)
+        for record in first_party_records: bundle_file(zip, "first-party/" + record["path"], ROOT / record["path"])
+        for record in patch_records:bundle_file(zip,"third-party-patches/"+record["path"],ROOT/record["path"])
+        for record in gpl_native_records:bundle_file(zip,"third-party-native-sources/"+record["path"],ROOT/record["path"])
         added = set();added_archives={}
         for root in all_sources:
             for source in flatten(root):
@@ -467,12 +489,12 @@ JNA is distributed under the LGPL-2.1-or-later alternative; its original dual-li
                 if name in added_archives:
                     if added_archives[name]!=identity:raise ValueError("Conflicting shared source archive identity")
                 else:
-                    zip.write(archive,name);added_archives[name]=identity
-                    if "rebuildReport" in source: zip.writestr("build-records/" + PurePosixPath(name).name + ".json", json.dumps(source["rebuildReport"], indent=2) + "\n")
+                    bundle_file(zip,name,archive);added_archives[name]=identity
+                    if "rebuildReport" in source: bundle_bytes(zip,"build-records/" + PurePosixPath(name).name + ".json", (json.dumps(source["rebuildReport"], indent=2) + "\n").encode("utf-8"))
                 for license in source["licenseFiles"]:
-                    if license not in added: zip.write(ROOT / license, license); added.add(license)
+                    if license not in added: bundle_file(zip, license, ROOT / license); added.add(license)
         for license in licenses:
-            if license not in added: zip.write(ROOT / license, license); added.add(license)
+            if license not in added: bundle_file(zip, license, ROOT / license); added.add(license)
     temporary.replace(bundle)
     delivery = {"schema": 1, "manifestSha256": digest(MANIFEST), "bundle": file_record(bundle, bundle.name), "completeForAllPackagedCores": not pending}
     DELIVERY.write_text(json.dumps(delivery, indent=2) + "\n", encoding="utf-8")
@@ -483,6 +505,7 @@ def source_delivery(require_complete=True):
     """Offline build gate. It never downloads, changes pins, or grants release permission."""
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     delivery = json.loads(DELIVERY.read_text(encoding="utf-8"))
+    if manifest.get("delivery") != SOURCE_DELIVERY: raise ValueError("Corresponding-source delivery layout changed; prepare the bundle again")
     if digest(MANIFEST) != delivery["manifestSha256"]: raise ValueError("Source manifest changed; prepare the bundle again")
     if require_complete and (manifest["pendingCores"] or not manifest["completeForAllPackagedCores"] or manifest.get("pendingArtifacts") or manifest.get("completeForAllPackagedArtifacts") is not True): raise ValueError("Incomplete corresponding-source artifacts")
     cores = json.loads((ROOT / "third-party/cores.json").read_text(encoding="utf-8"))["cores"]

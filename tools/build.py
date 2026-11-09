@@ -8,7 +8,10 @@ sys.path.insert(0, str(WORKSPACE / 'better-mc-remake/scripts'))
 import local_mc_runtime as sdk
 
 def sha(path):
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    digest=hashlib.sha256()
+    with path.open('rb') as stream:
+        for chunk in iter(lambda:stream.read(1024*1024),b''):digest.update(chunk)
+    return digest.hexdigest()
 
 def build(name, tests, release=False):
     out = ROOT / 'build' / name
@@ -22,6 +25,12 @@ def build(name, tests, release=False):
     metadata = sdk.client_metadata(game, 'BatterMC5Remake')
     libraries = sdk.client_libraries(game, 'BatterMC5Remake', metadata)
     classpath = sdk.javac_classpath(server, game, '21.1.250', libraries)
+    # JEI is an optional runtime integration, never embedded in either product JAR.
+    jei=WORKSPACE/'minecraft/release/client/mods/jei-1.21.1-neoforge-19.32.0.359.jar'
+    jei_pin={'version':'19.32.0.359','bytes':1616910,'sha256':'0169e38d4771b1a0a6bd9fc92734297105fff2f6ad8a4ed73ad38139b824ea54'}
+    if not jei.is_file() or jei.stat().st_size!=jei_pin['bytes'] or sha(jei)!=jei_pin['sha256']:
+        raise ValueError('JEI compile-only SDK differs from its exact installed pin')
+    classpath+=os.pathsep+str(jei)
     sources = sorted((ROOT/'common/src/main/java').rglob('*.java')) + sorted((ROOT/'domain/src/main/java').rglob('*.java'))
     if not sources:
         raise ValueError('No independent sources')
@@ -103,20 +112,6 @@ def build(name, tests, release=False):
             raise ValueError('Packaged core lacks verified corresponding source and licensing')
         from release_sources import source_delivery as verified_source_delivery
         source_delivery=verified_source_delivery(require_complete=True)
-        resources['META-INF/muxi/source-bundle.zip']=Path(source_delivery['path']).read_bytes()
-        if len(resources['META-INF/muxi/source-bundle.zip'])!=source_delivery['bytes'] or hashlib.sha256(resources['META-INF/muxi/source-bundle.zip']).hexdigest()!=source_delivery['sha256']:
-            raise ValueError('Verified source bundle changed during packaging')
-        resources['META-INF/muxi/source_manifest.json']=(ROOT/'third-party/source_manifest.json').read_bytes()
-        if hashlib.sha256(resources['META-INF/muxi/source_manifest.json']).hexdigest()!=source_delivery['manifestSha256']:
-            raise ValueError('Verified source manifest changed during packaging')
-        resources['META-INF/muxi/SOURCE-DELIVERY.txt']=(
-            'Muxi Console '+version+'\n\n'
-            'Original project: https://github.com/muxigame/muxi-console (MIT).\n'
-            'Third-party components retain their own licenses; see licenses/ and source_manifest.json.\n'
-            'Complete corresponding core and worker source material accompanies this binary in source-bundle.zip.\n'
-            'Extract that ZIP, then follow README-SOURCES.txt and the included build instructions.\n'
-            'source-bundle.zip SHA256: '+source_delivery['sha256']+'\n'
-        ).encode('utf-8')
     resources['META-INF/muxi/cores.json']=json.dumps(core_manifest,indent=2).encode()
     for link_id, library_id in [("sameboy-link", "sameboy_link"), ("mgba-link", "mgba_link"), ("melondsds-link", "melondsds_link"), ("azahar-link", "azahar_link")]:
         link_manifest_path=ROOT/"third-party"/(link_id+".json")
@@ -148,16 +143,15 @@ def build(name, tests, release=False):
             resources['cores/'+platform+'/'+name+('.dll' if platform.startswith('windows') else '.so')]=body
     resources['META-INF/muxi/extract-hashes.json']=json.dumps({k:hashlib.sha256(v).hexdigest() for k,v in resources.items() if k.startswith(('worker/','cores/','system/'))},sort_keys=True).encode()
     resources['META-INF/muxi/extract-sizes.json']=json.dumps({k:len(v) for k,v in resources.items() if k.startswith(('worker/','cores/','system/'))},sort_keys=True).encode()
-    with zipfile.ZipFile(artifact,'w',zipfile.ZIP_DEFLATED) as jar:
-        for p in classes.rglob('*.class'):resources[p.relative_to(classes).as_posix()]=p.read_bytes()
-        for path,body in sorted(resources.items()):
-            info=zipfile.ZipInfo(path,(2026,1,1,0,0,0));info.compress_type=zipfile.ZIP_STORED if path=='META-INF/muxi/source-bundle.zip' else zipfile.ZIP_DEFLATED;jar.writestr(info,body)
+    for p in classes.rglob('*.class'):resources[p.relative_to(classes).as_posix()]=p.read_bytes()
+    from package_runtime import package_artifacts
+    split=package_artifacts(artifact,resources,source_delivery)
     if any(sha(ROOT/p)!=h for p,h in inputs.items()): raise RuntimeError('Sources changed during compilation')
-    report={'artifact':str(artifact),'sha256':sha(artifact),'version':version,'releasePackaging':release,'correspondingSource':None if source_delivery is None else {'bytes':source_delivery['bytes'],'sha256':source_delivery['sha256']},'sources':inputs,'tests':test_results,'minecraftTested':False,'productionPublished':False}
+    report={'artifact':str(artifact),'bytes':artifact.stat().st_size,'sha256':sha(artifact),'version':version,**split,'compileOnlyDependencies':{'jei':{'path':str(jei),**jei_pin}},'releasePackaging':release,'correspondingSource':None if source_delivery is None else {'bytes':source_delivery['bytes'],'sha256':source_delivery['sha256']},'sources':inputs,'tests':test_results,'minecraftTested':False,'productionPublished':False}
     (out/'build.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
     print(json.dumps({k:v for k,v in report.items() if k!='sources'}))
     return artifact
 
 if __name__=='__main__':
     sys.stdout.reconfigure(encoding='utf-8',errors='replace')
-    p=argparse.ArgumentParser();p.add_argument('--name',required=True);p.add_argument('--tests',action='store_true');p.add_argument('--release',action='store_true',help='Require complete verified corresponding source and bundle it with third-party licenses');a=p.parse_args();build(a.name,a.tests,a.release)
+    p=argparse.ArgumentParser();p.add_argument('--name',required=True);p.add_argument('--tests',action='store_true');p.add_argument('--release',action='store_true',help='Require complete verified sources and emit a separate same-release source attachment');a=p.parse_args();build(a.name,a.tests,a.release)

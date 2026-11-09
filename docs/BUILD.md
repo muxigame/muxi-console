@@ -40,10 +40,10 @@ build/<name>/build.json        源码/依赖哈希、工具链与可选比较结
 可与一个已构建产品JAR核对：
 
 ```text
-python -B tools/build_worker.py --name worker-compare-01 --java-home /path/to/jdk-21 --cache /path/to/dependency-cache --compare /path/to/muxi-console.jar
+python -B tools/build_worker.py --name worker-compare-01 --java-home /path/to/jdk-21 --cache /path/to/dependency-cache --compare /path/to/muxi-console-runtime.jar
 ```
 
-`--compare`复核产品提取清单、七个嵌入依赖的大小/SHA256、每个worker class，以及整个 `worker/runtime.jar` 原始字节；不相同则保留结果并返回失败。Java编译器和ZIP压缩器版本也会记录，其他工具链若生成不同字节可从逐class差异定位。
+`--compare`复核运行库的提取清单、七个嵌入依赖的大小/SHA256、每个worker class，以及整个 `worker/runtime.jar` 原始字节；不相同则保留结果并返回失败。旧版单JAR也可作为比较输入。Java编译器和ZIP压缩器版本也会记录，其他工具链若生成不同字节可从逐class差异定位。
 
 `machine-saves-04`的基准worker为51301字节，SHA256 `99012c1f6043fa9520cda82f14f6d297405cfd1c293446956f7c0eb6fb17ae3a`。对应工具链为Java21.0.2+13-58、Python3.12.7、zlib1.2.13；这只是该基准的精确重建条件，不代表其他Java21发行版必然产生不同结果。
 
@@ -63,7 +63,23 @@ python -B tools/fetch_cores.py --offline
 python -B tools/build.py --name mc-local-01 --tests
 ```
 
-正式发行还需运行 `tools/release_sources.py --prepare` 和 `--verify`，核对18个实际打包核心、4个联机附属库、Dolphin Sys、依赖及工作进程的对应源码，然后使用 `tools/build.py --name release-local-01 --tests --release`。诊断专用2048不进入发行包。该模式拒绝未完成源码/许可交付或尚未批准发行的核心，离线复核源码包与当前二进制pin，并把完整源码包、清单、构建说明和许可证一并放入产品JAR的 `META-INF/muxi/`。第三方源码不加入Minecraft类路径，也不会被模拟工作进程加载。
+正式发行还需运行 `tools/release_sources.py --prepare` 和 `--verify`，核对18个实际打包核心、4个联机附属库、Dolphin Sys、依赖及工作进程的对应源码，然后使用 `tools/build.py --name release-local-01 --tests --release`。诊断专用2048不进入发行包。该模式拒绝未完成源码/许可交付或尚未批准发行的核心，离线复核源码包与当前二进制pin，并输出三份独立文件：
+
+| 文件 | 内容与安装位置 |
+|---|---|
+| `muxi-console-<主版本>+mc1.21.1.jar` | 领域与Minecraft集成、模型/UI、服务器所需的小型核心身份清单。客户端与服务端均安装。 |
+| `muxi-console-runtime-1.0.0+mc1.21.1.jar` | 18个普通核心、4个联机附属库、独立worker/JNA/LWJGL、Dolphin Sys、提取清单、许可证和源码附件指纹。仅客户端放入`mods/`。 |
+| `muxi-console-runtime-1.0.0-sources.zip` | 完整对应源码、固定子模块、补丁、构建说明与原始许可。与运行库放在同一个公开发行页，不放入Minecraft整合包、`mods/`或类路径。 |
+
+`build.json`保留主包的`artifact`、`bytes`、`sha256`、`version`，新增`runtimeArtifact`（`path/bytes/sha256/version`）和正式发行的`sourceAttachment`（`path/bytes/sha256`）。开发构建也输出主包和运行库，但`sourceAttachment=null`，运行库内明确写为尚未验证完整源码交付，不能作为正式发行。
+
+运行库是NeoForge官方支持的[lowcodefml资源模组](https://docs.neoforged.net/docs/1.21.1/gettingstarted/modfiles/)，modId为`muxi_console_runtime`，没有`@Mod`入口类。主包只在客户端声明必需依赖，独立服务端无需运行库。客户端通过该mod文件的`findResource`路径读取固定资源，避免把跨模组资源可见性依赖于Java模块的默认类加载行为。每次提取仍校验原条目的大小和SHA256；拆包不改变核心、worker、系统资源的身份或存档格式。
+
+`tools/package_runtime.py`中的运行库版本与源码附件发行地址独立于主包版本。文件排序、ZIP日期和metadata固定，主包版本、构建时间、本机路径不会写入运行库。只修改主包代码或metadata时，保持已验证的源码包与运行库输入不变，运行库便保持相同SHA256；发布套件可按独立文件增量更新。修改worker、核心、依赖、系统资源或运行库内许可/源码内容时，应正常更新运行库版本和主包兼容范围，并重新执行对应验证，不以旧版本名发布不同字节。源码准备工具会验证实际输入；仅主包变化而源码交付输入未变时无需重复`--prepare`，`--verify`仍必需。
+
+源码附件首发与运行库1.0.0同在`v0.2.2`发行页；其文件名、字节数、SHA256及完整源码清单写入运行库的`META-INF/muxi/SOURCE-DELIVERY.txt`和`source_manifest.json`。后续主包可以继续引用这份未变的运行库和对应源码附件，不需要玩家每次重新下载约605MB源码。源码仍为完整现成下载，不能以只给上游链接或按需索取承诺替代。正式发布须在发行页实际上传该附件。
+
+构建读取客户端干净源中已安装的`jei-1.21.1-neoforge-19.32.0.359.jar`作为仅编译依赖，固定1616910字节、SHA256 `0169e38d4771b1a0a6bd9fc92734297105fff2f6ad8a4ed73ad38139b824ea54`；JEI不会嵌入主包、运行库或worker，未安装JEI的客户端仍可使用模组其余功能。
 
 BlastEm与PCE的源码构建入口为 `tools/rebuild_cores.py`；新增核心和联机桥的入口为 `tools/build_dolphin.py`、`tools/build_ds_link_adapter.py`、`tools/build_3ds_link_adapter.py`、`tools/build_link_adapter.py`、`tools/build_gba_link_adapter.py`。使用固定官方提交、校验过的LLVM-MinGW/GNU Make工具链和单CPU编译；具体输入、完整固定子模块、补丁、生成步骤及源码与二进制哈希随源码包交付。GPL派生NWM补丁及原文件保留GPL标记，不纳入第一方MIT授权。其他核心保留官方发行的精确二进制及其自报提交所对应的完整源码，不声称重建出了相同二进制。MinGW运行库、winpthreads和LLVM libunwind的原始许可一并交付。
 

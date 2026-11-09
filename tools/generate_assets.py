@@ -726,6 +726,8 @@ def languages():
         "ui.muxi_console.writer.slot":("空白卡带","Blank card"),
         "ui.muxi_console.core":("游戏机核心","Console core"),
         "ui.muxi_console.reshape_hint":("将游戏机核心与对应染料放入合成栏制作机型；已装卡带须与新机型兼容。","Craft a console core with its dye to choose hardware. An installed cartridge must remain compatible."),
+        "jei.muxi_console.hardware_core":("核心用于合成，不能直接游玩。将核心和所示染料放入合成栏或工作台，制作对应机型。","Cores are crafting materials and cannot play games directly. Craft a core with the shown dye in your inventory or at a crafting table to make the selected hardware."),
+        "jei.muxi_console.hardware_reshape":("也可重塑同类已有设备，保留机器身份、卡带和进度。已装卡带必须兼容新机型；不兼容时，请先保存离开，再在背包中取出卡带。","You can also reshape existing hardware of the same kind. Its machine identity, cartridge and progress are preserved. An inserted cartridge must be compatible with the new hardware; otherwise save and leave, then remove the cartridge in your inventory first."),
         "tooltip.muxi_console.slot":("卡带槽","Cartridge slot"),
         "tooltip.muxi_console.slot_empty":("未插入卡带","Empty"),
         "tooltip.muxi_console.core":("合成用核心，不能直接游玩","Crafting core; cannot play games directly"),
