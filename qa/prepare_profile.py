@@ -69,6 +69,34 @@ def retire_profile(path: Path, digest: str):
             raise ValueError("Prior preparation run lease is not released")
         closed.append({"runId":marker["runId"],"run":str(run)})
     expected={"preparation-owner.json","preparation-result.json","validation-profile.json"}
+    overlay_receipt=root/"overlay-receipt.json"
+    if overlay_receipt.exists():
+        ordinary(overlay_receipt,root)
+        if overlay_receipt.stat().st_size>65536:
+            raise ValueError("Unexpected canonical overlay receipt size")
+        value=json.loads(overlay_receipt.read_text(encoding="utf-8"))
+        if set(value)!={"path","sha256","files","removals"} or not isinstance(value["path"],str) or not re.fullmatch(r"[a-f0-9]{64}",value["sha256"]):
+            raise ValueError("Unexpected canonical overlay receipt fields")
+        source=release.checked_child(WORKSPACE/value["path"],WORKSPACE)
+        ordinary(source,WORKSPACE)
+        if source.stat().st_size>65536 or release.hashes(source)["sha256"]!=value["sha256"]:
+            raise ValueError("Canonical overlay source changed")
+        original=json.loads(source.read_text(encoding="utf-8-sig"))
+        if value["files"]!=original.get("files") or value["removals"]!=original.get("removals",[]) or value["removals"]!=profile.get("sourceRemovals",[]):
+            raise ValueError("Canonical overlay receipt differs from the frozen source/profile")
+        declared=set()
+        for row in value["files"]:
+            if set(row)!={"source","path","size","sha256","sides"} or not row["sides"] or any(side not in ("client","server") for side in row["sides"]):
+                raise ValueError("Unexpected canonical overlay entry")
+            for side in row["sides"]:
+                selected=[entry for entry in profile[side+"Files"] if entry["path"]==row["path"]]
+                if (side,row["path"]) in declared or len(selected)!=1 or selected[0].get("overlay") is not True or any(selected[0].get(key)!=row[key] for key in ("size","sha256")) or selected[0].get("origin")!=row["source"]:
+                    raise ValueError("Canonical overlay entry differs from the frozen profile")
+                declared.add((side,row["path"]))
+        actual_overlays={(side,row["path"]) for side in ("client","server") for row in profile[side+"Files"] if row.get("overlay")}
+        if actual_overlays!=declared:
+            raise ValueError("Canonical overlay receipt omits a frozen entry")
+        expected.add("overlay-receipt.json")
     # The canonical full-pack preparer always emits this public receipt, including
     # when it needed no independent copies. Accept only that empty, bounded shape.
     copy_receipt=root/"link-limit-copy-receipt.json"
