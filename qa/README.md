@@ -201,3 +201,12 @@ GPU 结果来自 `BrowserLinkClient.nativeBrowser` 返回的真实 `MCEFBrowser.
 
 
 0.2.0正式整包使用最终3159e379包及当前干净源，双客户端29项通过，64条原生回执全部成功；没有Console QA模组，不重跑ROM矩阵。三MC正常退出0、native审计空，约6.93GB回收。完整准备的overlay-receipt仅在来源JSON原SHA、文件/移除声明及冻结profile逐项相同时纳入正常retire边界，未知文件仍拒绝；这不删除原run/日志或放宽路径/进程门。
+
+
+## 0.2.1实时输入、声音及存档回归（2026-11-09）
+
+候选04 `d7cb4c07…9ecaefa` 在统一 `client-2/runs/console-realtime-native-02` 完成GBA34、远端NES12、NDS保存恢复15项，共61项；5原PNG逐张实审（NES原版教程遮一小片，只接受两区颜色目标）。正常60次及250ms续租延迟30次短按完整，GBA回调到core p95约16ms／实际纹理约26ms，两个稳定声音线路窗口drop/underrun增量0。NDS后台/最终profile+CPU状态和同机冷恢复通过，600ms实际回执延迟不冻结CPU。纯检查60组4782项。正式包 `ef319411…ccc5c6` 与候选全部894个运行条目逐字节一致，仅增加完整源码交付材料。
+
+定时热窗禁止轮询QA：`QaOwner`在命令前于主线程校验整个产品JAR，旧03每650ms取数会污染画面cadence。新driver只在热窗前后经过原owner/hash门，本地RenderPost收集真实回调、native像素和音频线路；不削弱校验、不把计划10ms冒充实际按住时间。03创作/生存窗口假设失败及受观测影响的原false、两轮实际PCM掉样失败均保留。只在设备open/start启动阶段显式清积压，启动丢弃与总drop都记数；稳态测试不裁剪或隐藏掉样。
+
+产品计数/日志有7次自然worker关闭；独立observer实际持有并确认6个signaled exit0/native清理句柄，漏过NES离席后短恢复PID81956，不宣称独立7覆盖。三MC exit0、最终native审计空、1.073GB运行payload及唯一准备回收已核。源与详细不可覆盖结果留在对应build/run，未发布QA模组。实体OS键鼠、音响听感、完整整包下的性能及任意商业游戏未由本次最小双端回归替代。
