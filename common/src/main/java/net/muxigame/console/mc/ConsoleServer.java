@@ -34,6 +34,10 @@ public final class ConsoleServer {
         public final Map<UUID,String> ready=new HashMap<>();public final Map<Long,Map<Integer,short[]>> analog=new TreeMap<>();
         public final Map<UUID,LoadingWatch> loading=new HashMap<>();
         public final FrameFlowWindow frameFlowWindow=new FrameFlowWindow(8,180000);public boolean frameFlow;public long frameFlowWaitTicks;
+        public final HostFrameClock hostFrameClock=new HostFrameClock();public boolean hostClock,clockDispatched;public long clockLeaseSent;
+        public final HoldSaveBarrier holdSaveBarrier=new HoldSaveBarrier();
+        private final long[] clockInputSequences={-1,-1,-1,-1},clockInputAt=new long[4],clockInputRateAt=new long[4];
+        private final double[] clockInputTokens={32,32,32,32};private final PortInput[] clockInputs={PortInput.IDLE,PortInput.IDLE,PortInput.IDLE,PortInput.IDLE};
         public final Map<Long,Map<Integer,PortInput>> fullInputs=new TreeMap<>();public final Map<Integer,PortInput> heldFullInputs=new HashMap<>();
         public final Map<Integer,int[]> heldInputs=new HashMap<>();
         public final Map<Long,Map<UUID,String>> crc=new HashMap<>();
@@ -181,9 +185,15 @@ public final class ConsoleServer {
                     if(Set.of(Platform.NDS,Platform.N3DS,Platform.WII).contains(r.card.platform())){var profile=s.profiles.latest(new MachineProfileVault.Key(r.saveKey.machineUUID(),r.card.platform()));if(profile.isPresent()&&(!b.has("profileGeneration")||!profile.get().generation().toString().equals(b.get("profileGeneration").getAsString())))throw new DomainException("profile_stale","机器文件存档已改变，请重新加载机器");}
                     double fps=b.get("fps").getAsDouble();if(!Double.isFinite(fps)||fps<10||fps>120)throw new DomainException("core","核心帧率超出当前运行范围");
                     if(r.fingerprint.isEmpty()){r.fingerprint=fp;r.fps=fps;}else if(!r.fingerprint.equals(fp))throw new DomainException("core","多人玩家需要使用相同版本的模拟器核心");
-                    if(r.card.platform().sharedRuntime()&&r.session.host().equals(p.getUUID())&&!r.ready.containsKey(p.getUUID())&&b.has("frameFlow")&&b.get("frameFlow").getAsInt()==1){r.frameFlowWindow.reset(r.session.epoch(),r.frame,now());r.frameFlow=true;r.frameFlowWaitTicks=0;}
+                    if(r.card.platform().sharedRuntime()){
+                        if(!b.has("hostClock")||b.get("hostClock").getAsInt()!=1)throw new DomainException("core","请同时更新客户端与服务器的游戏机模组");
+                        if(!r.hostClock)r.hostFrameClock.reset(r.session.epoch(),r.fps,r.frame,System.nanoTime());
+                        r.hostClock=true;r.frameFlow=false;
+                    }
                     r.ready.put(p.getUUID(),fp);
                 }
+                case "clock_input" -> clockInput(p,s,m);
+                case "clock_progress" -> {Room r=ownedRoomForSave(p,s,b);observeHostFrame(r,p.getUUID(),b.get("frame").getAsLong());}
                 case "frame_done" -> {
                     Room r=ownedRoomForSave(p,s,b);if(!r.frameFlow||!r.session.host().equals(p.getUUID())||!r.ready.containsKey(p.getUUID()))throw new DomainException("authority","只有已准备的主控制席可确认模拟进度");
                     r.frameFlowWindow.acknowledge(r.session.epoch(),b.get("tick").getAsLong(),b.get("frame").getAsLong(),now());
@@ -210,7 +220,7 @@ public final class ConsoleServer {
     }
     static void failed(ServerPlayer p,Wire.Message m,Exception e){
             // Old input can already be in transit when a normal leave or epoch transition completes.
-            if(e instanceof DomainException stale&&stale.code().equals("session")&&(Set.of("input","ready","frame_crc","load_progress").contains(m.operation())||m.operation().startsWith("shared_")))return;
+            if(e instanceof DomainException stale&&stale.code().equals("session")&&(Set.of("input","clock_input","clock_progress","ready","frame_crc","load_progress").contains(m.operation())||m.operation().startsWith("shared_")))return;
             JsonObject failure=object();failure.addProperty("code",e instanceof DomainException de?de.code():"request");failure.addProperty("message",UserErrors.describe(e));failure.addProperty("operation",m.operation());for(String identity:List.of("request","room","epoch","transaction","upload","token","saveTransaction","machine","content","platform","profileGeneration","generation"))if(m.body().has(identity)&&m.body().get(identity).isJsonPrimitive()&&m.body().get(identity).getAsString().length()<=256)failure.add(identity,m.body().get(identity));MuxiConsole.LOG.warn("Console request failed op={} actor={} code={}",m.operation(),p.getUUID(),failure.get("code").getAsString(),e);Wire.send(p,"error",failure);
             if(m.operation().startsWith("upload_")&&!Set.of("upload_abort","upload_touch","upload_ticket").contains(m.operation())){WorldState current=WORLDS.get(p.server);if(current!=null){UploadLease failed=current.burns.get(p.getUUID());if(sameUpload(failed,m.body())&&current.burns.remove(p.getUUID(),failed)){if(current.cloud!=null)current.cloud.abort(p.getUUID(),failed.upload);else if(current.localMedia!=null)current.localMedia.abort(p.getUUID(),failed.upload);else try{current.uploads.abort(p.getUUID(),failed.upload);}catch(IOException cleanup){MuxiConsole.LOG.warn("Failed upload cleanup",cleanup);}}}}
             if((m.operation().startsWith("profile_")&&!m.operation().equals("profile_read"))||m.operation().equals("save_progress")){WorldState current=WORLDS.get(p.server);if(current!=null)ProfileMessages.cancelFor(p.server,current,p.getUUID(),m.body());}
@@ -300,10 +310,51 @@ public final class ConsoleServer {
         return r!=null&&r.card.sha256().equals(hash)&&r.session.epoch()==b.get("epoch").getAsLong()&&r.session.isController(p.getUUID())&&(!r.card.platform().sharedRuntime()||r.session.host().equals(p.getUUID()))&&validParticipant(p,r);
     }
     private static void sendStart(ServerPlayer p,Room r){sendStart(p,r,false);}
-    private static void sendStart(ServerPlayer p,Room r,boolean open){JsonObject j=cardJson(r.card);j.addProperty("machine",r.saveKey.machineUUID().toString());j.addProperty("content",r.saveKey.contentSHA());j.addProperty("presentation",r.presentations.getOrDefault(p.getUUID(),"fullscreen"));j.addProperty("open",open);boolean leader=p.getUUID().equals(r.session.host());j.addProperty("room",r.key);j.addProperty("epoch",r.session.epoch());j.addProperty("leader",leader);j.addProperty("shared",r.card.platform().sharedRuntime());j.addProperty("sharedPeers",Math.max(0,r.session.controllers().size()-1));j.addProperty("loadProgress",true);j.addProperty("romTickets",true);j.addProperty("frameFlow",r.card.platform().sharedRuntime());j.addProperty("position",r.device==null?Long.MIN_VALUE:r.device.getBlockPos().asLong());j.addProperty("port",r.session.controllers().entrySet().stream().filter(e->e.getValue().equals(p.getUUID())).findFirst().orElseThrow().getKey());if(!r.card.platform().sharedRuntime()||leader){StateMessages.attachLatest(WORLDS.get(p.server),r,j);ProfileMessages.attachLatest(WORLDS.get(p.server),r,j);}try{String name=WORLDS.get(p.server).content.describe(r.card.sha256()).filename();int dot=name.lastIndexOf('.');String extension=dot<0?"":name.substring(dot+1).toLowerCase(Locale.ROOT);if(r.card.platform().acceptsExtension(extension))j.addProperty("extension",extension);}catch(IOException|RuntimeException missing){MuxiConsole.LOG.warn("Console content metadata could not be attached hash={}",r.card.sha256(),missing);j.addProperty("loadError","卡带文件信息缺失，请联系服主检查内容存储");}Wire.send(p,"session_start",j);}
-    private static void requestCheckpoint(MinecraftServer server,Room r){ServerPlayer host=server.getPlayerList().getPlayer(r.session.host());if(host!=null){JsonObject j=object();j.addProperty("room",r.key);j.addProperty("epoch",r.session.epoch());Wire.send(host,"checkpoint_request",j);}}
-    static void saved(MinecraftServer server,WorldState world,Room r,MachineStateVault.Snapshot snapshot){
+    private static void sendStart(ServerPlayer p,Room r,boolean open){JsonObject j=cardJson(r.card);j.addProperty("machine",r.saveKey.machineUUID().toString());j.addProperty("content",r.saveKey.contentSHA());j.addProperty("presentation",r.presentations.getOrDefault(p.getUUID(),"fullscreen"));j.addProperty("open",open);boolean leader=p.getUUID().equals(r.session.host());j.addProperty("room",r.key);j.addProperty("epoch",r.session.epoch());j.addProperty("leader",leader);j.addProperty("shared",r.card.platform().sharedRuntime());j.addProperty("sharedPeers",Math.max(0,r.session.controllers().size()-1));j.addProperty("loadProgress",true);j.addProperty("romTickets",true);j.addProperty("frameFlow",false);if(r.card.platform().sharedRuntime())j.addProperty("hostClock",1);j.addProperty("position",r.device==null?Long.MIN_VALUE:r.device.getBlockPos().asLong());j.addProperty("port",r.session.controllers().entrySet().stream().filter(e->e.getValue().equals(p.getUUID())).findFirst().orElseThrow().getKey());if(!r.card.platform().sharedRuntime()||leader){StateMessages.attachLatest(WORLDS.get(p.server),r,j);ProfileMessages.attachLatest(WORLDS.get(p.server),r,j);}try{String name=WORLDS.get(p.server).content.describe(r.card.sha256()).filename();int dot=name.lastIndexOf('.');String extension=dot<0?"":name.substring(dot+1).toLowerCase(Locale.ROOT);if(r.card.platform().acceptsExtension(extension))j.addProperty("extension",extension);}catch(IOException|RuntimeException missing){MuxiConsole.LOG.warn("Console content metadata could not be attached hash={}",r.card.sha256(),missing);j.addProperty("loadError","卡带文件信息缺失，请联系服主检查内容存储");}Wire.send(p,"session_start",j);}
+    private static void requestCheckpoint(MinecraftServer server,Room r){ServerPlayer host=server.getPlayerList().getPlayer(r.session.host());if(host!=null){JsonObject j=object();j.addProperty("room",r.key);j.addProperty("epoch",r.session.epoch());j.addProperty("hold",true);j.addProperty("holdToken",r.holdSaveBarrier.issue(UUID.randomUUID()));Wire.send(host,"checkpoint_request",j);}}
+    static void cancelCheckpointHold(MinecraftServer server,Room room,String token){
+        if(token==null||token.isEmpty()||!token.equals(room.holdSaveBarrier.token()))return;
+        JsonObject resume=clockAddress(room);resume.addProperty("holdToken",token);ServerPlayer host=server.getPlayerList().getPlayer(room.session.host());if(host!=null)Wire.send(host,"clock_resume",resume);
+        UUID waiting=room.pendingJoin;room.pendingJoin=null;room.pendingLeave=null;room.requestedLeaves.clear();room.holdSaveBarrier.clear();
+        WorldState world=WORLDS.get(server);if(world!=null){StateMessages.cancel(server,world,room.session.host());ProfileMessages.cancel(server,world,room.session.host());}
+        if(waiting!=null){ServerPlayer player=server.getPlayerList().getPlayer(waiting);if(player!=null)error(player,"save","存档未完成，已取消本次加入，请重试");}
+    }
+    /** The host owns the hardware clock, while the server still owns its epoch, physical seat and save scope. */
+    public static void observeHostFrame(Room room,UUID actor,long completedFrame){
+        if(!room.hostClock||!room.hostFrameClock.started()||!room.session.host().equals(actor)||!room.ready.containsKey(actor))throw new DomainException("authority","只有当前主控制席可以报告游戏进度");
+        if(!room.clockDispatched&&completedFrame!=room.frame)throw new DomainException("host_clock","游戏机尚未获得实时运行授权");
+        room.frame=room.hostFrameClock.observe(room.session.epoch(),completedFrame,System.nanoTime());
+    }
+    private static JsonObject clockAddress(Room room){JsonObject j=object();j.addProperty("room",room.key);j.addProperty("epoch",room.session.epoch());j.addProperty("port",room.session.controllers().entrySet().stream().filter(e->e.getValue().equals(room.session.host())).findFirst().orElseThrow().getKey());return j;}
+    private static void clockLease(MinecraftServer server,Room room,boolean start)throws IOException{
+        ServerPlayer host=server.getPlayerList().getPlayer(room.session.host());if(host==null)return;long time=System.nanoTime();
+        if(!start&&time-room.clockLeaseSent<1_000_000_000L)return;
+        JsonObject j=clockAddress(room);j.addProperty("leaseMillis",15000);j.addProperty("frame",room.frame);j.addProperty("fps",room.fps);
+        if(start){
+            List<PortInput> inputs=new ArrayList<>();for(int port=0;port<room.session.ports();port++)inputs.add(room.clockInputAt[port]!=0&&time-room.clockInputAt[port]<=300_000_000L?room.clockInputs[port].withoutMicrophone():PortInput.IDLE);
+            Wire.send(host,"clock_start",j,InputCodec.encodeFrame(new InputFrame(inputs)));
+        }else Wire.send(host,"clock_lease",j);
+        room.clockLeaseSent=time;
+    }
+    private static void clockInput(ServerPlayer actor,WorldState world,Wire.Message message)throws IOException{
+        JsonObject body=message.body();Room room=ownedRoom(actor,world,body);int port=body.get("port").getAsInt();long sequence=body.get("sequence").getAsLong();
+        if(!room.card.platform().sharedRuntime()||port<0||port>=room.session.ports()||!room.session.controls(actor.getUUID(),port)||!room.ready.containsKey(actor.getUUID())||!body.has("inputVersion")||body.get("inputVersion").getAsInt()!=InputCodec.VERSION||sequence<0)throw new DomainException("authority","输入需要当前已准备的游戏机控制席");
+        if(sequence<=room.clockInputSequences[port])return;
+        long time=System.nanoTime(),previous=room.clockInputRateAt[port];room.clockInputSequences[port]=sequence;
+        room.clockInputTokens[port]=Math.min(32,room.clockInputTokens[port]+(previous==0?0:Math.max(0,time-previous)/1e9*120));room.clockInputRateAt[port]=time;
+        if(room.clockInputTokens[port]<1)return;room.clockInputTokens[port]--;
+        PortInput input=InputCodec.decode(message.data());
+        room.clockInputs[port]=input.withoutMicrophone();room.clockInputAt[port]=time;
+        if(!room.hostClock||!room.clockDispatched||actor.getUUID().equals(room.session.host()))return;
+        ServerPlayer host=actor.server.getPlayerList().getPlayer(room.session.host());if(host==null)return;
+        JsonObject forwarded=object();forwarded.addProperty("room",room.key);forwarded.addProperty("epoch",room.session.epoch());forwarded.addProperty("port",port);forwarded.addProperty("sequence",sequence);forwarded.addProperty("inputVersion",InputCodec.VERSION);forwarded.addProperty("expiresMillis",300);
+        Wire.send(host,"clock_input",forwarded,message.data());
+    }
+    static void saved(MinecraftServer server,WorldState world,Room r,MachineStateVault.Snapshot snapshot,String holdToken){
         if(world.rooms.get(r.key)!=r||!snapshot.key().equals(r.saveKey)||!snapshot.fingerprint().equals(r.fingerprint)||snapshot.frame()<r.frame)return;
+        if(r.pendingJoin==null&&r.pendingLeave==null&&r.requestedLeaves.isEmpty())return;
+        if(!r.holdSaveBarrier.accept(holdToken,snapshot.frame(),r.frame))return;
+        r.holdSaveBarrier.clear();
         UUID joiningId=r.pendingJoin;r.pendingJoin=null;if(r.pendingLeave!=null)r.requestedLeaves.add(r.pendingLeave);r.pendingLeave=null;
         List<UUID> previous=List.copyOf(r.session.controllers().values());boolean changed=false;
         // Apply accepted departures against this committed state before opening another epoch.
@@ -318,7 +369,7 @@ public final class ConsoleServer {
         if(joiningId!=null)r.openOnStart.add(joiningId);if(changed)synchronize(server,r);
     }
     static void saveProgress(Room room){long observed=now();if(room.pendingJoin!=null||room.pendingLeave!=null)room.handoverStarted=observed;if(room.handheldSaveDeadline!=0)room.handheldSaveDeadline=observed+15000;}
-    private static void synchronize(MinecraftServer server,Room r){r.observedEpoch=r.session.epoch();r.inputs.resetForEpoch();r.ready.clear();r.loading.clear();r.analog.clear();r.heldInputs.clear();r.fullInputs.clear();r.heldFullInputs.clear();r.crc.clear();r.fingerprint="";r.frame=0;r.carry=0;r.waiting=0;r.frameFlow=false;r.frameFlowWaitTicks=0;r.frameFlowWindow.reset(r.session.epoch(),0,now());for(UUID id:r.session.controllers().values()){ServerPlayer p=server.getPlayerList().getPlayer(id);if(p!=null)sendStart(p,r,r.openOnStart.remove(id));}}
+    private static void synchronize(MinecraftServer server,Room r){r.observedEpoch=r.session.epoch();r.inputs.resetForEpoch();r.ready.clear();r.loading.clear();r.analog.clear();r.heldInputs.clear();r.fullInputs.clear();r.heldFullInputs.clear();r.crc.clear();r.fingerprint="";r.frame=0;r.carry=0;r.waiting=0;r.frameFlow=false;r.frameFlowWaitTicks=0;r.hostClock=false;r.clockDispatched=false;r.hostFrameClock.clear();r.holdSaveBarrier.clear();r.clockLeaseSent=0;Arrays.fill(r.clockInputSequences,-1);Arrays.fill(r.clockInputAt,0);Arrays.fill(r.clockInputRateAt,0);Arrays.fill(r.clockInputTokens,32);Arrays.fill(r.clockInputs,PortInput.IDLE);r.frameFlowWindow.reset(r.session.epoch(),0,now());for(UUID id:r.session.controllers().values()){ServerPlayer p=server.getPlayerList().getPlayer(id);if(p!=null)sendStart(p,r,r.openOnStart.remove(id));}}
     private static void leave(ServerPlayer p,WorldState s,String reason){for(Room r:new ArrayList<>(s.rooms.values()))if(r.session.isController(p.getUUID())){List<UUID> previous=List.copyOf(r.session.controllers().values());long endingEpoch=r.session.epoch();r.session.leave(p.getUUID());JsonObject j=object();j.addProperty("room",r.key);j.addProperty("epoch",endingEpoch);j.addProperty("reason",reason);Wire.send(p,"session_end",j);if(r.session.isClosed()||r.session.controllers().isEmpty()){s.rooms.remove(r.key);for(UUID id:previous){ServerPlayer other=p.server.getPlayerList().getPlayer(id);if(other!=null&&!id.equals(p.getUUID()))Wire.send(other,"session_end",j);}}else synchronize(p.server,r);}}
     private static void stopRoom(MinecraftServer server,WorldState s,Room r,String reason){s.rooms.remove(r.key);MuxiConsole.LOG.info("Console session ended room={} epoch={} platform={} reason={}",r.key,r.session.epoch(),r.card.platform().id(),reason);JsonObject j=object();j.addProperty("room",r.key);j.addProperty("epoch",r.session.epoch());j.addProperty("reason",reason);for(UUID id:r.session.controllers().values()){StateMessages.cancel(server,s,id);ServerPlayer p=server.getPlayerList().getPlayer(id);if(p!=null)Wire.send(p,"session_end",j);}}
     private static void stopDevice(DeviceEntity d,String reason){if(d.getLevel() instanceof net.minecraft.server.level.ServerLevel level){WorldState s=WORLDS.get(level.getServer());if(s!=null){Room r=s.rooms.get(key(d));if(r!=null)stopRoom(level.getServer(),s,r,reason);}}}
@@ -333,9 +384,18 @@ public final class ConsoleServer {
                 else if(p!=null)leave(p,s,"已离开主机或收起掌机");else stopRoom(server,s,r,"玩家已离线");
             }}
             if(!s.rooms.containsKey(r.key))continue;
-            if(r.pendingJoin!=null||r.pendingLeave!=null){if(now()-r.handoverStarted>60000){UUID waiting=r.pendingJoin!=null?r.pendingJoin:r.pendingLeave;ServerPlayer waitingPlayer=server.getPlayerList().getPlayer(waiting);if(waitingPlayer!=null)error(waitingPlayer,"save","存档同步超时，原会话已继续");r.pendingJoin=null;r.pendingLeave=null;if(!r.requestedLeaves.isEmpty()){r.pendingLeave=r.requestedLeaves.iterator().next();r.handoverStarted=now();requestCheckpoint(server,r);continue;}}else continue;}
+            if(r.hostClock&&r.clockDispatched)try{clockLease(server,r,false);}catch(IOException failure){MuxiConsole.LOG.warn("Console clock lease could not be encoded room={}",r.key,failure);stopRoom(server,s,r,"游戏机运行授权未能续期，已保留最近一次存档");continue;}
+            if(r.pendingJoin!=null||r.pendingLeave!=null){
+                if(now()-r.handoverStarted<=60000)continue;
+                cancelCheckpointHold(server,r,r.holdSaveBarrier.token());
+            }
             if(r.session.epoch()!=r.observedEpoch)synchronize(server,r);
             if(!r.ready.keySet().containsAll(r.session.controllers().values())){long observed=now();boolean stalled=false;for(UUID id:r.session.controllers().values())if(!r.ready.containsKey(id)&&r.loading.computeIfAbsent(id,key->new LoadingWatch(observed)).expired(observed))stalled=true;if(stalled)stopRoom(server,s,r,"卡带加载长时间没有进展，请检查连接或客户端日志后重试");continue;}
+            if(r.hostClock){
+                if(!r.clockDispatched)try{r.hostFrameClock.reset(r.session.epoch(),r.fps,r.frame,System.nanoTime());clockLease(server,r,true);r.clockDispatched=true;}catch(IOException failure){MuxiConsole.LOG.warn("Console clock could not be started room={}",r.key,failure);stopRoom(server,s,r,"游戏机实时运行未能启动");}
+                // Epoch/physical ownership and inputs are server controlled; CPU frames never wait on Minecraft ticks.
+                ProfileMessages.isSerializing(server,r);continue;
+            }
             if(ProfileMessages.isSerializing(server,r))continue;
             if(r.frameFlow){
                 if(r.frameFlowWindow.expired(r.session.epoch(),now())){stopRoom(server,s,r,"客户端长时间没有完成模拟进度，已保留最近一次存档");continue;}

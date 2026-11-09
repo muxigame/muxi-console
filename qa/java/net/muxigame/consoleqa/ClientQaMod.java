@@ -72,6 +72,7 @@ public final class ClientQaMod {
             ClientGate.receiver = message -> {
                 mediaMetrics.accept(message);
                 if(TransferActions.delay(message,productReceiver))return;
+                if(LatencyBridge.delay(message,productReceiver))return;
                 ExpansionActions.received(message);
                 productReceiver.accept(message);
                 LinkActions.received(message);
@@ -98,6 +99,7 @@ public final class ClientQaMod {
     private JsonObject dispatch(JsonObject command) {
         Minecraft client = Minecraft.getInstance();
         String action = command.get("action").getAsString();
+        if(action.startsWith("latency_")){LatencyBridge.command(client,command,owner);return observe(client);}
         if(action.startsWith("transfer_")){TransferActions.command(command);return observe(client);}
         if(action.startsWith("expansion_")){try{ExpansionActions.command(client,command);return observe(client);}catch(Exception e){throw new IllegalStateException(e);}}
         if(action.startsWith("linkqa_")){try{LinkActions.command(client,command,owner);return observe(client);}catch(Exception e){throw new IllegalStateException(e);}}
@@ -266,6 +268,7 @@ public final class ClientQaMod {
         result.addProperty("stateProbe",stateProbe);
         result.addProperty("sharedPcmBytes",sharedPcmBytes);result.addProperty("sharedPcmNonzeroSamples",sharedPcmNonzeroSamples);
         result.add("mediaMetrics",mediaMetrics.snapshot());
+        if(LatencyBridge.enabled())result.add("latency",LatencyBridge.observe(client));
         result.add("transferFixture",TransferActions.observe());
         JsonArray pads=new JsonArray();for(var device:net.muxigame.console.client.input.InputProfiles.availableGamepads()){JsonObject pad=new JsonObject();pad.addProperty("id",device.id());pad.addProperty("name",device.name());try{pad.addProperty("guidSha256",java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(device.guid().getBytes(java.nio.charset.StandardCharsets.UTF_8))));}catch(java.security.NoSuchAlgorithmException impossible){throw new IllegalStateException(impossible);}pads.add(pad);}result.add("availableGamepads",pads);
         result.add("shared",shared());JsonObject video=new JsonObject(),audio=new JsonObject();videoHistory.forEach((k,v)->video.addProperty(k.toString(),v));audioHistory.forEach((k,v)->audio.addProperty(k.toString(),v));result.add("sharedVideoHistory",video);result.add("sharedAudioHistory",audio);

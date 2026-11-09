@@ -67,7 +67,9 @@ public final class BrowserLinkServer {
         if(message.operation().equals("browser_refresh")){World w=world(p.server);w.pendingRefresh.add(p.getUUID());refreshPlayer(p,w);return true;}
         if(!Set.of("browser_frame","browser_audio").contains(message.operation()))throw new IOException("未知外接屏幕操作");
         String key=j.get("room").getAsString();long epoch=j.get("epoch").getAsLong(),number=j.get("frame").getAsLong();ConsoleServer.Room current=ConsoleServer.state(p.server).rooms.get(key);if(current==null||current.session.epoch()!=epoch)return true;ConsoleServer.Room room=room(p,key,epoch);
-        if(!room.session.host().equals(p.getUUID())||!room.ready.containsKey(p.getUUID())||number<0||number>room.frame)throw new IOException("只有当前主控制席可以提供游戏画面");
+        if(!room.session.host().equals(p.getUUID())||!room.ready.containsKey(p.getUUID()))throw new IOException("只有当前主控制席可以提供游戏画面");
+        if(room.hostClock)ConsoleServer.observeHostFrame(room,p.getUUID(),number);
+        if(number<0||number>room.frame)throw new IOException("游戏画面超过当前模拟进度");
         World world=world(p.server);List<Binding> bindings=world.bindings.values().stream().filter(b->b.room.equals(key)&&b.epoch==epoch&&valid(p.server,b)).toList();if(bindings.isEmpty())return true;
         Stream stream=world.streams.computeIfAbsent(key+"/"+epoch,k->new Stream());long now=System.nanoTime();
         if(message.operation().equals("browser_audio")){

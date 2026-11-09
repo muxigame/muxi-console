@@ -41,7 +41,7 @@ public final class SharedPlayServer {
         if(message.operation().equals("shared_attach")){if(host)throw new IOException("主控制席必须运行模拟器");room.ready.put(actor.getUUID(),"shared");Wire.send(actor,"shared_ready",reply(room,port,-1));return true;}
         if(!message.operation().equals("shared_frame")&&!message.operation().equals("shared_audio"))throw new IOException("未知共享游戏操作");
         if(!host||!room.ready.containsKey(actor.getUUID())||room.fingerprint.isEmpty())throw new IOException("只有已准备的主控制席可以发送共享游戏音画");
-        long frame=body.get("frame").getAsLong();if(frame<0||frame>room.frame)throw new IOException("共享画面批次超出模拟进度");Gate gate=gate(room);long now=System.nanoTime();
+        long frame=body.get("frame").getAsLong();if(room.hostClock)ConsoleServer.observeHostFrame(room,actor.getUUID(),frame);if(frame<0||frame>room.frame)throw new IOException("共享画面批次超出模拟进度");Gate gate=gate(room);long now=System.nanoTime();
         if(message.operation().equals("shared_frame")){
             if(!gate.video(frame,now))return true;BrowserFrameCodec.Image image=BrowserFrameCodec.decode(message.data());var surfaces=net.muxigame.console.compat.SurfaceMetadata.read(body,image.width(),image.height());
             for(var entry:room.session.controllers().entrySet()){ServerPlayer target=target(actor,room,entry.getValue());if(target==null)continue;JsonObject j=reply(room,entry.getKey(),frame);j.addProperty("width",image.width());j.addProperty("height",image.height());net.muxigame.console.compat.SurfaceMetadata.write(j,surfaces);Wire.send(target,"shared_frame",j,message.data());}

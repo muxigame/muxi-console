@@ -19,20 +19,21 @@ final class ProfileMessages {
     }
     private record Committed(Scope scope,MachineProfileVault.Snapshot snapshot){ }
     private static final class Progress {
-        final Scope scope;final SaveProgressWatch watch;long pausedFrame=-1;
+        final Scope scope;final SaveProgressWatch watch;long pausedFrame=-1;String holdToken="";
         Progress(Scope scope,SaveProgressWatch watch){this.scope=scope;this.watch=watch;}
     }
     private static final class Tracking {
+        final MinecraftServer server;
         final ConsoleServer.WorldState world;
         final Map<UUID,Pending> pending=new HashMap<>();
         final LinkedHashMap<UUID,Committed> committed=new LinkedHashMap<>();
         final Map<String,Progress> progress=new HashMap<>();
         final SaveTransactionTombstones<Scope> retired=new SaveTransactionTombstones<>();
         final Map<Scope,MachineProfileVault.Snapshot> finishedProfiles=new HashMap<>();
-        Tracking(ConsoleServer.WorldState world){this.world=world;}
+        Tracking(MinecraftServer server,ConsoleServer.WorldState world){this.server=server;this.world=world;}
     }
     private static final Map<MinecraftServer,Tracking> TRACKING=new IdentityHashMap<>();
-    private static Tracking tracking(MinecraftServer server,ConsoleServer.WorldState world){Tracking value=TRACKING.computeIfAbsent(server,ignored->new Tracking(world));if(value.world!=world)throw new IllegalStateException("Profile world identity changed");return value;}
+    private static Tracking tracking(MinecraftServer server,ConsoleServer.WorldState world){Tracking value=TRACKING.computeIfAbsent(server,ignored->new Tracking(server,world));if(value.world!=world)throw new IllegalStateException("Profile world identity changed");return value;}
     private static boolean nativeFiles(Platform platform){return platform==Platform.NDS||platform==Platform.N3DS||platform==Platform.WII;}
     private static MachineProfileVault.Key key(ConsoleServer.Room room){return new MachineProfileVault.Key(room.saveKey.machineUUID(),room.card.platform());}
     private static long now(){return System.currentTimeMillis();}
@@ -75,7 +76,12 @@ final class ProfileMessages {
         ConsoleServer.Room room=ConsoleServer.ownedRoomForSave(player,world,body);Scope scope=scope(player.getUUID(),body,room);Tracking t=tracking(player.server,world);
         if(op.equals("save_progress")){Progress progress=watch(t,scope);String stage=body.get("stage").getAsString();if(progress.watch.observe(stage,body.get("bytes").getAsLong(),body.get("total").getAsLong(),now())){
                 ConsoleServer.saveProgress(room);
-                if(stage.equals("serializing")&&progress.pausedFrame<0){progress.pausedFrame=room.frame;JsonObject paused=address(scope);paused.addProperty("frame",progress.pausedFrame);Wire.send(player,"save_paused",paused);}
+                if(stage.equals("serializing")&&progress.pausedFrame<0){
+                    long captured=room.frame;
+                    if(room.hostClock){if(!body.has("snapshotFrame"))throw new DomainException("save","实时存档缺少捕获帧");captured=body.get("snapshotFrame").getAsLong();ConsoleServer.observeHostFrame(room,player.getUUID(),captured);}
+                    String hold=body.has("holdToken")?UUID.fromString(body.get("holdToken").getAsString()).toString():"";if(!hold.isEmpty()&&!hold.equals(room.holdSaveBarrier.token()))throw new DomainException("save_hold","最终存档请求已经改变，请重试");
+                    progress.pausedFrame=captured;progress.holdToken=hold;JsonObject paused=address(scope);paused.addProperty("frame",progress.pausedFrame);if(!hold.isEmpty())paused.addProperty("holdToken",hold);Wire.send(player,"save_paused",paused);
+                }
             }return true;}
         if(!nativeFiles(room.card.platform()))throw new DomainException("profile","此机型没有原生机器文件");
         switch(op){
@@ -127,7 +133,7 @@ final class ProfileMessages {
         if(t.retired.outcome(scope,now()).isPresent())return;
         Committed committed=t.committed.get(scope.actor);if(outcome==SaveTransactionTombstones.Outcome.COMPLETED&&committed!=null&&committed.scope.equals(scope))t.finishedProfiles.put(scope,committed.snapshot);
         t.retired.retire(scope,outcome,now());Pending p=t.pending.get(scope.actor);if(p!=null&&p.scope.equals(scope))abort(world,t,p);
-        if(committed!=null&&committed.scope.equals(scope))t.committed.remove(scope.actor,committed);Progress progress=t.progress.get(scope.room);if(progress!=null&&progress.scope.equals(scope))t.progress.remove(scope.room,progress);
+        if(committed!=null&&committed.scope.equals(scope))t.committed.remove(scope.actor,committed);Progress progress=t.progress.get(scope.room);if(progress!=null&&progress.scope.equals(scope)){t.progress.remove(scope.room,progress);if(outcome!=SaveTransactionTombstones.Outcome.COMPLETED){ConsoleServer.Room room=world.rooms.get(scope.room);if(room!=null&&room.session.epoch()==scope.epoch)ConsoleServer.cancelCheckpointHold(t.server,room,progress.holdToken);}}
     }
     static void cancelFor(MinecraftServer server,ConsoleServer.WorldState world,UUID actor,JsonObject body){
         try{Scope scope=parsed(actor,body);Tracking t=TRACKING.get(server);if(t==null||t.world!=world||t.retired.outcome(scope,now()).isPresent())return;Pending p=t.pending.get(actor);if(p!=null&&p.scope.equals(scope)&&body.has("upload")&&!p.id.toString().equals(body.get("upload").getAsString()))return;

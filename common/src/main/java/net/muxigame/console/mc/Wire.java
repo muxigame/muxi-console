@@ -35,7 +35,7 @@ public final class Wire {
     private static void write(RegistryFriendlyByteBuf b, Message m){b.writeUtf(m.operation,32);b.writeUtf(JSON.toJson(m.body),16384);b.writeByteArray(m.data);}
     private static Message read(RegistryFriendlyByteBuf b){return new Message(b.readUtf(32),JSON.fromJson(b.readUtf(16384),JsonObject.class),b.readByteArray(24576));}
     public static void register(RegisterPayloadHandlersEvent event){
-        var r=event.registrar("mx-console-5");
+        var r=event.registrar("mx-console-6");
         r.playToServer(ToServer.TYPE,ToServer.CODEC,(p,c)->c.enqueueWork(()->{if(c.player() instanceof ServerPlayer s)ConsoleServer.receive(s,p.message);}));
         r.playToClient(ToClient.TYPE,ToClient.CODEC,(p,c)->c.enqueueWork(()->ClientGate.receiver.accept(p.message)));
     }

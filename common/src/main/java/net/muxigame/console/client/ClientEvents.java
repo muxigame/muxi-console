@@ -27,5 +27,6 @@ public final class ClientEvents {
         }
     }
     @SubscribeEvent public static void tick(ClientTickEvent.Post event){ConsoleClient.INSTANCE.tick();}
+    @SubscribeEvent public static void render(net.neoforged.neoforge.client.event.RenderFrameEvent.Pre event){ConsoleClient.INSTANCE.sampleControls();}
     @SubscribeEvent public static void logout(ClientPlayerNetworkEvent.LoggingOut event){ConsoleClient.INSTANCE.stop();}
 }

@@ -102,13 +102,13 @@ public class GameScreen extends Screen {
     }
     @Override public boolean keyPressed(int key,int scan,int modifiers){
         if(key==GLFW.GLFW_KEY_ESCAPE){onClose();return true;}
-        inputKeys.add(key);NativeControls.key(key,scan,true);return true;
+        inputKeys.add(key);NativeControls.key(key,scan,true);if(actions instanceof ConsoleClient client)client.sampleControls();return true;
     }
-    @Override public boolean keyReleased(int key,int scan,int modifiers){inputKeys.remove(key);NativeControls.key(key,scan,false);return true;}
+    @Override public boolean keyReleased(int key,int scan,int modifiers){inputKeys.remove(key);NativeControls.key(key,scan,false);if(actions instanceof ConsoleClient client)client.sampleControls();return true;}
     @Override public boolean mouseClicked(double x,double y,int button){
         if(button==GLFW.GLFW_MOUSE_BUTTON_RIGHT){if(!HandheldRenderer.heldForSession().isEmpty())mode=mode==Mode.MODEL?Mode.SCREEN:Mode.MODEL;pointerDown=false;shownSurfaces.clear();if(actions instanceof ConsoleClient client)client.clearPointer();return true;}
         if(button==GLFW.GLFW_MOUSE_BUTTON_LEFT&&pointerHardware()){pointerDown=true;updatePointer(x,y);return true;}
-        NativeControls.mouse(button,true);return true;
+        NativeControls.mouse(button,true);if(actions instanceof ConsoleClient client)client.sampleControls();return true;
     }
     private boolean pointerHardware(){return actions instanceof ConsoleClient client&&client.surfaces().stream().anyMatch(AvFrame.Surface::touchable);}
     private void updatePointer(double x,double y){
@@ -118,6 +118,6 @@ public class GameScreen extends Screen {
     }
     @Override public void mouseMoved(double x,double y){super.mouseMoved(x,y);if(pointerHardware())updatePointer(x,y);}
     @Override public boolean mouseDragged(double x,double y,int button,double dx,double dy){if(button==GLFW.GLFW_MOUSE_BUTTON_LEFT&&pointerHardware()){pointerDown=true;updatePointer(x,y);return true;}return super.mouseDragged(x,y,button,dx,dy);}
-    @Override public boolean mouseReleased(double x,double y,int button){if(button==GLFW.GLFW_MOUSE_BUTTON_LEFT){pointerDown=false;if(pointerHardware())updatePointer(x,y);}if(button!=GLFW.GLFW_MOUSE_BUTTON_RIGHT)NativeControls.mouse(button,false);return true;}
+    @Override public boolean mouseReleased(double x,double y,int button){if(button==GLFW.GLFW_MOUSE_BUTTON_LEFT){pointerDown=false;if(pointerHardware())updatePointer(x,y);}if(button!=GLFW.GLFW_MOUSE_BUTTON_RIGHT)NativeControls.mouse(button,false);if(actions instanceof ConsoleClient client)client.sampleControls();return true;}
     @Override public void onClose(){clearInputKeys();if(actions instanceof ConsoleClient c)c.releaseControls();if(minecraft!=null&&minecraft.screen==this)minecraft.setScreen(null);}
 }

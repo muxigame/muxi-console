@@ -26,7 +26,7 @@ def sha(path: Path) -> str:
     return digest.hexdigest()
 
 
-def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool = False, cartridge_review: bool = False, plan_path: Path | None = None, link_review: bool = False, media_probe: Path | None = None, expansion_diagnostics: Path | None = None, large_rom_mib: int = 8, gba_link_review: bool = False, nds_link_review: bool = False, n3ds_link_review: bool = False) -> Path:
+def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool = False, cartridge_review: bool = False, plan_path: Path | None = None, link_review: bool = False, media_probe: Path | None = None, expansion_diagnostics: Path | None = None, large_rom_mib: int = 8, gba_link_review: bool = False, nds_link_review: bool = False, n3ds_link_review: bool = False, latency_review: bool = False, latency_probe: Path | None = None) -> Path:
     if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", name):
         raise ValueError("Use a new lowercase QA build name")
     if large_rom_mib not in (8,32) or large_rom_mib!=8 and not cartridge_review:raise ValueError('Large fixture must be an explicit cartridge review at 8 or 32MiB')
@@ -167,6 +167,40 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
             path=REPO/field['report'];report=json.loads(path.read_text(encoding='utf-8'))
             if sha(path)!=field['reportSha256']or not report.get('complete')or report.get('coreSHA256',report.get('coreSha256'))!=n3ds_link_core['platforms']['windows-x86_64']['librarySha256']:raise ValueError('Actual 3DS native/product checkpoint proof differs')
             n3ds_link_inputs[path]=sha(path);n3ds_link_baselines.append(dict(path=str(path),sha256=sha(path),checks=field['checks']))
+    latency=None;latency_inputs={};latency_rom=None;latency_nes=None
+    if latency_probe is not None and not latency_review:raise ValueError('Latency proof requires explicit --latency-review')
+    if latency_review:
+        latency_probe=(latency_probe or REPO/'build/gba-realtime-baseline-03/inputs.json').resolve(strict=True)
+        if not latency_probe.is_relative_to(REPO/'build'):raise ValueError('Latency proof must be this repository\'s fixed independent native baseline')
+        baseline_inputs=json.loads(latency_probe.read_text(encoding='utf-8'));baseline_result_path=latency_probe.parent/'result.json';baseline_result=json.loads(baseline_result_path.read_text(encoding='utf-8'))
+        closure=baseline_result.get('workerClosure',{})
+        if (not baseline_result.get('complete')or baseline_result.get('measurementSeconds',0)<30 or baseline_result.get('perFrameSaveStateCalls')!=0
+                or not closure.get('normalExit')or closure.get('exitCode')!=0 or closure.get('forced')or not closure.get('nativeTemporaryFilesCleaned')
+                or not closure.get('actualOwnedProcessSignalRequired')or not all(c.get('passed')for c in baseline_result.get('checks',[]))):raise ValueError('Real paced ordinary GBA baseline and Windows closure are required')
+        sys.path.insert(0,str(REPO/'tools'));from gba_realtime_diagnostic import diagnostic_rom as realtime_rom,contract as realtime_contract
+        latency_rom=latency_probe.parent/'original-realtime.gba';latency_bytes=latency_rom.read_bytes()
+        if len(latency_bytes)!=65536 or sha(latency_rom)!=baseline_inputs['romSha256']or latency_bytes!=realtime_rom():raise ValueError('Original realtime ROM differs from the actually executed baseline')
+        if any(sha(REPO/p)!=digest for p,digest in baseline_inputs['sourceSHA256'].items()):raise ValueError('Realtime baseline generator/probe changed after execution')
+        with zipfile.ZipFile(product)as jar:
+            candidate_extract=json.loads(jar.read('META-INF/muxi/extract-hashes.json'))
+            for entry in('cores/windows-x86_64/mgba.dll','worker/runtime.jar'):
+                if candidate_extract[entry]!=baseline_inputs['extracted'][entry]['sha256']:raise ValueError('Latency candidate ordinary worker/core differs; obtain a new independent baseline')
+        nes_probe_path=REPO/'build/nes-media-02/probe.json';nes_probe=json.loads(nes_probe_path.read_text(encoding='utf-8'));nes_result_path=nes_probe_path.parent/'result.json';nes_result=json.loads(nes_result_path.read_text(encoding='utf-8'));latency_nes=Path(nes_probe['diagnosticRom']['path']).resolve(strict=True)
+        from runtime_smoke import diagnostic_rom as nes_rom
+        if (nes_probe.get('exitCode')!=0 or nes_result.get('exitCode')!=0 or nes_result.get('forced')or not nes_result.get('nativeTempCleaned')
+                or nes_result.get('nonzeroPcmSamples',0)<1000 or sha(latency_nes)!=nes_probe['diagnosticRom']['sha256']or latency_nes.read_bytes()!=nes_rom(True)
+                or candidate_extract['cores/windows-x86_64/fceumm.dll']!=nes_probe['extracted']['cores/windows-x86_64/fceumm.dll']['sha256']):raise ValueError('Original audible NES remote-control fixture/core proof changed')
+        latency_inputs={latency_probe:sha(latency_probe),baseline_result_path:sha(baseline_result_path),latency_rom:sha(latency_rom),nes_probe_path:sha(nes_probe_path),nes_result_path:sha(nes_result_path),latency_nes:sha(latency_nes),**{REPO/p:h for p,h in baseline_inputs['sourceSHA256'].items()},REPO/'tools/runtime_smoke.py':sha(REPO/'tools/runtime_smoke.py')}
+        latency={'path':str(latency_rom),'sha256':sha(latency_rom),'size':len(latency_bytes),'probe':str(latency_probe),'probeSha256':sha(latency_probe),'baselineResult':str(baseline_result_path),'baselineResultSha256':sha(baseline_result_path),'contract':realtime_contract(),'nativeBaselineMeasurementSeconds':baseline_result['measurementSeconds'],'nativeAudioDevicePlayed':False,'nes':{'path':str(latency_nes),'sha256':sha(latency_nes),'size':latency_nes.stat().st_size,'probe':str(nes_probe_path),'probeSha256':sha(nes_probe_path),'baselineResultSha256':sha(nes_result_path)},'scope':'Ordinary GBA host-clock latency plus authored audible NES remote regression; no expansion/Link payload is implied'}
+        # Only the already authored NDS program is needed for the native-files save seam.
+        nds_report_path=REPO/'build/expansion-diagnostics-12/diagnostics.json';nds_report=json.loads(nds_report_path.read_text(encoding='utf-8'))
+        if nds_report.get('original')is not True or nds_report.get('biosIncluded')is not False or nds_report.get('gameAssetsIncluded')is not False or any(sha(REPO/p)!=h for p,h in nds_report['sources'].items()):raise ValueError('Original NDS source provenance differs')
+        nds_rows=[r for r in nds_report['outputs']if Path(r['path']).name=='muxi-input.nds']
+        if len(nds_rows)!=1:raise ValueError('Exactly one authored NDS fixture required')
+        nds_row=nds_rows[0];latency_nds=Path(nds_row['path']).resolve(strict=True)
+        if latency_nds.parent!=nds_report_path.parent or latency_nds.stat().st_size!=nds_row['bytes']or sha(latency_nds)!=nds_row['sha256']or nds_row['bytes']>4*1024*1024:raise ValueError('Original NDS fixture bytes differ')
+        latency['nds']={**nds_row,'path':str(latency_nds),'report':str(nds_report_path),'reportSha256':sha(nds_report_path)}
+        latency_inputs.update({nds_report_path:sha(nds_report_path),latency_nds:sha(latency_nds),**{REPO/p:h for p,h in nds_report['sources'].items()}})
     empty_zip = io.BytesIO()
     with zipfile.ZipFile(empty_zip, "w"):
         pass
@@ -195,6 +229,11 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
     for label,(path,content)in n3ds_link_media.items():pins[f"n3ds-link-{label}-rom.sha256"]=hashlib.sha256(content).hexdigest()
     if link_boot is not None:pins["link-boot.sha256"]=hashlib.sha256(link_boot).hexdigest()
     if media is not None:pins['media-rom.sha256']=media['sha256']
+    if latency is not None:
+        pins['latency.sha256']=latency['sha256']
+        pins['expansion-nds-rom.sha256']=latency['nds']['sha256']
+        if 'media-rom.sha256'in pins and pins['media-rom.sha256']!=latency['nes']['sha256']:raise ValueError('Conflicting authored NES fixtures')
+        pins['media-rom.sha256']=latency['nes']['sha256']
     for platform,row in expansion.items():pins[f'expansion-{platform}-rom.sha256']=row['sha256']
     if large is not None:
         pins["large-gba-rom.sha256"]=large["sha256"];pins["pce-rom.sha256"]=hashlib.sha256(pce).hexdigest()
@@ -223,6 +262,7 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
         manifest['ndsLinkDiagnostics']={label:dict(path=str(path),sha256=sha(path),bytes=len(content))for label,(path,content)in nds_link_media.items()}
         manifest['ndsLinkDiagnostics'].update(generator='tools/link_ds_diagnostic.py',generatorSha256=sha(REPO/'tools/link_ds_diagnostic.py'),report=str(diagnostic_report),reportSha256=sha(diagnostic_report),baselines=nds_link_baselines,bridgeSha256=nds_link_core['platforms']['windows-x86_64']['librarySha256'],baseSingleCoreSha256=nds_link_core['baseSingleCoreCompatibility']['librarySha256'])
     if media is not None:manifest['mediaDiagnosticRom']=media
+    if latency is not None:manifest['latency']=latency
     if expansion:manifest['expansionDiagnostics']={"programs":expansion,"report":str(expansion_diagnostics),"reportSha256":sha(expansion_diagnostics),"sources":original['sources'],"scope":"Original diagnostic-only DS/3DS/Wii programs; no third-party game or BIOS; build provenance is not Minecraft acceptance"}
     input_hashes = {str(path.relative_to(REPO)): sha(path) for path in sources.glob("*.java")}
     if n3ds_link_review:
@@ -260,6 +300,10 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
             args.append(str(sources / "MediaMetrics.java"))
             args.append(str(sources / "TransferActions.java"))
             args.append(str(sources / "ExpansionActions.java"))
+            args.append(str(sources / "LatencyBridge.java"))
+            if latency_review:
+                args.append(str(sources / "LatencyActions.java"))
+                args.append(str(sources / "LatencyTimer.java"))
         argument_file = out / (side + ".args")
         sdk.argfile(argument_file, args)
         command = [str(jdk / "javac.exe"), "-J-Xmx512m", "-J-XX:ActiveProcessorCount=1", "-J-Dfile.encoding=UTF-8", "-J-Duser.language=en", "@" + str(argument_file)]
@@ -279,6 +323,10 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
         if gba is not None:
             resources["diagnostics/original-arm.gba"] = gba
         if media is not None:resources['diagnostics/original-two-port-tone.nes']=media_path.read_bytes()
+        if latency is not None:
+            resources['diagnostics/original-realtime.gba']=latency_rom.read_bytes()
+            resources['diagnostics/original-two-port-tone.nes']=latency_nes.read_bytes()
+            resources['diagnostics/original-expansion.nds']=latency_nds.read_bytes()
         for row in expansion.values():resources['diagnostics/original-expansion.'+row['suffix']]=Path(row['path']).read_bytes()
         for label,(path,content) in link_media.items():resources[f"diagnostics/original-link-{label}.gb"]=content
         for label,(path,content)in gba_link_media.items():resources[f"diagnostics/original-link-{label}.gba"]=content
@@ -309,6 +357,7 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
     if any(sha(path)!=digest for path,digest in media_inputs.items()):raise RuntimeError('Original media probe inputs changed during QA compilation')
     if any(sha(path)!=digest for path,digest in n3ds_link_inputs.items()):raise RuntimeError('Original 3DS link inputs changed during QA compilation')
     if any(sha(path)!=digest for path,digest in expansion_inputs.items()):raise RuntimeError('Original expansion inputs changed during QA compilation')
+    if any(sha(path)!=digest for path,digest in latency_inputs.items()):raise RuntimeError('Original latency proof/source changed during QA compilation')
     if any(sha(p)!=digest for p,digest in gba_link_inputs.items()):raise ValueError("GBA link QA source/baseline changed while compiling")
     if any(sha(p)!=digest for p,digest in nds_link_inputs.items()):raise ValueError('DS link baseline/source changed during QA build')
     manifest["sources"] = input_hashes
@@ -334,5 +383,7 @@ if __name__ == "__main__":
     parser.add_argument('--media-probe',type=Path,help='Exact candidate native audible NES probe.json for media transport QA')
     parser.add_argument('--expansion-diagnostics',type=Path,help='Pinned original no-BIOS DS/3DS/Wii diagnostic build report')
     parser.add_argument('--large-rom-mib',type=int,choices=(8,32),default=8,help='Only FF padding after the original 64KiB GBA program; 32MiB for slow resumable transfer QA')
+    parser.add_argument('--latency-review',action='store_true',help='Only the verified first-party realtime GBA and audible NES regression fixtures')
+    parser.add_argument('--latency-probe',type=Path,help='Explicit >=30s paced GBA inputs.json; defaults to the preserved original baseline-03')
     options = parser.parse_args()
-    build(options.name, options.product, options.rom, options.gb_rom, options.pixel_review,options.cartridge_review,options.model_plan,options.link_review,options.media_probe,options.expansion_diagnostics,options.large_rom_mib,options.gba_link_review,options.nds_link_review,options.n3ds_link_review)
+    build(options.name, options.product, options.rom, options.gb_rom, options.pixel_review,options.cartridge_review,options.model_plan,options.link_review,options.media_probe,options.expansion_diagnostics,options.large_rom_mib,options.gba_link_review,options.nds_link_review,options.n3ds_link_review,options.latency_review,options.latency_probe)

@@ -10,7 +10,7 @@ import net.muxigame.console.domain.*;
 
 /** Opaque, bounded state transport; every chunk is authorized against the current physical session. */
 final class StateMessages {
-    private record Pending(UUID id,String room,long epoch,MachineSaveKey key,String transaction){}
+    private record Pending(UUID id,String room,long epoch,MachineSaveKey key,String transaction,String holdToken){}
     private static final Map<MinecraftServer,Map<UUID,Pending>> PENDING=new IdentityHashMap<>();
     private static Map<UUID,Pending> pending(MinecraftServer s){return PENDING.computeIfAbsent(s,k->new HashMap<>());}
     static void attachLatest(ConsoleServer.WorldState world,ConsoleServer.Room room,JsonObject target){
@@ -37,7 +37,8 @@ final class StateMessages {
                 if(room.fingerprint.isEmpty())throw new DomainException("save","模拟器尚未准备好");long frame=body.get("frame").getAsLong();if(frame<0||frame>room.frame)throw new DomainException("save","存档帧不在会话范围内");
                 long declaredSize=body.get("size").getAsLong();if(declaredSize<1||declaredSize>limit(room.card.platform()))throw new DomainException("save_size","即时状态超过此平台的存档上限");
                 String transaction=body.has("saveTransaction")?UUID.fromString(body.get("saveTransaction").getAsString()).toString():"";
-                var status=world.states.begin(player.getUUID(),room.saveKey,room.fingerprint,frame,body.get("size").getAsLong(),body.get("hash").getAsString(),System.currentTimeMillis(),ProfileMessages.stateGeneration(world,room,player.getUUID(),body));pending(player.server).put(player.getUUID(),new Pending(status.uploadId(),room.key,room.session.epoch(),room.saveKey,transaction));ConsoleServer.saveProgress(room);ack(player,status,room,transaction);
+                String holdToken=body.has("holdToken")?UUID.fromString(body.get("holdToken").getAsString()).toString():"";if(!holdToken.isEmpty()&&!holdToken.equals(room.holdSaveBarrier.token()))throw new DomainException("save_hold","最终存档请求已经改变，请重试");
+                var status=world.states.begin(player.getUUID(),room.saveKey,room.fingerprint,frame,body.get("size").getAsLong(),body.get("hash").getAsString(),System.currentTimeMillis(),ProfileMessages.stateGeneration(world,room,player.getUUID(),body));pending(player.server).put(player.getUUID(),new Pending(status.uploadId(),room.key,room.session.epoch(),room.saveKey,transaction,holdToken));ConsoleServer.saveProgress(room);ack(player,status,room,transaction);
             }
             case "state_piece" -> {
                 Pending transfer=pending(player.server).get(player.getUUID());UUID id=UUID.fromString(body.get("upload").getAsString());if(transfer==null||!transfer.id.equals(id)||!transfer.room.equals(room.key)||transfer.epoch!=room.session.epoch()||!transfer.key.equals(room.saveKey))throw new DomainException("save","存档上传会话已改变");
@@ -47,7 +48,7 @@ final class StateMessages {
             case "state_commit" -> {
                 Pending transfer=pending(player.server).get(player.getUUID());UUID id=UUID.fromString(body.get("upload").getAsString());if(transfer==null||!transfer.id.equals(id)||!transfer.room.equals(room.key)||transfer.epoch!=room.session.epoch()||!transfer.key.equals(room.saveKey))throw new DomainException("save","存档提交会话已改变");
                 if(!transfer.transaction.isEmpty()&&(!body.has("saveTransaction")||!transfer.transaction.equals(body.get("saveTransaction").getAsString())))throw new DomainException("save_session","存档事务已改变");
-                MachineStateVault.Snapshot saved=world.states.commit(player.getUUID(),id,System.currentTimeMillis());pending(player.server).remove(player.getUUID(),transfer);JsonObject done=json(saved);done.addProperty("upload",id.toString());done.addProperty("room",room.key);done.addProperty("epoch",room.session.epoch());if(!transfer.transaction.isEmpty())done.addProperty("saveTransaction",transfer.transaction);Wire.send(player,"state_committed",done);ProfileMessages.completeCleanup(player.server,world,player.getUUID(),body);ConsoleServer.saved(player.server,world,room,saved);
+                MachineStateVault.Snapshot saved=world.states.commit(player.getUUID(),id,System.currentTimeMillis());pending(player.server).remove(player.getUUID(),transfer);JsonObject done=json(saved);done.addProperty("upload",id.toString());done.addProperty("room",room.key);done.addProperty("epoch",room.session.epoch());if(!transfer.transaction.isEmpty())done.addProperty("saveTransaction",transfer.transaction);Wire.send(player,"state_committed",done);ProfileMessages.completeCleanup(player.server,world,player.getUUID(),body);ConsoleServer.saved(player.server,world,room,saved,transfer.holdToken);
             }
             case "state_abort" -> {cancelFor(player.server,world,player.getUUID(),body);ProfileMessages.cancelFor(player.server,world,player.getUUID(),body);}
             default -> throw new DomainException("save","未知存档操作");
