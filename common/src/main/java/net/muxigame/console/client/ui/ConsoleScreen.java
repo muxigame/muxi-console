@@ -3,9 +3,11 @@ package net.muxigame.console.client.ui;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 
 abstract class ConsoleScreen extends Screen {
-    static final int INK = 0xff203b42, CREAM = 0xffe4e0d1, AMBER = 0xffedb66a, EDGE = 0xff708c89;
+    private static final ResourceLocation BACKGROUND=ResourceLocation.withDefaultNamespace("textures/gui/container/generic_54.png");
+    static final int CREAM = 0xff404040, AMBER = 0xff8b3b18, EDGE = 0xff606060;
     protected int left, top, panelWidth, panelHeight;
     protected ConsoleScreen(Component title) { super(title); }
     protected void layout(int preferredWidth, int preferredHeight) {
@@ -17,12 +19,22 @@ abstract class ConsoleScreen extends Screen {
         return addRenderableWidget(new ConsoleButton(x, y, w, 20, Component.literal(label), action));
     }
     protected void panel(GuiGraphics graphics, String subtitle) {
-        graphics.fill(0, 0, width, height, 0x850f2026);
-        graphics.fill(left, top, left + panelWidth, top + panelHeight, EDGE);
-        graphics.fill(left + 1, top + 1, left + panelWidth - 1, top + panelHeight - 1, INK);
-        graphics.fill(left + 14, top + 12, left + 42, top + 15, AMBER);
-        graphics.drawString(font, title, left + 14, top + 23, CREAM, false);
+        graphics.fill(0, 0, width, height, 0x80000000);
+        graphics.fill(left+7,top+7,left+panelWidth-7,top+panelHeight-7,0xffc6c6c6);
+        // Reuse the ordinary container frame without drawing unused inventory slots.
+        frame(graphics,0,0,7,7,0,0,7,7);
+        frame(graphics,7,0,panelWidth-14,7,7,0,162,7);
+        frame(graphics,panelWidth-7,0,7,7,169,0,7,7);
+        frame(graphics,0,7,7,panelHeight-14,0,7,7,208);
+        frame(graphics,panelWidth-7,7,7,panelHeight-14,169,7,7,208);
+        frame(graphics,0,panelHeight-7,7,7,0,215,7,7);
+        frame(graphics,7,panelHeight-7,panelWidth-14,7,7,215,162,7);
+        frame(graphics,panelWidth-7,panelHeight-7,7,7,169,215,7,7);
+        graphics.drawString(font, title, left + 14, top + 14, CREAM, false);
         if (!subtitle.isEmpty()) line(graphics, subtitle, left + 14, top + 39, panelWidth - 28, EDGE);
+    }
+    private void frame(GuiGraphics graphics,int x,int y,int w,int h,int u,int v,int sourceWidth,int sourceHeight){
+        graphics.blit(BACKGROUND,left+x,top+y,w,h,(float)u,(float)v,sourceWidth,sourceHeight,256,256);
     }
     protected void line(GuiGraphics graphics, String value, int x, int y, int maxWidth, int color) {
         graphics.drawString(font, font.plainSubstrByWidth(value, Math.max(0, maxWidth)), x, y, color, false);

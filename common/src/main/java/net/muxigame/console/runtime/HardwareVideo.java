@@ -81,10 +81,13 @@ final class HardwareVideo implements AutoCloseable {
         resize(w, h);
     }
 
-    void beforeFrame() {
+    void beforeFrame(boolean bindFramebuffer) {
         if (!initialized()) throw new IllegalStateException("Hardware context is not initialized");
         GLFW.glfwMakeContextCurrent(window);
-        GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, framebuffer);
+        // Dolphin caches its own current EFB framebuffer. Rebinding behind that
+        // cache makes later draws target the frontend instead of the cached EFB.
+        // It obtains our presentation framebuffer through the public callback.
+        if (bindFramebuffer) GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, framebuffer);
     }
 
     byte[] read(int w, int h) throws IOException {

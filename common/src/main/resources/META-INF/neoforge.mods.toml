@@ -3,7 +3,7 @@ loaderVersion="[4,)"
 license="MIT; third-party components retain their own licenses"
 [[mods]]
 modId="muxi_console"
-version="0.2.3-dev.1"
+version="0.2.3-dev.2"
 displayName="PlayStation"
 authors="Muxigame"
 description="Original console hardware, transferable cartridges, per-machine saves and multiplayer screens."
@@ -16,7 +16,7 @@ side="BOTH"
 [[dependencies.muxi_console]]
 modId="muxi_console_runtime"
 type="required"
-versionRange="[1.0.0,1.1)"
+versionRange="[1.0.1,1.1)"
 ordering="NONE"
 side="CLIENT"
 [[dependencies.muxi_console]]

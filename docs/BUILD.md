@@ -53,6 +53,8 @@ python -B tools/build_worker.py --name worker-compare-01 --java-home /path/to/jd
 
 ## 完整 Minecraft 模组
 
+当前开发候选的运行库已升1.0.1，包含Wii帧缓冲修复，主包要求至少1.0.1；正式线上仍为1.0.0。开发构建的运行库没有新的源码交付证明，不得发布。准备正式0.2.3时须重新执行下面的源码准备/核验及`--release`，新附件为`muxi-console-runtime-1.0.1-sources.zip`；不改写既有0.2.2发行附件。
+
 完整模组目前沿用 `tools/build.py` 的 muxigame 工作区SDK入口；单独克隆本仓不会自动取得Minecraft映射开发环境。该入口只读取已安装SDK，包含MC集成、领域代码、资源、工作进程及固定第三方核心。没有另外维护一套Gradle工程。
 
 在已登记的真实 `muxigame/muxi-console/` 子仓中执行：
@@ -68,8 +70,8 @@ python -B tools/build.py --name mc-local-01 --tests
 | 文件 | 内容与安装位置 |
 |---|---|
 | `muxi-console-<主版本>+mc1.21.1.jar` | 领域与Minecraft集成、模型/UI、服务器所需的小型核心身份清单。客户端与服务端均安装。 |
-| `muxi-console-runtime-1.0.0+mc1.21.1.jar` | 18个普通核心、4个联机附属库、独立worker/JNA/LWJGL、Dolphin Sys、提取清单、许可证和源码附件指纹。仅客户端放入`mods/`。 |
-| `muxi-console-runtime-1.0.0-sources.zip` | 完整对应源码、固定子模块、补丁、构建说明与原始许可。与运行库放在同一个公开发行页，不放入Minecraft整合包、`mods/`或类路径。 |
+| `muxi-console-runtime-<运行库版本>+mc1.21.1.jar` | 18个普通核心、4个联机附属库、独立worker/JNA/LWJGL、Dolphin Sys、提取清单、许可证和源码附件指纹。仅客户端放入`mods/`。 |
+| `muxi-console-runtime-<运行库版本>-sources.zip` | 完整对应源码、固定子模块、补丁、构建说明与原始许可。与运行库放在同一个公开发行页，不放入Minecraft整合包、`mods/`或类路径。 |
 
 `build.json`保留主包的`artifact`、`bytes`、`sha256`、`version`，新增`runtimeArtifact`（`path/bytes/sha256/version`）和正式发行的`sourceAttachment`（`path/bytes/sha256`）。开发构建也输出主包和运行库，但`sourceAttachment=null`，运行库内明确写为尚未验证完整源码交付，不能作为正式发行。
 

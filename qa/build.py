@@ -12,6 +12,7 @@ import sys
 import zipfile
 import io
 import tomllib
+import struct
 
 REPO = Path(__file__).resolve().parents[1]
 WORKSPACE = REPO.parent
@@ -27,7 +28,33 @@ def sha(path: Path) -> str:
     return digest.hexdigest()
 
 
-def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool = False, cartridge_review: bool = False, plan_path: Path | None = None, link_review: bool = False, media_probe: Path | None = None, expansion_diagnostics: Path | None = None, large_rom_mib: int = 8, gba_link_review: bool = False, nds_link_review: bool = False, n3ds_link_review: bool = False, latency_review: bool = False, latency_probe: Path | None = None, runtime: Path | None = None, jei: Path | None = None, recipe_review: bool = False) -> Path:
+def wii_wbfs_fixture(report_path: Path, diagnostics: Path, dol: dict) -> tuple[dict,dict,dict]:
+    """Admit only our source-bound plain original disc and independently decode its WBFS mapping."""
+    report_path=report_path.resolve(strict=True)
+    if not report_path.is_relative_to(REPO/'build')or report_path.name!='disc-diagnostic.json':raise ValueError('Original Wii disc report must be a repository build')
+    report=json.loads(report_path.read_text(encoding='utf-8'))
+    if report.get('original')is not True or report.get('structuralChecksPassed')is not True or any(report.get(k)is not False for k in('vendorApploaderIncluded','biosIncluded','keysIncluded','gameAssetsIncluded','partitionEncrypted','partitionHasHashes')):raise ValueError('Only our original plain no-vendor Wii disc fixture is accepted')
+    if report.get('originalDiagnostics')!={'path':str(diagnostics),'sha256':sha(diagnostics)}or report.get('originalDol')!={k:dol[k]for k in('path','bytes','sha256')}:raise ValueError('Wii disc does not derive from this exact original DOL report')
+    tool=REPO/'tools/make_wii_disc_diagnostic.py';loader=REPO/'tests/runtime/diagnostics/expansion/disc/apploader.c';app=report.get('apploader',{});binary=report_path.parent/'apploader.bin'
+    if report.get('toolSha256')!=sha(tool)or app.get('source')!=loader.relative_to(REPO).as_posix()or app.get('sourceSha256')!=sha(loader)or binary.stat().st_size!=app.get('bytes')or sha(binary)!=app.get('sha256'):raise ValueError('Original disc wrapper or authored apploader differs')
+    inputs={report_path:sha(report_path),tool:sha(tool),loader:sha(loader),binary:sha(binary)};files={}
+    for row in report.get('programs',[]):
+        path=Path(row['path']).resolve(strict=True)
+        if path.parent!=report_path.parent or path.suffix not in('.iso','.wbfs')or path.suffix in files or not 0<path.stat().st_size<=4*1024*1024 or path.stat().st_size!=row['bytes']or sha(path)!=row['sha256']:raise ValueError('Exact authored ISO/WBFS file identity required')
+        files[path.suffix]=(path,row);inputs[path]=row['sha256']
+    if set(files)!={'.iso','.wbfs'}:raise ValueError('Original disc evidence must contain one ISO and one WBFS')
+    iso=files['.iso'][0].read_bytes();wbfs=files['.wbfs'][0].read_bytes();be32=lambda data,offset:struct.unpack_from('>I',data,offset)[0]
+    if len(iso)!=0x100000 or len(wbfs)!=0x400000 or wbfs[:4]!=b'WBFS'or be32(wbfs,4)!=len(wbfs)//512 or wbfs[8:10]!=bytes((9,21))or wbfs[12]!=1:raise ValueError('Actual original WBFS container header required')
+    mapped=struct.unpack_from('>H',wbfs,768)[0];block=1<<wbfs[9]
+    if mapped!=1 or wbfs[512:768]!=iso[:256]or wbfs[mapped*block:mapped*block+len(iso)]!=iso:raise ValueError('WBFS mapping does not decode to the exact authored ISO')
+    if iso[:6]!=b'MXIE00'or be32(iso,0x18)!=0x5d1c9ea3 or iso[0x60:0x62]!=bytes((1,1))or be32(iso,0x40000)!=1 or be32(iso,0x40004)*4!=0x40020 or be32(iso,0x40024)!=0:raise ValueError('Expected one original unencrypted Wii data partition')
+    partition=be32(iso,0x40020)*4;data=partition+be32(iso,partition+0x2b8)*4;dol_offset=data+be32(iso,data+0x420)*4;dol_bytes=Path(dol['path']).read_bytes();app_offset=data+0x2440
+    if partition!=0x50000 or data!=0x70000 or dol_offset!=data+0x10000 or iso[dol_offset:dol_offset+len(dol_bytes)]!=dol_bytes or iso[app_offset:app_offset+10]!=b'MUXI-TEST\0'or be32(iso,app_offset+0x10)!=app['entry']or be32(iso,app_offset+0x14)!=app['bytes']or iso[app_offset+32:app_offset+32+app['bytes']]!=binary.read_bytes():raise ValueError('Wii partition does not contain our exact DOL and authored apploader')
+    row=files['.wbfs'][1]
+    return {**row,'path':str(files['.wbfs'][0]),'suffix':'wbfs'},inputs,dict(report=str(report_path),reportSha256=sha(report_path),structuralChecksPassed=True,originalDol=dol,scope='Authored WBFS mapped disc only; no commercial game or vendor assets')
+
+
+def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool = False, cartridge_review: bool = False, plan_path: Path | None = None, link_review: bool = False, media_probe: Path | None = None, expansion_diagnostics: Path | None = None, large_rom_mib: int = 8, gba_link_review: bool = False, nds_link_review: bool = False, n3ds_link_review: bool = False, latency_review: bool = False, latency_probe: Path | None = None, runtime: Path | None = None, jei: Path | None = None, recipe_review: bool = False, wii_wbfs_diagnostic: Path | None = None) -> Path:
     if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", name):
         raise ValueError("Use a new lowercase QA build name")
     if large_rom_mib not in (8,32) or large_rom_mib!=8 and not cartridge_review:raise ValueError('Large fixture must be an explicit cartridge review at 8 or 32MiB')
@@ -91,13 +118,14 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
     gba_link_media={};gba_link_inputs={};gba_link_baselines=[]
     nds_link_media={};nds_link_inputs={};nds_link_baselines=[]
     n3ds_link_media={};n3ds_link_inputs={};n3ds_link_baselines=[]
-    media=None;media_inputs={};expansion={};expansion_inputs={}
+    media=None;media_inputs={};expansion={};expansion_inputs={};wbfs_evidence=None
+    if wii_wbfs_diagnostic is not None and expansion_diagnostics is None:raise ValueError('WBFS fixture also requires its original expansion diagnostics report')
     if expansion_diagnostics is not None:
         expansion_diagnostics=expansion_diagnostics.resolve(strict=True)
         if not expansion_diagnostics.is_relative_to(REPO/'build') or expansion_diagnostics.name!='diagnostics.json':raise ValueError('Expansion diagnostics must be an original repository build report')
         original=json.loads(expansion_diagnostics.read_text(encoding='utf-8'))
         if original.get('original')is not True or original.get('biosIncluded')is not False or original.get('gameAssetsIncluded')is not False:raise ValueError('Only our original no-BIOS expansion diagnostics may be embedded')
-        expected_sources={p.relative_to(REPO).as_posix()for pattern in('*.c','*.S')for p in(REPO/'tests/runtime/diagnostics/expansion').glob(pattern)}|{'tools/make_expansion_diagnostics.py','tools/prepare_expansion_sdk.py'}
+        expected_sources={'tests/runtime/diagnostics/expansion/'+name for name in('n3ds.c','nds7.c','nds9.c','wii.c','nds7.S','nds9.S')}|{'tools/make_expansion_diagnostics.py','tools/prepare_expansion_sdk.py'}
         if set(original.get('sources',{}))!=expected_sources or any(sha(REPO/path)!=digest for path,digest in original['sources'].items()):raise ValueError('Original expansion generator/source pins changed')
         expansion_inputs={expansion_diagnostics:sha(expansion_diagnostics),**{REPO/path:digest for path,digest in original['sources'].items()}}
         for platform,suffix in(('nds','nds'),('n3ds','3dsx'),('wii','dol')):
@@ -107,6 +135,8 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
             if path.parent!=expansion_diagnostics.parent or not 0<path.stat().st_size<=4*1024*1024 or path.stat().st_size!=row['bytes']or sha(path)!=row['sha256']:raise ValueError('Original expansion ROM differs')
             expansion[platform]={**row,'path':str(path),'suffix':suffix};expansion_inputs[path]=row['sha256']
         if len(original['outputs'])!=3:raise ValueError('Unexpected expansion program in fixture report')
+        if wii_wbfs_diagnostic is not None:
+            expansion['wii'],wbfs_inputs,wbfs_evidence=wii_wbfs_fixture(wii_wbfs_diagnostic,expansion_diagnostics,expansion['wii']);expansion_inputs.update(wbfs_inputs)
     if media_probe is not None:
         media_probe=media_probe.resolve(strict=True)
         if not media_probe.is_relative_to(REPO/'build'):raise ValueError('Media probe must be a fixed original repository build')
@@ -254,7 +284,7 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
         pins['expansion-nds-rom.sha256']=latency['nds']['sha256']
         if 'media-rom.sha256'in pins and pins['media-rom.sha256']!=latency['nes']['sha256']:raise ValueError('Conflicting authored NES fixtures')
         pins['media-rom.sha256']=latency['nes']['sha256']
-    for platform,row in expansion.items():pins[f'expansion-{platform}-rom.sha256']=row['sha256']
+    for platform,row in expansion.items():pins[f'expansion-{platform}-rom.sha256']=row['sha256'];pins[f'expansion-{platform}-rom.suffix']=row['suffix']
     if large is not None:
         pins["large-gba-rom.sha256"]=large["sha256"];pins["pce-rom.sha256"]=hashlib.sha256(pce).hexdigest()
     manifest = {"schema": 1, "product": {"path": str(product), "sha256": pins["product.sha256"]},
@@ -287,6 +317,7 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
     if media is not None:manifest['mediaDiagnosticRom']=media
     if latency is not None:manifest['latency']=latency
     if expansion:manifest['expansionDiagnostics']={"programs":expansion,"report":str(expansion_diagnostics),"reportSha256":sha(expansion_diagnostics),"sources":original['sources'],"scope":"Original diagnostic-only DS/3DS/Wii programs; no third-party game or BIOS; build provenance is not Minecraft acceptance"}
+    if wbfs_evidence is not None:manifest['expansionDiagnostics']['wiiWbfsDiagnostic']=wbfs_evidence
     input_hashes = {str(path.relative_to(REPO)): sha(path) for path in sources.glob("*.java")}
     if n3ds_link_review:
         manifest['n3dsLinkDiagnostics']={label:dict(path=str(path),sha256=sha(path),bytes=len(content))for label,(path,content)in n3ds_link_media.items()}
@@ -412,6 +443,7 @@ if __name__ == "__main__":
     parser.add_argument("--n3ds-link-review",action="store_true")
     parser.add_argument('--media-probe',type=Path,help='Exact candidate native audible NES probe.json for media transport QA')
     parser.add_argument('--expansion-diagnostics',type=Path,help='Pinned original no-BIOS DS/3DS/Wii diagnostic build report')
+    parser.add_argument('--wii-wbfs-diagnostic',type=Path,help='Explicit source-bound authored WBFS report; keeps default original DOL unchanged')
     parser.add_argument('--large-rom-mib',type=int,choices=(8,32),default=8,help='Only FF padding after the original 64KiB GBA program; 32MiB for slow resumable transfer QA')
     parser.add_argument('--latency-review',action='store_true',help='Only the verified first-party realtime GBA and audible NES regression fixtures')
     parser.add_argument('--latency-probe',type=Path,help='Explicit >=30s paced GBA inputs.json; defaults to the preserved original baseline-03')
@@ -419,4 +451,4 @@ if __name__ == "__main__":
     parser.add_argument('--jei',type=Path,help='Exact current clean-source JEI artifact, never a copied integration addon')
     parser.add_argument('--recipe-review',action='store_true',help='Actual optional JEI U/R/search plus authored GB/GBA preservation')
     options = parser.parse_args()
-    build(options.name, options.product, options.rom, options.gb_rom, options.pixel_review,options.cartridge_review,options.model_plan,options.link_review,options.media_probe,options.expansion_diagnostics,options.large_rom_mib,options.gba_link_review,options.nds_link_review,options.n3ds_link_review,options.latency_review,options.latency_probe,options.runtime,options.jei,options.recipe_review)
+    build(options.name, options.product, options.rom, options.gb_rom, options.pixel_review,options.cartridge_review,options.model_plan,options.link_review,options.media_probe,options.expansion_diagnostics,options.large_rom_mib,options.gba_link_review,options.nds_link_review,options.n3ds_link_review,options.latency_review,options.latency_probe,options.runtime,options.jei,options.recipe_review,options.wii_wbfs_diagnostic)

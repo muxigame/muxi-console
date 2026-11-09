@@ -53,8 +53,10 @@ final class ExpansionActions {
         }
     }
     private static Path diagnostic(Minecraft mc,String platform)throws Exception{
-        String suffix=switch(platform){case "nds"->"nds";case "n3ds"->"3dsx";case "wii"->"dol";default->throw new IllegalArgumentException("Only our three original diagnostics");};
-        String name="original-expansion."+suffix;Properties pins=new Properties();try(var in=ExpansionActions.class.getResourceAsStream("/console-qa-pins.properties")){if(in==null)throw new IOException("Pinned QA metadata missing");pins.load(in);}
+        Properties pins=new Properties();try(var in=ExpansionActions.class.getResourceAsStream("/console-qa-pins.properties")){if(in==null)throw new IOException("Pinned QA metadata missing");pins.load(in);}
+        String suffix=switch(platform){case "nds"->"nds";case "n3ds"->"3dsx";case "wii"->pins.getProperty("expansion-wii-rom.suffix","dol");default->throw new IllegalArgumentException("Only our three original diagnostics");};
+        if(platform.equals("wii")&&!Set.of("dol","wbfs").contains(suffix))throw new IOException("Only the explicitly pinned authored DOL or WBFS diagnostic");
+        String name="original-expansion."+suffix;
         String expected=pins.getProperty("expansion-"+platform+"-rom.sha256");if(expected==null||!expected.matches("[a-f0-9]{64}"))throw new IOException("Build this QA with explicit expansion diagnostics");
         Path directory=mc.gameDirectory.toPath().resolve("console-qa-diagnostics").toAbsolutePath().normalize();Files.createDirectories(directory);if(!directory.toRealPath().equals(directory))throw new IOException("Ordinary QA diagnostic directory required");Path file=directory.resolve(name);
         if(!Files.exists(file,LinkOption.NOFOLLOW_LINKS))try(var in=ExpansionActions.class.getResourceAsStream("/diagnostics/"+name)){if(in==null)throw new IOException("Original diagnostic resource missing");try(var out=Files.newOutputStream(file,StandardOpenOption.CREATE_NEW)){byte[] block=new byte[32768];int total=0;for(int n;(n=in.read(block))!=-1;){total+=n;if(total>4*1024*1024)throw new IOException("Original diagnostic exceeds fixture budget");out.write(block,0,n);}}}

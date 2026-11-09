@@ -198,7 +198,7 @@ final class LibretroCore implements AutoCloseable {
     private record SavedState(byte[] core, byte[] sram, byte[] rtc) { }
     private void runCore() throws IOException {
         if(netpacket!=null)netpacket.beforeRun();
-        if (hardware != null) hardware.beforeFrame();
+        if (hardware != null) hardware.beforeFrame(!platform.equals("wii"));
         executionStarted = true; api.retro_run();
     }
     private void ensureHardwareExecutionStarted() throws IOException {

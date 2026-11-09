@@ -2,6 +2,14 @@
 
 本目录从空白编写，只读取本仓新产品 API 和统一 runner 文档。两个 QA JAR 分侧安装，Java 包为 `net.muxigame.consoleqa`，不会包含任何产品 class，也不发布。
 
+## Wii WBFS与原版界面候选
+
+`build/wii-ui-02`及运行库1.0.1已在统一`console-wii-ui-01`完成原创WBFS启动/输入/保存/冷恢复21项、三页键位2项，9原图逐张实审，两个worker及三MC自然0，运行和唯一准备已回收。用户实际WBFS的独立worker对照与范围见[候选记录](../docs/WII-UI-FIX.md)，不是完整游戏或整包性能验收。
+
+QA构建在既有`--pixel-review --runtime <新运行库> --model-plan <25机型计划> --expansion-diagnostics <原报告>`后加`--wii-wbfs-diagnostic build/wii-wbfs-diagnostic-02/disc-diagnostic.json`，严格绑定原创来源、apploader及实际WBFS映射；客户端提取真实`.wbfs`。默认仍为原DOL流程。统一runner启动后用`qa/expansion_review.py --run <规范绝对run> --build <新QA报告> --platforms wii`，再运行`qa/bindings_visual.py`；旧三平台默认及原结果保持。
+
+封装器源放在`diagnostics/expansion/disc/`，不进入原三程序生成器的顶层glob。02报告重新验证当前工具路径，ISO/WBFS/apploader及两QA JAR与实际运行01原字节相同，原8源码报告继续有效；没有重写原结果或为单纯工具路径重复启动Minecraft。
+
 ## 底座原生掌机槽专项
 
 最终 `build/dock-container-03` 已在统一 `client-2/runs/console-dock-container-02` 完成26/26项，4原图逐张实审；普通背包转场、原机GBA存档与整卡往返通过。2worker及三MC均自然0，运行payload和唯一准备已回收。精确SHA及未验范围见[候选记录](../docs/DOCK-CONTAINER.md)，尚未发布。

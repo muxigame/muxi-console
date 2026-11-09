@@ -8,14 +8,30 @@ from cartridge_review import at,raw,items,cleanup
 from upgrade_review import Upgrade,inventory_slot
 
 
-def run(d):
+def run(d,platforms=('nds','n3ds','wii')):
+    platforms=tuple(platforms)
+    if not platforms or len(set(platforms))!=len(platforms) or any(p not in ('nds','n3ds','wii')for p in platforms):raise ValueError('Choose each requested original expansion platform once')
     programs=d.build.get('expansionDiagnostics',{}).get('programs',{})
     if set(programs)!={'nds','n3ds','wii'}:raise ValueError('Build QA with the pinned three original expansion diagnostics')
-    path,out=record(d,'expansion');f=Upgrade(d,out);out.update(cards={},platforms={},scope='Actual normal callbacks through NativeControls/InputCodec/core, original no-BIOS programs, local server profile/state commit and cold worker restart; physical sensors and commercial games not tested.')
+    path,out=record(d,'expansion'if platforms==('nds','n3ds','wii')else'expansion-'+'-'.join(platforms));f=Upgrade(d,out);out.update(cards={},platforms={},selectedPlatforms=list(platforms),startupObservations={},scope='Actual normal callbacks through NativeControls/InputCodec/core, original no-BIOS programs, local server profile/state commit and cold worker restart; physical sensors and commercial disc images are not tested.')
     inputs={Path(__file__).resolve().with_name(name):None for name in('expansion_review.py','drive.py','polish_review.py','cartridge_review.py','upgrade_review.py')};inputs={p:sha(p)for p in inputs};out['driverInputs']={str(p):digest for p,digest in inputs.items()}
     def world():return d.command('server','expansion_observe')
     def ready(platform,restored=None):
-        return f.wait(lambda v:v['ready']and v['workerRunning']and v['frames']>=30 and v['expansion']['lastSession'].get('platform')==platform and(restored is None or v['restoredStateHash']==restored),'actual '+platform+' worker and expected restore',60)
+        phase='cold'if restored is not None else'first'
+        observed=[];out['startupObservations'][platform+'-'+phase]=observed
+        def actual(v):
+            session=v['expansion']['lastSession'];progress=v['cartridge']['progress']
+            if session.get('platform')==platform and progress.get('card')==session.get('instance'):
+                sample=dict(platform=session['platform'],extension=session.get('extension'),stage=progress['stage'],text=progress['text'],loading=progress['loading'],screen=v['screen'],room=v['room'],epoch=v['epoch'],frames=v['frames'])
+                if not observed or any(sample[k]!=observed[-1][k]for k in('stage','text','screen')):observed.append(sample)
+                if platform=='wii'and progress['stage']=='starting'and v['screen'].endswith('GameScreen')and not any(row.get('startupPhase')==phase for row in out['screenshots']):
+                    row=d.capture('host','expansion-wii-'+phase+'-starting');after=f.see()
+                    row.update(role='host',startupPhase=phase,actualSession=session,progressBefore=progress,progressAfter=after['cartridge']['progress'],presentation=after['polish'].get('presentation'))
+                    out['screenshots'].append(row)
+            return v['ready']and v['workerRunning']and v['frames']>=30 and session.get('platform')==platform and(restored is None or v['restoredStateHash']==restored)
+        value=f.wait(actual,'actual '+platform+' worker and expected restore',60)
+        if platform=='wii':check(out,bool(observed)and all('gba'not in s['text'].lower()for s in observed),'actual Wii session progress contains no other platform label',observed)
+        return value
     def focus(platform):
         v=f.see()
         if not v['screen'].endswith('GameScreen'):f.do('cartridge_use',dict(hand='MAIN_HAND'))
@@ -45,14 +61,18 @@ def run(d):
         return owner,state,profile,ended['expansion'].get('nativeDiagnosticFile')
     def handheld_start(platform,fixture_slot,card):
         f.inv();f.do('upgrade_click',dict(slot=inventory_slot(fixture_slot),button=2,type='SWAP'));f.wait(lambda v:at(v,2).get('model')==(23 if platform=='nds'else 24),'normal hotbar swap preserves the real empty machine');f.install(card,2);f.close();f.do('slot',dict(slot=2));return ready(platform)
-    def wii_panel(join):
+    def wii_panel(join,capture_panel=False):
         f.do('slot',dict(slot=8));f.do('use_block',dict(x=5,y=90,z=6));f.wait(lambda v:v['screen'].endswith('DeviceScreen'),'actual Wii management menu')
+        if capture_panel:f.picture('expansion-wii-management')
         if join:
             if not world()['wiiDevice']['powered']:f.do('button',dict(text='启动 / 停止'));f.settle(3)
             f.do('button',dict(text='P1 加入'))
     try:
         d.prepare();out['fixture']=d.command('server','expansion_prepare');f.do('dock_view',dict(hideGui=False));f.settle(12)
-        for index,platform in enumerate(('nds','n3ds','wii')):
+        if 'wii'in platforms:
+            f.do('linkqa_open');f.wait(lambda v:v['screen'].endswith('LinkScreen'),'normal product link-list screen without starting a session');f.picture('expansion-native-link-list');f.close()
+        for platform in platforms:
+            index=('nds','n3ds','wii').index(platform)
             card=burn(platform,3+index)
             if platform!='wii':started=handheld_start(platform,9+index,card)
             else:
@@ -62,7 +82,7 @@ def run(d):
                 controller=at(f.see(),1);check(out,controller.get('item')=='muxi_console:controller'and controller['count']>=1 and world()['wiiDevice']['ports']==0,'placed Wii has no port until an existing physical controller is connected')
                 f.do('slot',dict(slot=1));f.do('use_block',dict(x=5,y=90,z=6));f.wait(lambda v:at(v,1).get('count',0)==controller['count']-1,'normal controller use consumes one physical controller')
                 check(out,world()['wiiDevice']['ports']==1,'normal controller connection exposes the real Wii P1 port')
-                wii_panel(True);started=ready(platform)
+                wii_panel(True,True);started=ready(platform)
             v=focus(platform);surface_ids={p['id']for p in v['expansion']['surfaces']};check(out,surface_ids==({'primary'}if platform=='wii'else{'top','bottom'}),'actual '+platform+' AV surface layout',v['expansion']['surfaces'])
             pointer(platform)
             if platform=='n3ds':key(extra='TILT_RIGHT')
@@ -96,7 +116,7 @@ def run(d):
             restored=ready(platform,state['hash']);check(out,restored['machine']==owner and restored['expansion']['lastSession']['profile']['generation']==profile['generation']and restored['expansion']['profileReadBytes']-downloads>=profile['size'],'cold '+platform+' worker downloads the actual machine profile then restores its bound state')
             if native_file:check(out,restored['expansion'].get('nativeDiagnosticFile',{}).get('sha256')==native_file['sha256'],'cold '+platform+' boot retains the actual application native-file bytes')
             focus(platform);capture(platform,'cold');f.leave(platform+' cold cleanup');f.do('slot',dict(slot=8));f.close()
-        check(out,len(out['cards'])==3 and len({c['instance']for c in out['cards'].values()})==3,'three distinct cards were issued only by actual normal burns')
+        check(out,len(out['cards'])==len(platforms)and len({c['instance']for c in out['cards'].values()})==len(platforms),'every selected original platform card was issued once by actual normal burns')
         out['scenarioComplete']=True
     except Exception as error:out['failure']=str(error);raise
     finally:
@@ -107,4 +127,4 @@ def run(d):
 
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--run',type=Path,required=True);parser.add_argument('--build',type=Path,required=True);args=parser.parse_args();result=run(Driver(args.run,args.build));print(json.dumps(dict(complete=result['scenarioComplete'],checks=len(result['checks']),images=len(result['screenshots']))))
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--run',type=Path,required=True);parser.add_argument('--build',type=Path,required=True);parser.add_argument('--platforms',nargs='+',choices=('nds','n3ds','wii'),default=('nds','n3ds','wii'),help='Only selected original programs; default retains all three');args=parser.parse_args();result=run(Driver(args.run,args.build),args.platforms);print(json.dumps(dict(complete=result['scenarioComplete'],checks=len(result['checks']),images=len(result['screenshots']))))

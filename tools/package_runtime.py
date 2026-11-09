@@ -7,9 +7,9 @@ from pathlib import Path
 import shutil
 import zipfile
 
-RUNTIME_VERSION = "1.0.0"
+RUNTIME_VERSION = "1.0.1"
 SOURCE_ATTACHMENT = f"muxi-console-runtime-{RUNTIME_VERSION}-sources.zip"
-SOURCE_RELEASE_URL = "https://github.com/muxigame/muxi-console/releases/tag/v0.2.2"
+SOURCE_RELEASE_URL = "https://github.com/muxigame/muxi-console/releases/tag/v0.2.3"
 SOURCE_DOWNLOAD_URL = SOURCE_RELEASE_URL.replace("/tag/", "/download/") + "/" + SOURCE_ATTACHMENT
 SOURCE_METHOD = "complete source attachment alongside runtime binary"
 PAYLOAD_PREFIXES = ("worker/", "cores/", "system/")
