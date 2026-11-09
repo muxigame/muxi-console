@@ -1,0 +1,22 @@
+{
+  "parent": "muxi_console:block/desk_console_n3ds",
+  "display": {
+    "gui": {
+      "rotation": [
+        25,
+        225,
+        0
+      ],
+      "translation": [
+        -0.4487142,
+        0.1896348,
+        0
+      ],
+      "scale": [
+        0.6897584,
+        0.6897584,
+        0.6897584
+      ]
+    }
+  }
+}

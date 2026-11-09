@@ -8,9 +8,10 @@ public final class HardwareCatalogTest {
     private static int checks;
     private static void check(boolean b,String message){checks++;if(!b)throw new AssertionError(message);}
     public static void main(String[] ignored){
-        check(HardwareCatalog.bodies().size()==22,"21 systems plus two-player cabinet present");
+        check(HardwareCatalog.bodies().size()==25,"24 systems plus two-player cabinet present");
         for(var body:HardwareCatalog.bodies()){
-            check(body.id()>=1&&body.id()<=22,"stable ids");check(body.ports()>=1&&body.ports()<=4,"physical port count");
+            check(body.id()>=1&&body.id()<=25,"stable ids");check(body.ports()>=1&&body.ports()<=4,"physical port count");
+            check(body.id()==22||body.id()==body.platform().customModelData(),"Catalog and stable enum media CMD agree without occupying cabinet22");
             check(HardwareCatalog.accepts(body.id(),body.platform()),"native media accepted");
             float[] bounds=body.bounds();for(int axis=0;axis<3;axis++)check(bounds[axis]>=0&&bounds[axis]<bounds[axis+3]&&bounds[axis+3]<=16,"authored body bounded");
             bounds[0]=-999;check(body.bounds()[0]>=0,"bounds immutable");
@@ -28,6 +29,12 @@ public final class HardwareCatalogTest {
         check(HardwareCatalog.ports(19)==1&&HardwareCatalog.screens(19).size()==2,"VB is single-player two-view body");
         check(HardwareCatalog.ports(21)==1&&HardwareCatalog.ports(22)==2,"cabinet control seats match geometry");
         check(!HardwareCatalog.accepts(99,Platform.NES),"unknown typed hardware rejected");
+        for(int id:new int[]{23,24}){
+            var screens=HardwareCatalog.screens(id);check(screens.size()==2,"Dual-screen handheld has two distinct physical LCDs");
+            check(screens.get(0).surface().equals("top")&&!screens.get(0).touchable()&&screens.get(1).surface().equals("bottom")&&screens.get(1).touchable(),"Only bottom LCD exposes touch input");
+            for(var screen:screens)check(Math.abs((screen.x1()-screen.x0())/(screen.y1()-screen.y0())-screen.nativeWidth()/(double)screen.nativeHeight())<.00001,"Each new LCD preserves its own native aspect");
+        }
+        check(HardwareCatalog.body(25).platform()==Platform.WII&&!HardwareCatalog.body(25).handheld()&&HardwareCatalog.ports(25)==4,"Wii keeps its own desktop body and four seats");
         check(!HardwareCatalog.controls(0).isEmpty()&&!HardwareCatalog.controllerControls().isEmpty(),"generic handheld and physical controller have feedback");
         check(HardwareCatalog.controls(19).isEmpty(),"VB visor does not invent controller buttons");
         for(int id:new int[]{17,18}){

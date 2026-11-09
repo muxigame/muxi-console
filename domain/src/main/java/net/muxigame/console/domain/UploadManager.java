@@ -25,7 +25,7 @@ public final class UploadManager implements AutoCloseable {
                     || maxReservedBytes < 1 || timeoutMillis < 1)
                 throw new DomainException("limits", "Invalid upload limits");
         }
-        public static Limits defaults() { return new Limits(RomInspector.MAX_ROM_BYTES, 24 * 1024, 16, 1, 1024L * 1024 * 1024, 60000); }
+        public static Limits defaults() { return new Limits(RomInspector.MAX_ROM_BYTES, 24 * 1024, 16, 1, 16L * 1024 * 1024 * 1024, 60000); }
     }
 
     public record Request(String filename, Platform platform, long size, String sha256, boolean rightsConfirmed) {
@@ -44,6 +44,7 @@ public final class UploadManager implements AutoCloseable {
         final UUID actor;
         final Request request;
         final Path path;
+        boolean reused;
         long offset;
         long lastActivity;
         Pending(UUID actor, Request request, Path root, long now) {
@@ -104,23 +105,30 @@ public final class UploadManager implements AutoCloseable {
         if (request.size() < request.platform().minBytes() || request.size() > Math.min(limits.maxRomBytes(), request.platform().maxBytes()))
             throw new DomainException("size", "ROM size exceeds upload or platform limit");
         expire(nowMillis);
+        RomDescriptor existing = store.hasLocal(request.sha256()) ? store.describe(request.sha256()) : null;
+        if (existing != null && (existing.size() != request.size() || existing.platform() != request.platform()))
+            throw new DomainException("content", "Existing content metadata differs from the upload declaration");
+        long reservation = existing == null ? request.size() : 0;
         long actorCount = pending.values().stream().filter(p -> p.actor.equals(actor)).count();
         if (actorCount >= limits.maxSessionsPerActor() || pending.size() >= limits.maxSessions()
-                || request.size() > limits.maxReservedBytes() - Math.min(reservedBytes, limits.maxReservedBytes()))
+                || reservation > limits.maxReservedBytes() - Math.min(reservedBytes, limits.maxReservedBytes()))
             throw new DomainException("limit", "Too many pending uploads");
-        long used = store.usedBytes();
-        if (!store.has(request.sha256()) && request.size() > store.quotaBytes() - Math.min(used, store.quotaBytes()))
+        long used = existing == null ? store.usedBytes() : 0;
+        if (existing == null && request.size() > store.quotaBytes() - Math.min(used, store.quotaBytes()))
             throw new DomainException("quota", "Content store is full");
         Pending upload = new Pending(actor, request, staging, nowMillis);
-        Files.createFile(upload.path);
+        upload.reused = existing != null;
+        if (upload.reused) upload.offset = request.size();
+        else Files.createFile(upload.path);
         pending.put(upload.id, upload);
-        reservedBytes += request.size();
+        reservedBytes += reservation;
         return upload.status();
     }
 
     public synchronized Status append(UUID actor, UUID uploadId, long offset, byte[] bytes, String chunkSha256, long nowMillis) throws IOException {
         checkOpen();
         Pending upload = require(actor, uploadId, nowMillis);
+        if (upload.reused) throw new DomainException("complete", "Existing content needs no upload chunks");
         if (bytes == null || bytes.length < 1 || bytes.length > limits.maxChunkBytes())
             throw new DomainException("chunk", "Invalid upload chunk length");
         if (offset != upload.offset) throw new DomainException("offset", "Chunk offset must equal acknowledged offset");
@@ -142,6 +150,12 @@ public final class UploadManager implements AutoCloseable {
         Pending upload = require(actor, uploadId, nowMillis);
         if (upload.offset != upload.request.size()) throw new DomainException("incomplete", "The complete ROM has not arrived");
         try {
+            if (upload.reused) {
+                RomDescriptor existing = store.describe(upload.request.sha256());
+                if (existing.size() != upload.request.size() || existing.platform() != upload.request.platform())
+                    throw new DomainException("content", "Existing content metadata changed");
+                return existing;
+            }
             RomDescriptor descriptor = inspector.inspect(upload.path, upload.request.filename(), upload.request.platform());
             if (!descriptor.sha256().equals(upload.request.sha256()) || descriptor.size() != upload.request.size())
                 throw new DomainException("hash", "Whole-file SHA-256 differs from the upload declaration");
@@ -158,6 +172,10 @@ public final class UploadManager implements AutoCloseable {
         Pending upload = pending.get(uploadId);
         if (upload == null || !upload.actor.equals(actor)) throw new DomainException("upload", "Upload is not available to this actor");
         remove(upload);
+    }
+    /** Internal queue cleanup after the MC adapter has revoked the exact writer/transaction. */
+    public synchronized int abortActor(UUID actor)throws IOException{
+        checkOpen();int removed=0;for(Pending upload:new ArrayList<>(pending.values()))if(upload.actor.equals(actor)){remove(upload);removed++;}return removed;
     }
 
     public synchronized int expire(long nowMillis) throws IOException {
@@ -197,7 +215,7 @@ public final class UploadManager implements AutoCloseable {
     private void remove(Pending upload) throws IOException {
         // Keep the reservation if deletion fails, rather than losing track of a pending disk object.
         Files.deleteIfExists(upload.path);
-        if (pending.remove(upload.id) != null) reservedBytes -= upload.request.size();
+        if (pending.remove(upload.id) != null && !upload.reused) reservedBytes -= upload.request.size();
     }
     private void checkOpen() { if (closed) throw new DomainException("closed", "Upload manager is closed"); }
     private static void checkTime(long now) { if (now < 0) throw new DomainException("clock", "Negative upload time"); }

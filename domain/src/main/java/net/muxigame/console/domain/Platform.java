@@ -14,7 +14,8 @@ public enum Platform {
     PCE(8, 4, "pce"), A2600(1, 2, "a26"), A7800(4, 2, "a78"),
     LYNX(2, 1, "lnx", "o"), NGP(8, 1, "ngp"), NGPC(8, 1, "ngc", "ngpc"),
     WS(16, 1, "ws"), WSC(16, 1, "wsc"), VB(16, 1, "vb"),
-    FDS(8, 2, "fds"), ARCADE(512, 4, "mxarc");
+    FDS(8, 2, "fds"), ARCADE(512, 4, "mxarc"),
+    NDS(512,1,"nds"), N3DS(8192,1,"3dsx","3ds","cci","cxi"), WII(9216,4,"dol","elf","iso","wbfs","rvz");
 
     private final long maxBytes;
     private final int controllerPorts;
@@ -43,12 +44,15 @@ public enum Platform {
             case VB -> 16384;
             case FDS -> 65500;
             case ARCADE -> 22;
+            case NDS -> 512;
+            case N3DS -> 32;
+            case WII -> 64;
         };
     }
     public int controllerPorts() { return controllerPorts; }
-    /** Hardware renderers and arcade netlists use one authoritative core for every control seat. */
-    public boolean sharedRuntime(){return this==N64||this==ARCADE;}
-    public int customModelData() { return ordinal() + 1; }
+    /** Every platform uses one authoritative core; remote seats receive video/audio, never a parallel ROM. */
+    public boolean sharedRuntime(){return true;}
+    public int customModelData() { return switch(this){case NDS->23;case N3DS->24;case WII->25;default->ordinal()+1;}; }
     public Set<String> extensions() { return extensions; }
     public boolean acceptsExtension(String extension) { return extensions.contains(extension.toLowerCase(Locale.ROOT)); }
 

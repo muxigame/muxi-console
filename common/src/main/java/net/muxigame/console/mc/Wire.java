@@ -18,6 +18,8 @@ public final class Wire {
         public Message {
             if (operation==null || !operation.matches("[a-z_]{1,32}") || body==null || data==null || data.length>24576)
                 throw new IllegalArgumentException("Invalid message bounds");
+            int metadata=JSON.toJson(body).getBytes(java.nio.charset.StandardCharsets.UTF_8).length;
+            if(metadata>16384||metadata+data.length>31744)throw new IllegalArgumentException("Message exceeds wire byte budget");
         }
     }
     public record ToServer(Message message) implements CustomPacketPayload {
@@ -30,10 +32,10 @@ public final class Wire {
         public static final StreamCodec<RegistryFriendlyByteBuf,ToClient> CODEC=StreamCodec.of((b,p)->write(b,p.message),b->new ToClient(read(b)));
         public Type<ToClient> type(){return TYPE;}
     }
-    private static void write(RegistryFriendlyByteBuf b, Message m){b.writeUtf(m.operation,32);b.writeUtf(JSON.toJson(m.body),2048);b.writeByteArray(m.data);}
-    private static Message read(RegistryFriendlyByteBuf b){return new Message(b.readUtf(32),JSON.fromJson(b.readUtf(2048),JsonObject.class),b.readByteArray(24576));}
+    private static void write(RegistryFriendlyByteBuf b, Message m){b.writeUtf(m.operation,32);b.writeUtf(JSON.toJson(m.body),16384);b.writeByteArray(m.data);}
+    private static Message read(RegistryFriendlyByteBuf b){return new Message(b.readUtf(32),JSON.fromJson(b.readUtf(16384),JsonObject.class),b.readByteArray(24576));}
     public static void register(RegisterPayloadHandlersEvent event){
-        var r=event.registrar("mx-console-3");
+        var r=event.registrar("mx-console-5");
         r.playToServer(ToServer.TYPE,ToServer.CODEC,(p,c)->c.enqueueWork(()->{if(c.player() instanceof ServerPlayer s)ConsoleServer.receive(s,p.message);}));
         r.playToClient(ToClient.TYPE,ToClient.CODEC,(p,c)->c.enqueueWork(()->ClientGate.receiver.accept(p.message)));
     }

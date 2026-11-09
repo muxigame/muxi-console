@@ -2,21 +2,27 @@ package net.muxigame.console.domain;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.HexFormat;
 import java.util.Locale;
+import java.util.function.BooleanSupplier;
 
 /** Independent cartridge admission. Raw formats have extension-based identification only. */
 public final class RomInspector {
-    public static final long MAX_ROM_BYTES = 512L * 1024L * 1024L;
+    public static final long MAX_ROM_BYTES = 12L * 1024L * 1024L * 1024L;
 
     public RomDescriptor inspect(Path file, Platform selected) throws IOException {
-        return inspect(file, file.getFileName().toString(), selected);
+        return inspect(file, file.getFileName().toString(), selected,()->true);
     }
+    public RomDescriptor inspect(Path file,Platform selected,BooleanSupplier active)throws IOException{return inspect(file,file.getFileName().toString(),selected,active);}
 
     public RomDescriptor inspect(Path file, String filename, Platform selected) throws IOException {
+        return inspect(file,filename,selected,()->true);
+    }
+    public RomDescriptor inspect(Path file,String filename,Platform selected,BooleanSupplier active)throws IOException{
         validateFilename(filename);
         if (!Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS)) throw new DomainException("file", "Expected a regular ROM file");
         long size = Files.size(file);
@@ -27,18 +33,20 @@ public final class RomInspector {
         var digest = Hashing.sha256Digest();
         long count = 0;
         try (InputStream input = Files.newInputStream(file, LinkOption.NOFOLLOW_LINKS)) {
-            header = input.readNBytes(512);
+            if(Thread.currentThread().isInterrupted()||!active.getAsBoolean())throw new InterruptedIOException("ROM inspection cancelled");
+            header = input.readNBytes(4096);
             digest.update(header);
             count = header.length;
             byte[] buffer = new byte[32768];
             for (int length; (length = input.read(buffer)) != -1;) {
+                if(Thread.currentThread().isInterrupted()||!active.getAsBoolean())throw new InterruptedIOException("ROM inspection cancelled");
                 count += length;
                 if (count > size) throw new DomainException("size", "ROM changed while being inspected");
                 digest.update(buffer, 0, length);
             }
         }
         if (count != size) throw new DomainException("size", "ROM changed while being inspected");
-        if(platform!=Platform.ARCADE)rejectContainer(header);
+        if(platform!=Platform.ARCADE)rejectContainer(header,platform==Platform.WII);
         Platform marker = markerPlatform(header);
         if (marker != null && marker != platform) throw new DomainException("format", "Cartridge header belongs to another platform");
         String detection = switch (platform) {
@@ -50,6 +58,9 @@ public final class RomInspector {
             case FDS -> inspectFds(file, size);
             case LYNX -> inspectLynx(header,size,filename);
             case ARCADE -> { ArcadeBundle.Manifest media=ArcadeBundle.inspect(file);yield "mxarc-1:"+media.driver(); }
+            case NDS -> inspectNds(header,size);
+            case N3DS -> inspect3ds(header,size,filename);
+            case WII -> inspectWii(header,size,filename);
             default -> "extension-and-size";
         };
         return new RomDescriptor(platform, HexFormat.of().formatHex(digest.digest()), size, filename, detection);
@@ -87,10 +98,42 @@ public final class RomInspector {
         return candidates.getFirst();
     }
 
-    private static void rejectContainer(byte[] header) {
+    private static void rejectContainer(byte[] header,boolean wiiElf) {
         if (starts(header, 0x50, 0x4b) || starts(header, 0x37, 0x7a, 0xbc, 0xaf)
-                || starts(header, 0x1f, 0x8b) || starts(header, 0x4d, 0x5a) || starts(header, 0x7f, 0x45, 0x4c, 0x46))
+                || starts(header, 0x1f, 0x8b) || starts(header, 0x4d, 0x5a) || !wiiElf&&starts(header, 0x7f, 0x45, 0x4c, 0x46))
             throw new DomainException("format", "Archives and executable containers are not supported cartridge files");
+    }
+    private static long le32(byte[] h,int p){return Integer.toUnsignedLong(java.nio.ByteBuffer.wrap(h,p,4).order(java.nio.ByteOrder.LITTLE_ENDIAN).getInt());}
+    private static long be32(byte[] h,int p){return Integer.toUnsignedLong(java.nio.ByteBuffer.wrap(h,p,4).order(java.nio.ByteOrder.BIG_ENDIAN).getInt());}
+    private static boolean marker(byte[] h,int p,String value){if(h.length<p+value.length())return false;for(int i=0;i<value.length();i++)if(u(h[p+i])!=value.charAt(i))return false;return true;}
+    private static String inspectNds(byte[] h,long size){
+        require(h.length>=512,"Truncated DS header");int crc=0xffff;for(int i=0;i<0x15e;i++){crc^=u(h[i]);for(int bit=0;bit<8;bit++)crc=(crc>>>1)^((crc&1)!=0?0xa001:0);}
+        require(crc==(u(h[0x15e])|(u(h[0x15f])<<8)),"DS header CRC16 mismatch");
+        for(int p:new int[]{0x20,0x30}){long offset=le32(h,p),entry=le32(h,p+4),address=le32(h,p+8),length=le32(h,p+12);require(offset>=512&&length>=4&&offset+length<=size,"DS CPU payload exceeds ROM bounds");require(address>=0x02000000L&&address+length<=0x04000000L&&entry>=address&&entry<address+length,"DS CPU entry or load address is invalid");}
+        return "nds-cpu-ranges-and-header-crc16";
+    }
+    private static String inspect3ds(byte[] h,long size,String filename){
+        if(filename.toLowerCase(Locale.ROOT).endsWith(".3dsx")){
+            require(starts(h,'3','D','S','X')&&h.length>=32,"Missing 3DSX homebrew header");int header=u(h[4])|(u(h[5])<<8),relocation=u(h[6])|(u(h[7])<<8);long code=le32(h,16),ro=le32(h,20),data=le32(h,24),bss=le32(h,28);
+            require(header>=32&&header<=size&&relocation>=8&&relocation<=4096&&code>0&&bss<=data&&header+3L*relocation+code+ro+data-bss<=size,"3DSX segments exceed file bounds");return "3dsx-homebrew-segment-bounds";
+        }
+        require(h.length>=512,"Truncated 3DS cartridge header");
+        if(marker(h,0x100,"NCSD")){long media=le32(h,0x104)*512;require(media>=512,"Invalid NCSD media length");boolean partition=false;for(int i=0;i<8;i++){long offset=le32(h,0x120+i*8)*512,length=le32(h,0x124+i*8)*512;if(length>0){partition=true;require(offset>=512&&offset+length<=size&&offset+length<=media,"NCSD partition exceeds file bounds");}}require(partition,"NCSD has no partitions");return "ncsd-partition-bounds";}
+        require(marker(h,0x100,"NCCH")&&le32(h,0x104)>0&&le32(h,0x104)*512<=size,"Expected an NCSD cartridge or NCCH executable container");return "ncch-header-size";
+    }
+    private static String inspectWii(byte[] h,long size,String filename){
+        String extension=filename.substring(filename.lastIndexOf('.')+1).toLowerCase(Locale.ROOT);
+        if(extension.equals("dol")){
+            require(h.length>=256,"Truncated DOL header");long entry=be32(h,0xe0);boolean executable=false;
+            for(int i=0;i<18;i++){long offset=be32(h,i*4),address=be32(h,0x48+i*4),length=be32(h,0x90+i*4);if(length==0)continue;require(offset>=256&&offset+length<=size&&address>=0x80000000L&&address+length<=0x94000000L,"DOL segment exceeds file or Wii memory bounds");if(i<7&&entry>=address&&entry<address+length)executable=true;}
+            require(executable,"DOL entry point is outside executable segments");return "wii-dol-segment-bounds";
+        }
+        if(extension.equals("elf")){
+            require(h.length>=52&&starts(h,0x7f,'E','L','F')&&h[4]==1&&h[5]==2&&u(h[18])==0&&u(h[19])==20,"Only 32-bit big-endian PowerPC Wii ELF is admitted");long table=be32(h,28);int stride=(u(h[42])<<8)|u(h[43]),count=(u(h[44])<<8)|u(h[45]);require(stride>=32&&count>0&&count<=128&&table+(long)stride*count<=size,"Invalid Wii ELF program headers");return "wii-powerpc-elf-header";
+        }
+        if(extension.equals("iso")){require(h.length>=32&&be32(h,0x18)==0x5d1c9ea3L,"Missing Wii disc magic");return "wii-disc-header";}
+        if(extension.equals("wbfs")){require(h.length>=12&&starts(h,'W','B','F','S')&&u(h[8])>=9&&u(h[8])<=16&&u(h[9])>=u(h[8])&&u(h[9])<=26&&be32(h,4)>0,"Invalid WBFS disc header");return "wii-wbfs-header";}
+        require(extension.equals("rvz")&&starts(h,'R','V','Z',1)&&h.length>=72,"Missing RVZ format header");return "wii-rvz-header";
     }
 
     private static Platform markerPlatform(byte[] header) {

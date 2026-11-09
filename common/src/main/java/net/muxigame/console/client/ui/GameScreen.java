@@ -13,6 +13,7 @@ import net.muxigame.console.client.*;
 import net.muxigame.console.client.input.NativeControls;
 import net.muxigame.console.domain.VideoLayout;
 import net.muxigame.console.mc.HardwareCatalog;
+import net.muxigame.console.runtime.AvFrame;
 import org.lwjgl.glfw.GLFW;
 
 /** Two uncluttered fullscreen presentations of one running session. Escape only returns to the world. */
@@ -24,6 +25,9 @@ public class GameScreen extends Screen {
     private final Set<Integer> inputKeys=new HashSet<>();
     private JsonObject presentation=new JsonObject();
     private long sequence;
+    private final List<ShownSurface> shownSurfaces=new ArrayList<>();
+    private boolean pointerDown;
+    private record ShownSurface(AvFrame.Surface source,float[] rect){}
     public GameScreen(ClientActions actions,int port){
         super(Component.translatable("ui.muxi_console.title"));
         if(port<0||port>3)throw new IllegalArgumentException("Player seat outside range");
@@ -36,7 +40,7 @@ public class GameScreen extends Screen {
     public Mode mode(){return mode;}
     public JsonObject presentationSnapshot(){return presentation.deepCopy();}
     public Set<Integer> inputKeys(){return Set.copyOf(inputKeys);}
-    public void clearInputKeys(){inputKeys.clear();NativeControls.clear();}
+    public void clearInputKeys(){inputKeys.clear();NativeControls.clear();pointerDown=false;shownSurfaces.clear();if(actions instanceof ConsoleClient client)client.clearPointer();}
     @Override protected void init(){net.minecraft.client.KeyMapping.releaseAll();clearInputKeys();if(actions instanceof ConsoleClient c)c.resumeControls();}
     @Override public void removed(){net.minecraft.client.KeyMapping.releaseAll();clearInputKeys();if(actions instanceof ConsoleClient c)c.clearInputVisual();}
     @Override public boolean isPauseScreen(){return false;}
@@ -56,6 +60,7 @@ public class GameScreen extends Screen {
         }finally{g.disableScissor();g.pose().popPose();}
     }
     @Override public void render(GuiGraphics g,int mouseX,int mouseY,float partial){
+        shownSurfaces.clear();
         g.fill(0,0,width,height,0xff101315);
         double aspect=aspect();int renderedModel=-1,highlighted=0;float[] video;JsonArray content;
         var item=HandheldRenderer.heldForSession();boolean model=mode==Mode.MODEL&&!item.isEmpty();
@@ -69,16 +74,30 @@ public class GameScreen extends Screen {
             var p=planes.isEmpty()?new HardwareCatalog.Plane(bounds[0],bounds[1],bounds[3],bounds[4],bounds[2]):planes.get(0);
             float x0=width/2f-(p.x1()-cx)*unit,y0=height/2f-(p.y1()-cy)*unit;
             video=VideoLayout.fit(x0,y0,x0+(p.x1()-p.x0())*unit,y0+(p.y1()-p.y0())*unit,aspect);
+            if(actions instanceof ConsoleClient client&&client.picture()!=null)for(var plane:planes){
+                var source=DeviceRenderer.surface(client.picture(),plane);if(source==null)continue;
+                float left=width/2f-(plane.x1()-cx)*unit,top=height/2f-(plane.y1()-cy)*unit;
+                float[] fitted=VideoLayout.fit(left,top,left+(plane.x1()-plane.x0())*unit,top+(plane.y1()-plane.y0())*unit,source.nativeWidth()/(double)source.nativeHeight());
+                shownSurfaces.add(new ShownSurface(source,fitted));
+                if(plane==p)video=fitted;
+            }
             g.flush();Lighting.setupForFlatItems();var pose=g.pose();pose.pushPose();
             try{pose.translate(width/2f,height/2f,400);pose.scale(unit*16,-unit*16,unit*16);pose.mulPose(Axis.YP.rotationDegrees(180));pose.translate(-cx/16,-cy/16,-cz/16);highlighted=HandheldRenderer.presented(item,pose,g.bufferSource(),LightTexture.FULL_BRIGHT);g.flush();}
             finally{pose.popPose();Lighting.setupFor3DItems();}
         }else{
             video=VideoLayout.fit(3,3,width-3,height-3,aspect);int x=Math.round(video[0]),y=Math.round(video[1]),w=Math.max(1,Math.round(video[2]-video[0])),h=Math.max(1,Math.round(video[3]-video[1]));
             g.fill(x-2,y-2,x+w+2,y+h+2,0xff59646a);g.fill(x-1,y-1,x+w+1,y+h+1,0xff080a0b);actions.renderPicture(g,x,y,w,h);content=rect(x,y,w,h);
+            if(actions instanceof ConsoleClient client&&client.picture()!=null){
+                var texture=minecraft.getTextureManager().getTexture(client.picture());
+                if(texture instanceof DynamicTexture dynamic&&dynamic.getPixels()!=null){int aw=dynamic.getPixels().getWidth(),ah=dynamic.getPixels().getHeight();
+                    for(var source:client.surfaces())shownSurfaces.add(new ShownSurface(source,new float[]{video[0]+source.x()*(video[2]-video[0])/aw,video[1]+source.y()*(video[3]-video[1])/ah,video[0]+(source.x()+source.width())*(video[2]-video[0])/aw,video[1]+(source.y()+source.height())*(video[3]-video[1])/ah}));
+                }
+            }
         }
         ConsoleClient.ProgressSnapshot progress=actions instanceof ConsoleClient c?c.progressSnapshot():null;
         if(!model&&progress!=null&&(progress.loading()||!progress.error().isEmpty()))loading(g,video,progress);
         JsonObject out=new JsonObject();out.addProperty("sequence",++sequence);out.addProperty("mode",mode==Mode.MODEL?"model":"screen");out.addProperty("surfaceWidth",width);out.addProperty("surfaceHeight",height);out.addProperty("renderedModel",renderedModel);out.addProperty("modelRendered",model);out.addProperty("videoAspect",aspect);out.add("contentRect",content);out.add("videoRect",rect(video[0],video[1],video[2]-video[0],video[3]-video[1]));out.addProperty("highlightedSurfaces",highlighted);out.addProperty("widgetCount",children().size());out.addProperty("buttons",actions instanceof ConsoleClient c?c.localInputVisual().buttons():0);
+        JsonArray screens=new JsonArray();for(var shown:shownSurfaces){var source=shown.source();float[] area=shown.rect();JsonObject entry=new JsonObject();entry.addProperty("id",source.id());entry.addProperty("touchable",source.touchable());entry.addProperty("nativeWidth",source.nativeWidth());entry.addProperty("nativeHeight",source.nativeHeight());entry.add("sourceRect",rect(source.x(),source.y(),source.width(),source.height()));entry.add("rect",rect(area[0],area[1],area[2]-area[0],area[3]-area[1]));screens.add(entry);}out.add("screens",screens);
         if(progress!=null){JsonObject load=new JsonObject();load.addProperty("stage",progress.stage());load.addProperty("bytes",progress.bytes());load.addProperty("total",progress.total());load.addProperty("percent",progress.percent());load.addProperty("text",progress.text());load.addProperty("loading",progress.loading());load.addProperty("error",progress.error());out.add("progress",load);}presentation=out;
     }
     @Override public boolean keyPressed(int key,int scan,int modifiers){
@@ -87,9 +106,18 @@ public class GameScreen extends Screen {
     }
     @Override public boolean keyReleased(int key,int scan,int modifiers){inputKeys.remove(key);NativeControls.key(key,scan,false);return true;}
     @Override public boolean mouseClicked(double x,double y,int button){
-        if(button==GLFW.GLFW_MOUSE_BUTTON_RIGHT){if(!HandheldRenderer.heldForSession().isEmpty())mode=mode==Mode.MODEL?Mode.SCREEN:Mode.MODEL;return true;}
+        if(button==GLFW.GLFW_MOUSE_BUTTON_RIGHT){if(!HandheldRenderer.heldForSession().isEmpty())mode=mode==Mode.MODEL?Mode.SCREEN:Mode.MODEL;pointerDown=false;shownSurfaces.clear();if(actions instanceof ConsoleClient client)client.clearPointer();return true;}
+        if(button==GLFW.GLFW_MOUSE_BUTTON_LEFT&&pointerHardware()){pointerDown=true;updatePointer(x,y);return true;}
         NativeControls.mouse(button,true);return true;
     }
-    @Override public boolean mouseReleased(double x,double y,int button){if(button!=GLFW.GLFW_MOUSE_BUTTON_RIGHT)NativeControls.mouse(button,false);return true;}
+    private boolean pointerHardware(){return actions instanceof ConsoleClient client&&client.surfaces().stream().anyMatch(AvFrame.Surface::touchable);}
+    private void updatePointer(double x,double y){
+        if(!(actions instanceof ConsoleClient client))return;
+        for(var shown:shownSurfaces){float[] area=shown.rect();if(shown.source().touchable()&&x>=area[0]&&x<=area[2]&&y>=area[1]&&y<=area[3]){client.pointer(shown.source().id(),(x-area[0])/(area[2]-area[0]),(y-area[1])/(area[3]-area[1]),pointerDown);return;}}
+        client.clearPointer();
+    }
+    @Override public void mouseMoved(double x,double y){super.mouseMoved(x,y);if(pointerHardware())updatePointer(x,y);}
+    @Override public boolean mouseDragged(double x,double y,int button,double dx,double dy){if(button==GLFW.GLFW_MOUSE_BUTTON_LEFT&&pointerHardware()){pointerDown=true;updatePointer(x,y);return true;}return super.mouseDragged(x,y,button,dx,dy);}
+    @Override public boolean mouseReleased(double x,double y,int button){if(button==GLFW.GLFW_MOUSE_BUTTON_LEFT){pointerDown=false;if(pointerHardware())updatePointer(x,y);}if(button!=GLFW.GLFW_MOUSE_BUTTON_RIGHT)NativeControls.mouse(button,false);return true;}
     @Override public void onClose(){clearInputKeys();if(actions instanceof ConsoleClient c)c.releaseControls();if(minecraft!=null&&minecraft.screen==this)minecraft.setScreen(null);}
 }

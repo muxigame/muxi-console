@@ -13,7 +13,10 @@ import net.minecraft.world.item.component.CustomModelData;
 
 /** The authored model catalog is the single coordinate contract for bodies and live screens. */
 public final class HardwareCatalog {
-    public record Plane(float x0,float y0,float x1,float y1,float z){}
+    public record Plane(float x0,float y0,float x1,float y1,float z,String surface,int nativeWidth,int nativeHeight,boolean touchable){
+        public Plane(float x0,float y0,float x1,float y1,float z){this(x0,y0,x1,y1,z,"primary",0,0,false);}
+        public Plane{if(!Set.of("primary","top","bottom").contains(surface)||nativeWidth<0||nativeHeight<0||(nativeWidth==0)!=(nativeHeight==0))throw new IllegalArgumentException("Invalid screen surface");}
+    }
     public record ControlSurface(int button,int port,String facing,float x0,float y0,float z0,float x1,float y1,float z1){}
     public record ControlRegion(int button,int port,float x0,float y0,float z0,float x1,float y1,float z1){}
     public record MediaSlot(float width,float baseX,float baseY,float baseZ,float rotationX,float rotationY,float rotationZ,float depthScale,boolean top,int clipAxis,boolean above,float clipValue){}
@@ -43,7 +46,7 @@ public final class HardwareCatalog {
     public static Collection<Body> bodies(){return BODIES.values();}
     public static Body body(int id){return BODIES.get(id);}
     public static int model(ItemStack item){CustomModelData data=item.get(DataComponents.CUSTOM_MODEL_DATA);return data==null?0:data.value();}
-    public static ItemStack variant(ItemStack item,int id){if(id<0||id>22||id!=0&&!BODIES.containsKey(id))throw new IllegalArgumentException("Unknown body");if(id==0)item.remove(DataComponents.CUSTOM_MODEL_DATA);else item.set(DataComponents.CUSTOM_MODEL_DATA,new CustomModelData(id));return item;}
+    public static ItemStack variant(ItemStack item,int id){if(id<0||id>25||id!=0&&!BODIES.containsKey(id))throw new IllegalArgumentException("Unknown body");if(id==0)item.remove(DataComponents.CUSTOM_MODEL_DATA);else item.set(DataComponents.CUSTOM_MODEL_DATA,new CustomModelData(id));return item;}
     public static boolean accepts(int body,Platform media){Body b=body(body);return body==0||b!=null&&b.accepts(media);}
     public static int ports(int body){Body b=body(body);return b==null?4:b.ports();}
     public static List<Plane> screens(int body){Body b=body(body);return b==null?List.of():b.screens();}
@@ -103,10 +106,12 @@ public final class HardwareCatalog {
                 else if(j.has("screen_plane")&&!j.get("screen_plane").isJsonNull())screens.add(plane(j.getAsJsonObject("screen_plane")));
                 JsonObject box=j.getAsJsonObject("bounds");JsonArray min=box.getAsJsonArray("min"),max=box.getAsJsonArray("max");float[] bounds=new float[6];for(int k=0;k<3;k++){bounds[k]=min.get(k).getAsFloat();bounds[k+3]=max.get(k).getAsFloat();}
                 String name=j.has("zh_name")?j.get("zh_name").getAsString():"双人街机";String form=j.has("form_factor")?j.get("form_factor").getAsString():"arcade";
+                Platform platform=Platform.fromId(j.get("platform").getAsString());String code=platform==Platform.SG1000?"SG-1000":platform==Platform.N3DS?"3DS":platform.name();
+                if(!name.equals(code)&&!name.startsWith(code+" · "))name=code+" · "+name;
                 int ports=j.has("cabinet_seats")?j.get("cabinet_seats").getAsInt():j.get("controller_ports").getAsInt();
-                if(result.put(id,new Body(id,Platform.fromId(j.get("platform").getAsString()),name,form,ports,screens,bounds,controls(j,"control_surfaces"),regions(j,"button_regions"),j.has("media_bounds")?box(j.getAsJsonObject("media_bounds")):null,slot(j.getAsJsonObject("media_slot"))))!=null)throw new IOException("Duplicate body id");
+                if(result.put(id,new Body(id,platform,name,form,ports,screens,bounds,controls(j,"control_surfaces"),regions(j,"button_regions"),j.has("media_bounds")?box(j.getAsJsonObject("media_bounds")):null,slot(j.getAsJsonObject("media_slot"))))!=null)throw new IOException("Duplicate body id");
             }
-            if(result.size()!=22)throw new IOException("Incomplete hardware catalog");return new Catalog(Collections.unmodifiableMap(result),controls(root,"generic_control_surfaces"),controls(root,"controller_control_surfaces"),regions(root,"generic_button_regions"),regions(root,"controller_button_regions"),box(root.getAsJsonObject("generic_media_bounds")),slot(root.getAsJsonObject("generic_media_slot")),slot(root.getAsJsonObject("generic_desktop_media_slot")));
+            if(result.size()!=25)throw new IOException("Incomplete hardware catalog");return new Catalog(Collections.unmodifiableMap(result),controls(root,"generic_control_surfaces"),controls(root,"controller_control_surfaces"),regions(root,"generic_button_regions"),regions(root,"controller_button_regions"),box(root.getAsJsonObject("generic_media_bounds")),slot(root.getAsJsonObject("generic_media_slot")),slot(root.getAsJsonObject("generic_desktop_media_slot")));
         }catch(Exception e){throw new ExceptionInInitializerError(e);}
     }
     private static float[] box(JsonObject object)throws IOException{
@@ -121,7 +126,7 @@ public final class HardwareCatalog {
         for(float value:new float[]{slot.width,slot.baseX,slot.baseY,slot.baseZ,slot.rotationX,slot.rotationY,slot.rotationZ,slot.depthScale,slot.clipValue})if(!Float.isFinite(value))throw new IOException("Invalid media slot coordinates");
         if(index<0||!Set.of("above","below").contains(keep)||slot.width<=0||slot.width>16||slot.depthScale<=0||slot.depthScale>2)throw new IOException("Invalid media slot");return slot;
     }
-    private static Plane plane(JsonObject j){JsonArray a=j.getAsJsonArray("from"),b=j.getAsJsonArray("to");return new Plane(a.get(0).getAsFloat(),a.get(1).getAsFloat(),b.get(0).getAsFloat(),b.get(1).getAsFloat(),a.get(2).getAsFloat());}
+    private static Plane plane(JsonObject j){JsonArray a=j.getAsJsonArray("from"),b=j.getAsJsonArray("to"),size=j.has("native_size")?j.getAsJsonArray("native_size"):null;return new Plane(a.get(0).getAsFloat(),a.get(1).getAsFloat(),b.get(0).getAsFloat(),b.get(1).getAsFloat(),a.get(2).getAsFloat(),j.has("surface")?j.get("surface").getAsString():"primary",size==null?0:size.get(0).getAsInt(),size==null?0:size.get(1).getAsInt(),j.has("touchable")&&j.get("touchable").getAsBoolean());}
     private static List<ControlRegion> regions(JsonObject object,String key)throws IOException{
         if(!object.has(key))return List.of();List<ControlRegion> result=new ArrayList<>();
         for(JsonElement row:object.getAsJsonArray(key)){

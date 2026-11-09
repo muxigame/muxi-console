@@ -1,0 +1,87 @@
+{
+  "sourceEvidence": {
+    "resultSHA256": "3307e37b3787b2dc905dbd365644de5975a7fa747ce5ac9d71accd02f25710de",
+    "scope": "Actual accepted start and closing-shaped end broadcast at CLOSING epoch; native header read from committed automatic CPU state, decompressing MXZ1 only. The original full scenario remains false.",
+    "stateSHA256": "373f14a04a48f870090e92ce95df1e304b7b7c116b597ec43a8198f7bd799b21"
+  },
+  "start": {
+    "link": "277df325-58ba-4013-90fb-ad65d5404d6e",
+    "epoch": 3,
+    "hostPlayer": "4927d282-c5db-3a96-aaf8-e9aa04de9eda",
+    "stage": "RUNNING",
+    "frameFlow": true,
+    "endpoints": [
+      {
+        "player": "1aff1ef6-059e-33c9-970a-37d092e1234a",
+        "machine": "03078bb1-4500-4cac-9ad5-c885a97e1d45",
+        "instance": "84ba39e4-cbb9-420f-8fe0-9c45f4075ebe",
+        "hash": "0fda17de8355cb61b9363cf18dd4c888bb1e9f82241d5fc80341e33ce22ac149",
+        "platform": "n3ds",
+        "size": 120880,
+        "title": "original-link-right",
+        "model": 24,
+        "name": "DebugGuest"
+      },
+      {
+        "player": "4927d282-c5db-3a96-aaf8-e9aa04de9eda",
+        "machine": "721bb633-3902-4ff3-8255-e1595d417ed6",
+        "instance": "5b1c639d-06bd-4803-a9c9-dd8de6f92ea9",
+        "hash": "715417bf5b90c13c02116f2e3c4a0ec5d960a0f373bba6107b01299df9aa825c",
+        "platform": "n3ds",
+        "size": 119424,
+        "title": "original-link-left",
+        "model": 24,
+        "name": "DebugHost"
+      }
+    ],
+    "port": 1,
+    "host": true,
+    "bridge": "19b7331fef796c243577ac1e5d442c69d700ee1282f2c1bcb6227b33a3d50e69",
+    "single": "19b7331fef796c243577ac1e5d442c69d700ee1282f2c1bcb6227b33a3d50e69",
+    "frameBase": 0,
+    "queueCheckpoint": false,
+    "states": [
+      {},
+      {}
+    ],
+    "profiles": [
+      {},
+      {}
+    ]
+  },
+  "closing": {
+    "link": "277df325-58ba-4013-90fb-ad65d5404d6e",
+    "epoch": 4,
+    "hostPlayer": "4927d282-c5db-3a96-aaf8-e9aa04de9eda",
+    "stage": "CLOSING",
+    "frameFlow": true,
+    "endpoints": [
+      {
+        "player": "1aff1ef6-059e-33c9-970a-37d092e1234a",
+        "machine": "03078bb1-4500-4cac-9ad5-c885a97e1d45",
+        "instance": "84ba39e4-cbb9-420f-8fe0-9c45f4075ebe",
+        "hash": "0fda17de8355cb61b9363cf18dd4c888bb1e9f82241d5fc80341e33ce22ac149",
+        "platform": "n3ds",
+        "size": 120880,
+        "title": "original-link-right",
+        "model": 24,
+        "name": "DebugGuest"
+      },
+      {
+        "player": "4927d282-c5db-3a96-aaf8-e9aa04de9eda",
+        "machine": "721bb633-3902-4ff3-8255-e1595d417ed6",
+        "instance": "5b1c639d-06bd-4803-a9c9-dd8de6f92ea9",
+        "hash": "715417bf5b90c13c02116f2e3c4a0ec5d960a0f373bba6107b01299df9aa825c",
+        "platform": "n3ds",
+        "size": 119424,
+        "title": "original-link-left",
+        "model": 24,
+        "name": "DebugHost"
+      }
+    ],
+    "port": 1,
+    "host": true,
+    "reason": "连线核心未能继续，保留最近已提交的存档"
+  },
+  "nativeHeaderHex": "4d58533319b7331fef796c243577ac1e5d442c69d700ee1282f2c1bcb6227b33a3d50e69"
+}

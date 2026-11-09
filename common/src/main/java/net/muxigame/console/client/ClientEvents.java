@@ -9,6 +9,7 @@ import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 
 @EventBusSubscriber(modid=MuxiConsole.ID,value=Dist.CLIENT)
 public final class ClientEvents {
+    @SubscribeEvent public static void tooltip(net.neoforged.neoforge.client.event.RenderTooltipEvent.GatherComponents event){net.muxigame.console.client.ui.HandheldSlotTooltip.gather(event);}
     /** A gameplay Screen owns keyboard/mouse actions; stale world mappings cannot survive into the next tick. */
     @SubscribeEvent(priority=net.neoforged.bus.api.EventPriority.LOWEST)
     public static void capturedTick(ClientTickEvent.Pre event){

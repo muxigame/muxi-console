@@ -23,11 +23,6 @@ public final class DeviceScreen extends ConsoleScreen {
         button(left + 22 + w, top + 58, w, dock()?"取出掌机":"取出卡带", ignored -> act("eject", 0));
         button(left + 14, top + 86, w, "连接附近屏幕", ignored -> act("link", 0));
         button(left + 22 + w, top + 86, w, "按键与手柄", ignored -> net.muxigame.console.client.input.NativeControls.openSettings(this));
-        if(!dock()&&!context.has("card")&&!context.get("powered").getAsBoolean()){
-            int id=context.has("model")?context.get("model").getAsInt():0;
-            var body=net.muxigame.console.mc.HardwareCatalog.body(id);
-            button(left+14,top+180,panelWidth-28,"机型："+(body==null?"通用主机":body.name())+" · 点击切换",ignored->act("body",(id+1)%23));
-        }
         if(context.has("card")){leave=button(left+14,top+172,panelWidth-28,"保存并离开游戏",ignored->{if(currentSession())actions.leave();});leave.active=currentSession();}
         int seatWidth = (panelWidth - 28 - gap * 3) / 4;
         for (int port = 0; port < 4; port++) {
@@ -48,6 +43,7 @@ public final class DeviceScreen extends ConsoleScreen {
         if(leave!=null)leave.active=currentSession();
         panel(graphics, dock()?"装入掌机，通过底座连接大屏，再选择控制席":"插入卡带，连接屏幕，再选择你的控制席");
         line(graphics, "选择控制席", left + 14, top + 124, panelWidth - 28, CREAM);
+        if(!context.has("card")&&context.has("model")&&context.get("model").getAsInt()==0)line(graphics,"游戏机核心：取回后在工作台与染料合成机型",left+14,top+180,panelWidth-28,AMBER);
         line(graphics, Objects.requireNonNullElse(actions.status(), ""), left + 14, top + panelHeight - 55, panelWidth - 28, AMBER);
         super.render(graphics, mouseX, mouseY, partialTick);
     }

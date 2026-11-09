@@ -30,7 +30,7 @@ public final class Hashing {
         var digest = sha256Digest();
         try (InputStream input = Files.newInputStream(path, LinkOption.NOFOLLOW_LINKS)) {
             byte[] buffer = new byte[32768];
-            for (int count; (count = input.read(buffer)) != -1;) digest.update(buffer, 0, count);
+            for (int count; (count = input.read(buffer)) != -1;) {if(Thread.currentThread().isInterrupted())throw new java.io.InterruptedIOException("File hashing was cancelled");digest.update(buffer, 0, count);}
         }
         return HexFormat.of().formatHex(digest.digest());
     }

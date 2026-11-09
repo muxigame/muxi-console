@@ -30,20 +30,21 @@ public final class WorkerMain {
                             int count = body.readInt(); if (count < 0 || count > 256) throw new IOException("Invalid option count");
                             Map<String, String> options = new HashMap<>();
                             for (int i = 0; i < count; i++) if (options.put(Wire.string(body), Wire.string(body)) != null) throw new IOException("Duplicate core option");
+                            String platform=Wire.string(body);
                             Wire.end(body);
-                            core = new LibretroCore(library, content.isEmpty() ? null : Path.of(content), system, save, options);
+                            core = new LibretroCore(library, content.isEmpty() ? null : Path.of(content), system, save, options,platform);
                             LibretroCore opened = core; result = Wire.body(reply -> Wire.info(reply, opened.info()));
                         } else {
                             if (core == null && packet.operation() != Wire.QUIT) throw new IOException("No loaded core");
                             result = switch (packet.operation()) {
                                 case Wire.STEP -> {
-                                    int ports = body.readUnsignedByte(); if (ports > 4) throw new IOException("Too many controller ports");
-                                    List<PortInput> inputs = new ArrayList<>();
-                                    for (int i = 0; i < ports; i++) inputs.add(new PortInput(body.readUnsignedShort(), body.readShort(), body.readShort(), body.readShort(), body.readShort()));
-                                    Wire.end(body); AvFrame frame = core.step(new InputFrame(inputs)); yield Wire.body(reply -> Wire.frame(reply, frame));
+                                    InputFrame inputs=InputCodec.decodeFrame(Wire.bytes(body));Wire.end(body); AvFrame frame = core.step(inputs); yield Wire.body(reply -> Wire.frame(reply, frame));
                                 }
                                 case Wire.RESET -> { Wire.end(body); core.reset(); yield new byte[0]; }
                                 case Wire.SAVE -> { Wire.end(body); yield core.saveState(); }
+                                case Wire.STATE_SIZE -> {Wire.end(body);long size=core.stateSize();yield Wire.body(reply->reply.writeLong(size));}
+                                case Wire.SAVE_TO -> {Path path=Path.of(Wire.string(body));Wire.end(body);core.saveStateTo(path);yield new byte[0];}
+                                case Wire.LOAD_FROM -> {Path path=Path.of(Wire.string(body));Wire.end(body);core.loadStateFrom(path);yield new byte[0];}
                                 case Wire.LOAD -> { core.loadState(packet.body()); yield new byte[0]; }
                                 case Wire.SRAM_READ -> { Wire.end(body); yield core.readSram(); }
                                 case Wire.SRAM_WRITE -> { core.writeSram(packet.body()); yield new byte[0]; }

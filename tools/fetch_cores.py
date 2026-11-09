@@ -37,6 +37,9 @@ SPECS = {
     "mednafen_wswan": ("libretro/beetle-wswan-libretro", ["ws", "wsc"], "beetle_wswan"),
     "mednafen_vb": ("libretro/beetle-vb-libretro", ["vb"], "beetle_vb"),
     "2048": ("libretro/libretro-2048", [], "2048"),
+    "melondsds": ("JesseTG/melonds-ds",["nds"],"melonds_ds"),
+    "azahar": ("azahar-emu/azahar",["n3ds"],"azahar"),
+    "dolphin": ("libretro/dolphin",["wii"],"dolphin"),
 }
 
 
@@ -59,7 +62,7 @@ def fetch_one(name, workspace, pin, prior, offline):
     repository, games, documentation = SPECS[name]
     filename = name + "_libretro.dll"
     existing = prior.get("platforms", {}).get("windows-x86_64")
-    if not pin and prior.get("binaryOrigin") == "source-rebuild":
+    if not pin and prior.get("binaryOrigin") in ("source-rebuild","official-release","official-pinned"):
         # A locally rebuilt, source-bound core is never replaced by a rolling download.
         archive_path = (workspace / existing["archive"]).resolve()
         cache_root = (workspace / "test-environment/cache/muxi-console").resolve()
@@ -68,7 +71,7 @@ def fetch_one(name, workspace, pin, prior, offline):
         if archive_path.stat().st_size != existing["archiveBytes"] or sha(archive_path.read_bytes()) != existing["archiveSha256"]:
             raise ValueError(f"Source-rebuilt archive differs from its pin: {name}")
         with zipfile.ZipFile(archive_path) as container:
-            members = [entry for entry in container.infolist() if entry.filename == existing["libraryName"] and not entry.is_dir()]
+            members = [entry for entry in container.infolist() if (entry.filename == existing["libraryName"] if prior.get("binaryOrigin")=="source-rebuild" else Path(entry.filename).name == existing["libraryName"]) and not entry.is_dir()]
             if len(members) != 1 or members[0].file_size != existing["libraryBytes"] or members[0].file_size > 64 * 1024 * 1024:
                 raise ValueError(f"Source-rebuilt archive has no unique bounded library: {name}")
             library = container.read(members[0])

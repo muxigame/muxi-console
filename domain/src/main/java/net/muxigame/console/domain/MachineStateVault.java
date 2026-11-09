@@ -15,6 +15,7 @@ public final class MachineStateVault implements AutoCloseable {
         public String hash(){return checkpoint.hash();}
         public long size(){return checkpoint.size();}
         public UUID generationID(){return checkpoint.generationID();}
+        public UUID profileGeneration(){return checkpoint.profileGeneration();}
     }
     private static final class Pending {
         final MachineSaveKey key;final UUID id;long progressed;
@@ -44,6 +45,9 @@ public final class MachineStateVault implements AutoCloseable {
         channel=acquiredChannel;lock=acquired;
     }
     public synchronized StateVault.Status begin(UUID actor,MachineSaveKey key,String fingerprint,long frame,long size,String hash,long now)throws IOException{
+        return begin(actor,key,fingerprint,frame,size,hash,now,null);
+    }
+    public synchronized StateVault.Status begin(UUID actor,MachineSaveKey key,String fingerprint,long frame,long size,String hash,long now,UUID profileGeneration)throws IOException{
         active();Objects.requireNonNull(key);expire(now);
         if(actor==null)throw new DomainException("save_identity","Checkpoint actor is required");
         if(uploads.containsKey(actor)||uploads.values().stream().anyMatch(p->p.key.equals(key)))throw new DomainException("save_active","Machine/game checkpoint is already uploading");
@@ -51,7 +55,7 @@ public final class MachineStateVault implements AutoCloseable {
         long charge=Math.addExact(size,1024L);
         if(charge>limits.quotaBytes()-chargedBytes())throw new DomainException("save_quota","Machine checkpoint storage quota is exhausted");
         StateVault store=stores.get(key);if(store==null){Path machine=root.resolve(key.machineUUID().toString());directory(machine);Path game=machine.resolve(key.contentSHA());directory(game);store=new StateVault(game,limits,namespace(key));stores.put(key,store);}
-        StateVault.Status status=store.begin(actor,key.machineUUID(),fingerprint,frame,size,hash,now);uploads.put(actor,new Pending(key,status.uploadId(),now));return status;
+        StateVault.Status status=store.begin(actor,key.machineUUID(),fingerprint,frame,size,hash,now,profileGeneration);uploads.put(actor,new Pending(key,status.uploadId(),now));return status;
     }
     public synchronized StateVault.Status append(UUID actor,UUID id,long offset,byte[] bytes,long now)throws IOException{
         active();Pending pending=pending(actor,id);StateVault.Status status=stores.get(pending.key).append(actor,id,offset,bytes,now);pending.progressed=now;return status;

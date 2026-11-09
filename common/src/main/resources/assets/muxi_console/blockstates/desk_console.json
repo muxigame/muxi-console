@@ -88,6 +88,18 @@
       "model": "muxi_console:block/desk_console_arcade",
       "y": 0
     },
+    "facing=north,model=23": {
+      "model": "muxi_console:block/desk_console_nds",
+      "y": 0
+    },
+    "facing=north,model=24": {
+      "model": "muxi_console:block/desk_console_n3ds",
+      "y": 0
+    },
+    "facing=north,model=25": {
+      "model": "muxi_console:block/desk_console_wii",
+      "y": 0
+    },
     "facing=north,model=22": {
       "model": "muxi_console:block/arcade_cabinet_2p",
       "y": 0
@@ -178,6 +190,18 @@
     },
     "facing=east,model=21": {
       "model": "muxi_console:block/desk_console_arcade",
+      "y": 90
+    },
+    "facing=east,model=23": {
+      "model": "muxi_console:block/desk_console_nds",
+      "y": 90
+    },
+    "facing=east,model=24": {
+      "model": "muxi_console:block/desk_console_n3ds",
+      "y": 90
+    },
+    "facing=east,model=25": {
+      "model": "muxi_console:block/desk_console_wii",
       "y": 90
     },
     "facing=east,model=22": {
@@ -272,6 +296,18 @@
       "model": "muxi_console:block/desk_console_arcade",
       "y": 180
     },
+    "facing=south,model=23": {
+      "model": "muxi_console:block/desk_console_nds",
+      "y": 180
+    },
+    "facing=south,model=24": {
+      "model": "muxi_console:block/desk_console_n3ds",
+      "y": 180
+    },
+    "facing=south,model=25": {
+      "model": "muxi_console:block/desk_console_wii",
+      "y": 180
+    },
     "facing=south,model=22": {
       "model": "muxi_console:block/arcade_cabinet_2p",
       "y": 180
@@ -362,6 +398,18 @@
     },
     "facing=west,model=21": {
       "model": "muxi_console:block/desk_console_arcade",
+      "y": 270
+    },
+    "facing=west,model=23": {
+      "model": "muxi_console:block/desk_console_nds",
+      "y": 270
+    },
+    "facing=west,model=24": {
+      "model": "muxi_console:block/desk_console_n3ds",
+      "y": 270
+    },
+    "facing=west,model=25": {
+      "model": "muxi_console:block/desk_console_wii",
       "y": 270
     },
     "facing=west,model=22": {

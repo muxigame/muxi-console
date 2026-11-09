@@ -10,12 +10,21 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Checkbox;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Inventory;
+import net.muxigame.console.client.ConsoleClient;
 import net.muxigame.console.domain.Platform;
+import net.muxigame.console.mc.ConsoleContent;
+import net.muxigame.console.mc.WriterMenu;
 import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
 /** Selecting a file invalidates the prior affirmative rights declaration. */
-public final class WriterScreen extends ConsoleScreen {
+public final class WriterScreen extends AbstractContainerScreen<WriterMenu> {
+    private static final ResourceLocation TEXTURE=ResourceLocation.withDefaultNamespace("textures/gui/container/generic_54.png");
     private final JsonObject context;
     private final ClientActions actions;
     private Path file;
@@ -23,43 +32,52 @@ public final class WriterScreen extends ConsoleScreen {
     private Platform selected;
     private boolean rights;
     private boolean choosing;
+    private boolean releasedSession;
+    private boolean cancelledWriter;
     private String localStatus = "";
     private Checkbox declaration;
-    private ConsoleButton upload;
-    private ConsoleButton platform;
-    private ConsoleButton addDependency,clearDependencies;
+    private Button upload;
+    private Button platform;
+    private Button addDependency,clearDependencies;
 
-    public WriterScreen(JsonObject context, ClientActions actions) {
-        super(Component.translatable("ui.muxi_console.write"));
-        this.context = Objects.requireNonNull(context).deepCopy(); this.actions = Objects.requireNonNull(actions);
+    public WriterScreen(WriterMenu menu,Inventory inventory,Component title) {
+        this(menu,inventory,title,ConsoleClient.INSTANCE);
     }
+    public WriterScreen(WriterMenu menu,Inventory inventory,Component title,ClientActions actions) {
+        super(menu,inventory,title);
+        imageWidth=176;imageHeight=222;inventoryLabelY=130;
+        this.context = menu.context(); this.actions = Objects.requireNonNull(actions);
+    }
+    private Button button(int x,int y,int width,int height,Component label,Button.OnPress action){return addRenderableWidget(Button.builder(label,action).bounds(leftPos+x,topPos+y,width,height).build());}
     @Override protected void init() {
-        layout(468, 286);
-        button(left + 14, top + 58, 108, "选择文件", ignored -> browse());
-        platform = button(left + 14, top + 84, panelWidth - 28, "", ignored -> {
+        super.init();
+        if(!releasedSession){releasedSession=true;actions.leave();}
+        button(8,20,64,18,Component.translatable("ui.muxi_console.choose_file"), ignored -> browse());
+        platform = button(8,58,160,18,Component.empty(), ignored -> {
             selected = selected == null ? Platform.values()[0]
                     : selected.ordinal() + 1 == Platform.values().length ? null : Platform.values()[selected.ordinal() + 1];
             resetRights();
             refresh();
         });
-        addDependency=button(left+14,top+110,132,"添加街机父集 / BIOS",ignored->browseDependency());
-        clearDependencies=button(left+154,top+110,78,"清空依赖",ignored->clearDependencies());
-        declaration = addRenderableWidget(Checkbox.builder(Component.translatable("ui.muxi_console.rights"), font)
-                .pos(left + 14, top + 138).maxWidth(panelWidth - 28).selected(rights)
+        addDependency=button(8,40,32,16,Component.translatable("ui.muxi_console.writer.dependencies"),ignored->browseDependency());
+        addDependency.setTooltip(Tooltip.create(Component.translatable("ui.muxi_console.writer.dependencies_hint")));
+        clearDependencies=button(42,40,30,16,Component.translatable("ui.muxi_console.writer.clear"),ignored->clearDependencies());
+        declaration = addRenderableWidget(Checkbox.builder(Component.translatable("ui.muxi_console.writer.rights_short"), font)
+                .pos(leftPos+8,topPos+80).maxWidth(160).selected(rights)
                 .onValueChange((checkbox, value) -> { rights = value; actions.selectionChanged(); refresh(); }).build());
-        upload = button(left + panelWidth - 124, top + panelHeight - 38, 110, "上传并刻录", ignored -> {
-            if (file != null && rights && Files.isRegularFile(file)) {
+        declaration.setTooltip(Tooltip.create(Component.translatable("ui.muxi_console.rights")));
+        upload = button(8,110,160,18,Component.translatable("ui.muxi_console.writer.burn"), ignored -> {
+            if (file != null && rights && Files.isRegularFile(file)&&menu.getSlot(0).getItem().is(ConsoleContent.BLANK.get())) {
                 localStatus = "";
                 actions.upload(context.deepCopy(), file, List.copyOf(dependencies), selected, rights);
             }
         });
-        button(left + 14, top + panelHeight - 38, 70, "关闭", ignored -> onClose());
         refresh();
     }
     private void refresh() {
-        if (platform != null) platform.setMessage(Component.literal("平台：").append(selected == null
-                ? Component.literal("自动识别") : Component.translatable("platform.muxi_console." + selected.id())));
-        if (upload != null) upload.active = file != null && rights && Files.isRegularFile(file) && !choosing;
+        if (platform != null) platform.setMessage(Component.translatable("ui.muxi_console.platform").append(": ").append(selected == null
+                ? Component.translatable("ui.muxi_console.writer.automatic") : Component.translatable("platform.muxi_console." + selected.id())));
+        if (upload != null) upload.active = file != null && rights && Files.isRegularFile(file) && !choosing&&menu.getSlot(0).getItem().is(ConsoleContent.BLANK.get());
         if(addDependency!=null)addDependency.active=file!=null&&file.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".zip")&&(selected==null||selected==Platform.ARCADE)&&!choosing&&dependencies.size()<63;
         if(clearDependencies!=null)clearDependencies.active=!dependencies.isEmpty()&&!choosing;
     }
@@ -108,13 +126,29 @@ public final class WriterScreen extends ConsoleScreen {
         else localStatus = "一次选择一个游戏文件";
     }
     @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        panel(graphics, "物品栏准备空白卡带 → 选择文件 → 确认刻录");
-        line(graphics, file == null ? "也可以把游戏文件拖到这个窗口" : file.getFileName().toString(),
-                left + 132, top + 64, panelWidth - 148, CREAM);
-        line(graphics,"依赖："+dependencies.size()+" 个",left+242,top+116,panelWidth-256,CREAM);
-        if(panelHeight>=260)line(graphics, "换文件或依赖后需要重新确认；街机ZIP保留原驱动名", left + 14, top + 188, panelWidth - 28, EDGE);
-        String remote = Objects.requireNonNullElse(actions.status(), "");
-        line(graphics, localStatus.isBlank() ? remote : localStatus, left + 14, top + panelHeight - 56, panelWidth - 28, AMBER);
+        refresh();
         super.render(graphics, mouseX, mouseY, partialTick);
+        renderTooltip(graphics,mouseX,mouseY);
+        if(mouseX>=leftPos+80&&mouseX<leftPos+168&&mouseY>=topPos+20&&mouseY<topPos+34)
+            graphics.renderTooltip(font,Component.literal(file==null?Component.translatable("ui.muxi_console.writer.drop_file").getString():file.getFileName().toString()),mouseX,mouseY);
+        if(mouseX>=leftPos+8&&mouseX<leftPos+168&&mouseY>=topPos+98&&mouseY<topPos+109){String status=message();if(!status.isBlank())graphics.renderTooltip(font,Component.literal(status),mouseX,mouseY);}
+    }
+    private String message(){if(!localStatus.isBlank())return localStatus;if(!menu.getSlot(0).hasItem())return Component.translatable("ui.muxi_console.insert_blank").getString();return Objects.requireNonNullElse(actions.status(),"");}
+    @Override protected void containerTick(){refresh();}
+    private void cancelWriter(){if(!cancelledWriter){cancelledWriter=true;if(actions instanceof ConsoleClient client)client.cancelWriter(context);}}
+    @Override public void onClose(){cancelWriter();super.onClose();}
+    @Override public void removed(){cancelWriter();super.removed();}
+    @Override protected void renderBg(GuiGraphics graphics,float partial,int mouseX,int mouseY){
+        graphics.blit(TEXTURE,leftPos,topPos,0,0,imageWidth,imageHeight);
+        // Retain the vanilla container and inventory texture; only replace the unused upper storage rows.
+        graphics.fill(leftPos+7,topPos+17,leftPos+169,topPos+129,0xffc6c6c6);
+        graphics.blit(TEXTURE,leftPos+79,topPos+35,7,17,18,18);
+    }
+    @Override protected void renderLabels(GuiGraphics graphics,int mouseX,int mouseY){
+        super.renderLabels(graphics,mouseX,mouseY);
+        String name=file==null?Component.translatable("ui.muxi_console.writer.drop_file").getString():file.getFileName().toString();
+        graphics.drawString(font,font.plainSubstrByWidth(name,88),80,24,0x404040,false);
+        graphics.drawString(font,Component.translatable(menu.getSlot(0).getItem().is(ConsoleContent.CARTRIDGE.get())?"ui.muxi_console.writer.result":"ui.muxi_console.writer.slot"),102,40,0x404040,false);
+        graphics.drawString(font,font.plainSubstrByWidth(message(),160),8,99,0x404040,false);
     }
 }

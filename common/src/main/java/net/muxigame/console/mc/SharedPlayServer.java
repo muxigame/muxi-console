@@ -29,7 +29,7 @@ public final class SharedPlayServer {
         public long lastVideo(){return lastVideo;}public long lastAudio(){return lastAudio;}
     }
     private static Gate gate(ConsoleServer.Room room){Gate gate=GATES.get(room);if(gate==null||gate.epoch!=room.session.epoch()){gate=new Gate(room.session.epoch(),System.nanoTime());GATES.put(room,gate);}return gate;}
-    private static boolean shared(ConsoleServer.Room room){return room.card.platform()==Platform.N64||room.card.platform()==Platform.ARCADE;}
+    private static boolean shared(ConsoleServer.Room room){return room.card.platform().sharedRuntime();}
     private static JsonObject reply(ConsoleServer.Room room,int port,long frame){JsonObject j=new JsonObject();j.addProperty("room",room.key);j.addProperty("epoch",room.session.epoch());j.addProperty("port",port);if(frame>=0)j.addProperty("frame",frame);return j;}
     /** Returns true for every shared_* operation, after rechecking actual current server membership. */
     public static boolean receive(ServerPlayer actor,Wire.Message message)throws IOException{
@@ -43,8 +43,8 @@ public final class SharedPlayServer {
         if(!host||!room.ready.containsKey(actor.getUUID())||room.fingerprint.isEmpty())throw new IOException("只有已准备的主控制席可以发送共享游戏音画");
         long frame=body.get("frame").getAsLong();if(frame<0||frame>room.frame)throw new IOException("共享画面批次超出模拟进度");Gate gate=gate(room);long now=System.nanoTime();
         if(message.operation().equals("shared_frame")){
-            if(!gate.video(frame,now))return true;BrowserFrameCodec.Image image=BrowserFrameCodec.decode(message.data());
-            for(var entry:room.session.controllers().entrySet()){ServerPlayer target=target(actor,room,entry.getValue());if(target==null)continue;JsonObject j=reply(room,entry.getKey(),frame);j.addProperty("width",image.width());j.addProperty("height",image.height());Wire.send(target,"shared_frame",j,message.data());}
+            if(!gate.video(frame,now))return true;BrowserFrameCodec.Image image=BrowserFrameCodec.decode(message.data());var surfaces=net.muxigame.console.compat.SurfaceMetadata.read(body,image.width(),image.height());
+            for(var entry:room.session.controllers().entrySet()){ServerPlayer target=target(actor,room,entry.getValue());if(target==null)continue;JsonObject j=reply(room,entry.getKey(),frame);j.addProperty("width",image.width());j.addProperty("height",image.height());net.muxigame.console.compat.SurfaceMetadata.write(j,surfaces);Wire.send(target,"shared_frame",j,message.data());}
         }else{
             int part=body.get("part").getAsInt(),parts=body.get("parts").getAsInt(),total=body.get("totalBytes").getAsInt();if(body.get("rate").getAsInt()!=48000)throw new IOException("共享音频需要48kHz双声道PCM");
             if(!gate.audio(frame,part,parts,total,message.data().length,now))return true;

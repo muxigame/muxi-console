@@ -1,8 +1,50 @@
-# 木犀游戏机独立原生 QA
+# PlayStation 独立原生 QA
 
 本目录从空白编写，只读取本仓新产品 API 和统一 runner 文档。两个 QA JAR 分侧安装，Java 包为 `net.muxigame.consoleqa`，不会包含任何产品 class，也不发布。
 
-## 当前：机器存档与卡带收纳盒
+## 当前开发：刻录槽、重塑、分组键位与配件手持
+
+固定候选08（SHA `701c5ea2ae005abf7ba4a1b5258a3445d6d03682cd5cd8551f8abf71687d0b0a`；41组4311项纯检查）已在统一 `client-2/runs/console-upgrade-native-02` 正常闭合。QA报告 SHA `542ed3517e5e007780247a1c4dc326ede19e6bc9530a4d370502140dc571df6e`，绑定真实Wire v2的144项GB串口基线。产品之后的源码修改不由此候选验收继承。
+
+原生功能范围以六份不可覆盖结果联合：upgrade原false25条/8图（合法自动重启后的busy保护使脚本取卡等待超时），continuation原false16条/2图（截图名大写被白名单拒绝），presentation原false6条/15图（卡样式名下划线被拒绝），finish true7条/8图；Link原false32条/1邀请图（诊断程序须松键才重画，脚本曾持键等CRC），Link continuation true57条/5图。共143条实际已过断言记录，包含重复身份与存活检查，不等于143个独立功能。所有原false/超时、原图和精确SHA来源链保留；后续只接真实原卡、原机器、已提交状态，不重烧、不重放已完成合成或转交。
+
+功能联合完成实际Writer单槽、完整components与Machine UUID重塑保全、同机GB/GBA各自存档与切回恢复、不兼容目标拒绝、真实单卡槽tooltip、原options.txt重绑/重载、Wii设备选项持久化。33张upgrade原图含31张要求图与2张白昼补图；root已逐张审，三张绑定页因标题/动作名/提示模糊被视觉否决，功能断言仍有效，需新候选补原图。两张夜掌机仅证明轮廓/握持，色彩细节由独立白昼图证明；夜间配件图只计手持角度/位置，不重验未改的材质颜色。源码已窄修绑定页为背景与原生控件完成后flush，再画文字；只有SDK编译通过，未把修正源码说成08已测。
+
+GB Link使用双方各自正常刻录的两张串口诊断卡：真实拒绝不授权、接受后host仅下载伙伴32768字节正文/guest零ROM、单host LinkWorker与独立AV/输入/非零peer PCM、四次实际LinkWorker运行、组合存档冷恢复、两个普通SameBoy各自恢复、从双方单机正常保存再准备连线均有实证。原观察失败时SRAM实际host计数1/guest0；续办按真实状态推进到3/1，没有清档或注入计数。PCM约1024Hz是原始样本统计，不是实际听感或实体麦克风/手柄验收。6张Link原图已由root逐张实审，独立画面/完整机身/cold及普通单机恢复的像素目标接受；邀请页标题/接受拒绝/双方姓名清楚，但原版教程遮解释末尾，不计完整解释文字可读性。guest own及single图教程在机体外，不遮LCD，不称没有任何原版UI。
+
+本run三MC JVM及launcher均exit0/native审计空；只读进程句柄独立确认7个WorkerMain+4个LinkWorker共11个实际进程全自然exit0/native目录清空。自动prune释放460095837字节，无大型profile准备或保留。关服后用MC NbtIo/TagParser读取真实playerdata，4张原卡完整components各恰一次、两原掌机UUID各一次；4ROM、4最新MachineSaveKey、实际MXLG组合存档envelope与其内部LNK1 payload哈希均核对。`closed-review.json` SHA `eccb96733b2c9f151676b2714a110ab41a0e6d8e02b060b7b91aa40be188f8d6`；世界muxi-console目录37文件清单摘要 `ce2e5c4899dcd9a728a491f4c416ec3cba05be16af6374aa07946b338ff55bd1`。39次真实原PNG均960×540、逐图verify/decode/SHA，37个不同字节哈希；两组同画面字节相同不冒称额外不同画面。
+
+当前图库 `build/upgrade-review/index.html`（SHA `3048963be2ee1add56f43dd11c644365c7420206cc0a86c81e4475db9257aab8`）核全部39原图和六原结果，不拷贝或编辑PNG；明确四份原false、三张绑定页视觉否决和夜景/教程范围。用 `qa/upgrade_gallery.py --run <已关闭绝对run路径> --root-reviewed-link` 可只读重建，参数表示root已实际逐张审过Link目标，不等于整体视觉通过。
+
+固定候选10（SHA `aeb406b83cb794ac786363371f2119fdf9d7ad7d2c16035b1ef468ada7c8aebf`）另在统一 `client-2/runs/console-gba-link-native-01` 完成新原生验收，QA报告 SHA `6073c345c7cf7f967035ba97989acafb0e73c6a1bf1c4fc9bdb991ce8357aaf4`。`bindings-visual-result.json` true2条/3原图，三页标题/动作名/底部提示已逐张实审清楚，前后按键及设备值不变；08原三图视觉否决仍保留。`gba-link-result.json` true76条/6原图，双作者真实刻录及紫染料重塑、拒绝不授权、接受后host只下载伙伴65536字节而guest零ROM、单host真实mGBA Link路由、独立AV/按键、真实SRAM barrier、冷组合恢复、双方普通mGBA恢复后正常保存再连线均通过。ARM诊断为固定红/蓝，输入由实际SRAM计数证明，不伪造CRC变化。音频按各包真实32768Hz累计15.054199秒，测得512.083033Hz；不沿用GB的48000Hz，也不冒称实际听感或实体手柄。
+
+候选10共78条通过记录、9张新原图，root逐张接受各自像素/文字目标，邀请页无教程遮挡。结果SHA分别 `d1d9fb80bb7a4a945148839e4d06ff4c1b0d8df3ff8acf25ff3d7807b871e43a`、`b0c7ee14da9e2ef339e7fa9746dc9287fd47592a7e553bf8255f722de1e119e9`。3个LinkWorker和2个普通WorkerMain共5进程真实句柄代际核验自然0/native清空，3MC及launcher均exit0；自动prune释放465899271字节。关服后两卡完整components与两机器各恰一次、2ROM及2份最新状态和组档均核；`closed-review.json` SHA `2ce9e733c37a372e37a291658b500f7c70374d8543cdac5a7b750dcd4a93dab7`，世界内容树摘要 `3c4b4d656fcaa6e0d4b51f726952d03a68f0f6cae3b8ff0e86cd4b54bdf6dcfd`。已关闭run不得再驱动，后续源码不继承此精确候选验收。
+
+本轮严格续办入口为 `qa/upgrade_review.py --continue-source-sha256 <精确源SHA>`、`--continue-ui-source-sha256 <第二源SHA>`、`qa/upgrade_finish.py`、`qa/link_continue.py`。这些入口只接编码的本次精确失败边界；已关闭run不能再驱动。新候选正常流程仍从新run的upgrade默认入口开始，成功后再执行link；失败结果不能改true以骗过后续阶段。
+
+普通NES单主机音画专项使用`tools/nes_media_probe.py --name <新名> --product <固定候选>`先验证原创有声双控制诊断，再用`qa/build.py --media-probe <probe.json> ...`绑定同一候选及真实结果。`qa/media_review.py`已在候选08的独立`console-media-native-01`实际通过10条：P1/P2左右独立输入、客端零ROM/零核心、对应PNG/PCM批次、离席后的内置屏旁观及非零声音。约12.8秒应用层样本共享1.706Mbps/人、内置屏1.711Mbps/人，不含外层压缩/加密/TCP；3worker和3MC均自然0/native清理，payload已自动回收。两图仅计音画可见，教程遮挡及屏边出框不当完整构图验收。WebDisplays另须真实依赖验收，不能用内置屏结果替代。
+
+32MiB慢连接使用`qa/build.py --cartridge-review --large-rom-mib 32`，默认旧8MiB不变。`TransferActions`只对指定原创ROM的真实已接收回复延迟100ms投递给产品，不造字节/进度，队列最多4项；原InputSource与ROM缓存不替换。候选08在`console-transfer-native-01`正常刻录并玩作者本地缓存、第二次刻录独立卡号/单对象、真实丢弃拾取后验证切物品保留2260992字节，重拿259.094秒仅下载剩31293440字节、随后缓存重启零正文。25功能加4补图检查实际通过，4worker/3MC均自然0/native清理，payload已回收。首轮空槽前置错误原false保留，严格零卡/零内容空fixture续办；首图F1隐藏掌机无效，新`transfer-verified-resume-game.png`完整MODEL实际已审。`qa/transfer_review.py`和`qa/transfer_visual.py`只驱动对应已运行环境，不能覆写结果或冒称实际公网/云存储已测。
+
+该慢连接run关服后另有只读 `offline-world-review.json`（SHA `e72c9a70867d72e865fa2634e569c498dece44a0a5e14e8bdfc547e85f20c657`）：真实playerdata两卡/两机器各一次，唯一33554432字节ROM、两机最新head/metadata/状态SHA均核，内容树摘要 `e139913627bc42fc2a7a206cddd7b904613608c843a85245b4ff5061da5f89c7`。联合为29通过、1条前置失败保留和2原图；payload自动清理462038646字节，不将原false改true。
+
+候选06（SHA `53931e875f035a8f254799d7a2a9b567f95d2d8dbc68efdfa6aa1b3ff95b510b`）已在统一 `client-2/runs/console-upgrade-native-01` 实测，但未通过：原 `upgrade-result.json` SHA `581835193d4887e4852996e799b009ec54aa12db86d99b18af83e02c3baa4800` 保留false、10条已过断言及6原图，在第一次GB正常离开时暴露提交后迟到保存心跳重建旧事务的竞态；cleanupFailure原样保留，Link未执行。四张Writer输入/输出图已逐张通过；tooltip图实际hover紫色染料，被否决。GB MODEL原图像素bbox为 `(343,24,617,516)`，底部24行均背景，独立复核确认完整留边。
+
+原run已正常停止，三JVM exit0/native审计空；实际唯一WorkerMain进程句柄确认exit0且私有native目录清空。旧worker audit的complete=false表示要求的LinkWorker覆盖未到，不能改成通过。自动prune释放453058310字节；离线原playerdata保留两张真实卡完整components各一次、原机器UUID一次，2ROM与1份实际成功自动checkpoint磁盘SHA相符。独立 `closed-review.json` SHA `d1e6638a21384c13f16206fcf30b690f7224917f3656a93d00917e1db2601e36` 记录闭合，不覆盖原结果、PNG或失败。
+
+产品事务终态保留及StateMessages旧包过滤已有纯检查；下一候选需重新实测。新QA hover走真实vanilla鼠标移动回调，并等待实际getSlotUnderMouse与整卡身份吻合；不直接设置hover或绘制假tooltip。新截图记录保留真实槽位/身份/整stack SHA及实际presentation，避免每图重复整页options令结果超过有界读取大小。最终产品冻结后，用新名称构建QA，显式传入与当前25机体目录一致的新计划：`python -B qa/build.py --name <新QA名> --product <最终JAR> --pixel-review --link-review --model-plan build/new-hardware-01/model-review-plan.json`。统一分配器启动并通过 `qa/drive.py --check` 后，由唯一通道所有者运行 `python -B qa/upgrade_review.py --run <规范绝对run路径> --build <新QA报告>`；不在驱动中启动或停止MC，不覆写旧结果和PNG。
+
+本轮只正常刻录本仓原创GB/GBA诊断各一张，实际WriterMenu单槽放入/关闭归还/同槽取出，再在原生2×2合成栏重塑同一掌机。验证整组件与真实机器UUID保持、兼容原卡继续同机存档、第二游戏独立保存、不兼容目标无结果且原物完整。附原生卡槽tooltip、分组键位实际重绑/原options.txt重载、模拟动作页/Wii设备选项及左右手配件原图。空核心、染料和无发行身份的外观配件是明确fixture；已发行卡只增加非身份sentinel，不伪造卡UUID、机器身份或存档。
+
+新NDS/3DS/Wii在此驱动中仅验证真实合成结果、库存与两款空掌机展示，不作为其核心、触摸、传感器、麦克风、真实手柄或云服务已原生通过的证据。各活动游戏截图前后核同room/epoch/worker；原图仍须人工查看。所有结束和失败路径正常保存离开并记录实际自然worker退出，不能用旧图代替本轮模型。
+
+`qa/link_review.py` 只在同run的upgrade实际成功后执行，使用双方分别正常刻录的原创GB串口ROM、真实邀请/拒绝/接受、独立CPU画面与输入、peer PCM、最终barrier及跨进程恢复。当前 `--link-review` 明确绑定 `build/link-runtime-smoke-05` 的144条独立Wire v2基线和原创诊断boot；这不是MC通过声明。`qa/worker_audit.py --expect-link` 用只读Windows进程句柄观察WorkerMain与LinkWorker实际PID代际、runtime SHA、exit code与native目录，另列resourceComplete和coverageComplete；从不终止进程，MC仍由统一runner正常停止。原06未完成记录不因新驱动变化而重写。
+
+云端分段上传另由 `MultipartStorageTests`、`MultipartMediaTransferTest`、`ClientUploadCoordinatorTest` 做纯Java及真实loopback检查；9GiB是控制面逻辑长度，客户端稀疏大offset只传257字节，不发送无意义海量数据。这些检查不等于实际OSS/S3或Minecraft刻录验收。
+
+`qa/browser_media_review.py`是新WebDisplays音画专项入口，须使用同一固定候选的`--media-probe`和统一环境中真实WebDisplays/MCEF依赖。它正常单槽刻录原创有声NES，验证作者缓存、纯旁观零ROM/零worker、实际CEF GPU纹理变化、非零PCM/应用层速率及URL权限/解绑恢复；目前仅语法预检，待新候选执行，不能继承内置屏结果。现有另一任务的唯一release-test准备副本不在此脚本内删除或覆盖。
+
+## 历史：机器存档与卡带收纳盒
 
 本轮产品把存档归属改为真实机器 UUID 与精确 ROM SHA；卡带 UUID 只作实体媒体和权限身份。`MachineActions`、`MachineScene`只读 `MachineData.read`、当前 `saveOwner()`、实际机器存档元数据和磁盘文件，不创建机器身份、不注入存档。服务器 fixture 只提供普通空掌机、桌机、底座、工具和空盒；机器身份由产品正常使用/放置分配。历史以卡带 UUID 查存档的脚本和结果保留为旧候选证据，不能直接用来验当前机器存档。
 
@@ -144,3 +186,15 @@ GPU 结果来自 `BrowserLinkClient.nativeBrowser` 返回的真实 `MCEFBrowser.
 独立 `--held-live-review` 可在后续新的复制世界run只补原GB冷恢复：核对唯一既有GB卡及原vault SHA、fresh worker确实恢复该SHA，采集四张昼夜主副手原图，正常保存后核客户端/vault一致、worker自然关闭，取出同卡后检查CMD5/qa_preserve守恒。识别卡已在掌机时直接正常使用，不重复装卡动作；不新烧卡或删除原失败存档。
 
 2026-11-08真实04补验通过：候选10 SHA `08493a72b103454f1693658a6c4ce575e9dd58a2ad027254f65b47dbb14e5dde`，QA07，runId `372c19207595455caa521d9d7faba777`。同一GB实例从原252698字节vault SHA `6a8add62c3dc7adf5efdad8e99db5127da67389c3790d6361f3b34b7427268c0` 在fresh worker恢复成功，四张昼夜主副手原图已逐张看；最终frame1612保存SHA `4c1aab00e159e7b5b341074f4dd1641057ece8d36eb5af875b59f22a75c632ed` 与服务端一致，唯一worker正常关闭，正常取卡后CMD5和qa_preserve保持。03原失败保留。汇总画廊与分项范围见 [模型审核](../docs/MODEL-REVIEW.md)，结果含真实枚举 `host=[]/guest=[]`，未冒称实体按键或热插拔已测。
+接收端观测的`mediaMetrics`只累计操作名、包数、数据/JSON字节及实际Wire序列化长度和单调时间，不保存包正文或签名URL。两次同一客户端观测之差可计算共享/屏幕/ROM传输的应用层速率；它不包含Minecraft外层帧、压缩、加密或TCP/IP，不能称网卡流量。零下载检查应比较相应`rom_chunk`数据字节增量，而非累计所有会话的包数。
+
+2026-11-09候选12的`browser_media_review.py`新run02通过15条：原生刻录/作者缓存复用、旁观拒绝ROM、真实CEF纹理随CPU输入改变、非零PCM、两端解绑/撤权/后续导航及源正常保存关闭。使用`browser_pages.py`仅在测试期间提供两张固定本机页面，按目标面而非全局绑定数核对恢复，并实际读回纹理。两张同SHA原图已分别实看；约12.59秒每接收端应用层1.681Mbps。一个worker真实Windows句柄signaled exit0/native清空、三MC exit0，运行payload已自动回收。此前焦点与about:blank规范化导致的QA失败保持原false；听感、网卡流量及复杂游戏未宣称验证。
+
+
+### 3DS 真实连线专项（开发验收）
+
+构建 QA 时启用 `--n3ds-link-review`，绑定当前固定产品以及原创双角色 3DSX 的 SHA；运行已分配实例后使用 `python -X utf8 -B qa/n3ds_link_review.py --run <实例绝对路径> --build <qa-build.json绝对路径>`。该脚本只驱动已有实例，不启动或停止 Minecraft。普通青色染料是唯一新增 fixture，掌机通过原生合成、两张卡带分别由两位作者在刻录界面正常发行。
+
+验收包含明确邀请授权、伙伴零 ROM、真实 A 键 SD 写入、B 键新 UDS challenge、双屏/底触输入传输、后台 CPU/文件保存、fresh Room 冷恢复与普通模式互导。原生 Room 的 ENet 在途队列不做快照；原创程序没有触摸绘制和音频刺激，不将通道观察当作游戏触摸或听感通过。候选15仅完成首轮无线/输入和5张原图，保存名称不符合 Wire 规则导致失败，原记录保留；候选16等待重新验收，尚不标通过。
+
+2026-11-09候选17 SHA `d20c68350690ce00842ef5e1f73d12a69718c88cabb6f413508e94326e16ffa5` 在新run03完成真实双端验证。原脚本38条/5图在首个正常最终保存后，因读取profile观察字段层级错误留下false（SHA `e92f7f6d336607f5e361ea5c11072e359bb741753baa1bdabf54c42521bf0100`）。独立 `n3ds_link_continue.py` 只接受该精确原记录、同run/产品/QA/原两整卡和机器、原first-final状态与profile逐字段不变，再完成41条/2图（SHA `0cf1b988918137d48026a33431ae5525820d613f1ee3049a5ff385543a2e006c`），不重prepare、刻录或改存档。真实冷Room新nonce、普通模式恢复原CPU与native SD进度、普通保存后再连线均通过；7原图逐张实审。后台3600帧捕获约0.980秒、366179字节传输约0.601秒期间CPU推进48帧；三次正常结束约8.08/7.69/7.61秒，6连线及2普通worker均真句柄signaled exit0、native临时目录清空。两份记录联合覆盖完整范围，79条记录含重复屏障检查，不称79种独立功能；候选15/16和17原false均保留，专项静音/无触摸玩法边界不变。

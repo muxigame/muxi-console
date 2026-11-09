@@ -5,9 +5,10 @@ import java.nio.charset.StandardCharsets;
 
 /** Independently defined MXCW v2 protocol, network byte order throughout. */
 final class Wire {
-    static final int MAGIC = 0x4d584357, VERSION = 2, MAX_BYTES = 64 * 1024 * 1024;
+    static final int MAGIC = 0x4d584357, VERSION = 3, MAX_BYTES = 64 * 1024 * 1024;
     static final int OPEN = 1, STEP = 2, RESET = 3, SAVE = 4, LOAD = 5, SRAM_READ = 6, SRAM_WRITE = 7, QUIT = 8;
     static final int DISK_STATE = 9, DISK_SELECT = 10, DISK_EJECT = 11;
+    static final int STATE_SIZE=12, SAVE_TO=13, LOAD_FROM=14;
     record Packet(int operation, long request, byte[] body) {}
     interface Writer { void write(DataOutputStream out) throws IOException; }
     static byte[] body(Writer writer) throws IOException {
@@ -66,6 +67,7 @@ final class Wire {
         out.writeInt(frame.stereoPcm().length);
         for (short sample : frame.stereoPcm()) out.writeShort(sample);
         out.writeDouble(frame.displayAspect());
+        out.writeByte(frame.surfaces().size());for(var surface:frame.surfaces()){string(out,surface.id());out.writeInt(surface.x());out.writeInt(surface.y());out.writeInt(surface.width());out.writeInt(surface.height());out.writeInt(surface.nativeWidth());out.writeInt(surface.nativeHeight());out.writeBoolean(surface.touchable());}
     }
     static AvFrame frame(DataInputStream in) throws IOException {
         long number = in.readLong(); int width = in.readInt(), height = in.readInt(), rotation = in.readInt();
@@ -75,7 +77,8 @@ final class Wire {
             throw new IOException("Invalid audio sample count");
         short[] audio = new short[count]; for (int i = 0; i < count; i++) audio[i] = in.readShort();
         double aspect = in.readDouble();
-        try { return new AvFrame(number, width, height, rotation, rgba, audio, rate, shutdown, aspect); }
+        int countSurfaces=in.readUnsignedByte();if(countSurfaces>3)throw new IOException("Too many video surfaces");java.util.List<AvFrame.Surface> surfaces=new java.util.ArrayList<>();
+        try {for(int i=0;i<countSurfaces;i++)surfaces.add(new AvFrame.Surface(string(in),in.readInt(),in.readInt(),in.readInt(),in.readInt(),in.readInt(),in.readInt(),in.readBoolean()));return new AvFrame(number, width, height, rotation, rgba, audio, rate, shutdown, aspect,surfaces); }
         catch (IllegalArgumentException ex) { throw new IOException("Invalid worker frame", ex); }
     }
 }

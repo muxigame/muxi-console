@@ -68,7 +68,21 @@ final class HardwareVideo implements AutoCloseable {
             throw new IOException("Worker OpenGL framebuffer is incomplete");
     }
 
+    boolean initialized() { return window != 0 && reset; }
+
+    void ensureSize(int w, int h) throws IOException {
+        if (w == width && h == height) return;
+        if (w <= 0 || h <= 0 || (long) w * h > 2048L * 2048) throw new IOException("Native-resolution framebuffer exceeds supported pixel budget");
+        GLFW.glfwMakeContextCurrent(window);
+        if (depthBuffer != 0) GL30.glDeleteRenderbuffers(depthBuffer);
+        if (texture != 0) GL11.glDeleteTextures(texture);
+        if (framebuffer != 0) GL30.glDeleteFramebuffers(framebuffer);
+        depthBuffer = texture = framebuffer = 0;
+        resize(w, h);
+    }
+
     void beforeFrame() {
+        if (!initialized()) throw new IllegalStateException("Hardware context is not initialized");
         GLFW.glfwMakeContextCurrent(window);
         GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, framebuffer);
     }

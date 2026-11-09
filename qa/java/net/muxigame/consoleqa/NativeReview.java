@@ -22,6 +22,7 @@ final class NativeReview {
         JsonObject out=new JsonObject();var location=net.muxigame.console.client.ConsoleClient.INSTANCE.picture();out.addProperty("present",location!=null);if(location==null)return out;
         var texture=client.getTextureManager().getTexture(location);if(!(texture instanceof net.minecraft.client.renderer.texture.DynamicTexture dynamic))return out;var image=dynamic.getPixels();if(image==null)return out;int width=image.getWidth(),height=image.getHeight();out.addProperty("width",width);out.addProperty("height",height);
         for(int quarter:new int[]{1,3}){int pixel=image.getPixelRGBA(width/2,height*quarter/4);JsonArray rgb=new JsonArray();rgb.add(pixel&255);rgb.add(pixel>>>8&255);rgb.add(pixel>>>16&255);out.add(quarter==1?"upper":"lower",rgb);}
+        for(int quarter:new int[]{1,3}){int pixel=image.getPixelRGBA(width*quarter/4,height/2);JsonArray rgb=new JsonArray();rgb.add(pixel&255);rgb.add(pixel>>>8&255);rgb.add(pixel>>>16&255);out.add(quarter==1?"left":"right",rgb);}
         long count=0,sum=0;for(int x=width*77/100;x<width*82/100;x++)for(int y=height/12;y<height;y++){int pixel=image.getPixelRGBA(x,y);if((pixel&255)>150&&(pixel>>>8&255)>150&&(pixel>>>16&255)>150){count++;sum+=y;}}out.addProperty("rightPaddlePixels",count);out.addProperty("rightPaddleY",count==0?-1:sum/(double)count/height);return out;
     }
     static void view(Minecraft client,boolean held){

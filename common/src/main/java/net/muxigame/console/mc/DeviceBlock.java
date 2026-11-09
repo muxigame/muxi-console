@@ -18,7 +18,7 @@ import net.minecraft.server.level.ServerPlayer;
 public class DeviceBlock extends BaseEntityBlock {
     public enum Kind {DESK,WRITER,SCREEN,DOCK}
     public static final DirectionProperty FACING=BlockStateProperties.HORIZONTAL_FACING;
-    public static final IntegerProperty MODEL=IntegerProperty.create("model",0,22);
+    public static final IntegerProperty MODEL=IntegerProperty.create("model",0,25);
     public final Kind kind;
     public DeviceBlock(Kind kind,Properties properties){super(properties);this.kind=kind;registerDefaultState(stateDefinition.any().setValue(FACING,Direction.NORTH).setValue(MODEL,0));}
     protected MapCodec<? extends BaseEntityBlock> codec(){return simpleCodec(p->new DeviceBlock(kind,p));}

@@ -29,34 +29,38 @@ import net.muxigame.console.mc.*;
 final class ReviewScene {
     static final int DX=32, DY=26;
     static final String ORIGINAL_URL="about:blank#muxi-console-original";
+    static final String MEDIA_ORIGINAL_URL="http://127.0.0.1:26323/console-original",MEDIA_NAVIGATED_URL="http://127.0.0.1:26323/console-navigated";
     private final QaOwner owner;
     private final JsonArray stations;
     private boolean galleryBuilt;
     private BlockPos browserOrigin;
     private Object browserSide;
     private boolean browserFaceBuilt;
+    private String browserOriginalUrl=ORIGINAL_URL;
     private boolean sharedBuilt;
     ReviewScene(QaOwner owner) {
         this.owner=owner;
         try(var in=ReviewScene.class.getResourceAsStream("/diagnostics/model-review-plan.json")) {
             if(in==null)throw new IllegalStateException("Missing build-pinned review plan");
             stations=JsonParser.parseReader(new InputStreamReader(in,StandardCharsets.UTF_8)).getAsJsonObject().getAsJsonArray("stations");
-            if(stations.size()!=22)throw new IllegalStateException("Incomplete model plan");
+            if(stations.size()!=HardwareCatalog.bodies().size())throw new IllegalStateException("Incomplete model plan");
         }catch(java.io.IOException e){throw new IllegalStateException(e);}
     }
     JsonObject command(MinecraftServer server,JsonObject j){
         try{return switch(j.get("action").getAsString()){
             case "model_prepare" -> prepareGallery(server);
             case "model_camera" -> galleryCamera(server,j);
-            case "browser_prepare_blocks" -> prepareBrowserBlocks(server);
+            case "browser_prepare_blocks" -> prepareBrowserBlocks(server,false);
+            case "browser_media_prepare_blocks" -> prepareBrowserBlocks(server,true);
             case "browser_create_face" -> createBrowserFace(server);
-            case "shared_prepare" -> prepareShared(server);
-            case "shared_position","shared_camera" -> {if(!sharedBuilt)throw new IllegalStateException("Prepare shared pads first");ServerPlayer p=player(server,j.get("role").getAsString());int x=j.get("platform").getAsString().equals("n64")?8:14;if(j.get("action").getAsString().equals("shared_camera"))teleportEye(p,x+2.2,92.0,25.6,x+.5,90.8,20.5);else p.connection.teleport(x+.5,90,23.5,180,16);yield sharedObserve(server);}
+            case "shared_prepare" -> prepareShared(server,false);
+            case "media_prepare" -> prepareShared(server,true);
+            case "shared_position","shared_camera" -> {if(!sharedBuilt)throw new IllegalStateException("Prepare shared pads first");ServerPlayer p=player(server,j.get("role").getAsString());String platform=j.get("platform").getAsString();int x=platform.equals("n64")||platform.equals("nes")?8:14;if(j.get("action").getAsString().equals("shared_camera"))teleportEye(p,x+2.2,92.0,25.6,x+.5,90.8,20.5);else p.connection.teleport(x+.5,90,23.5,180,16);yield sharedObserve(server);}
             case "browser_camera" -> {ServerPlayer p=player(server,j.get("role").getAsString());teleportEye(p,12.8,92.2,14.2,13.0,90.8,8.5);yield browserObserve(server);}
             case "hardware_prepare" -> {fresh(server);ServerPlayer p=player(server,"host");if(!server.overworld().getBlockState(new BlockPos(5,90,6)).isAir()||CardData.read(p.getOffhandItem()).isPresent())throw new IllegalStateException("Hardware placement pad/offhand already occupied");p.getInventory().setItem(40,ItemStack.EMPTY);p.getInventory().setItem(4,HardwareCatalog.variant(new ItemStack(ConsoleContent.DESK_ITEM.get()),2));ItemStack gba=HardwareCatalog.variant(new ItemStack(ConsoleContent.HANDHELD.get()),5);CompoundTag tag=new CompoundTag();tag.putString("qa_preserve","original-gba-shell");gba.set(DataComponents.CUSTOM_DATA,CustomData.of(tag));p.getInventory().setItem(2,gba);p.getInventory().setItem(6,new ItemStack(Items.IRON_PICKAXE));p.inventoryMenu.broadcastChanges();yield hardwareObserve(server);}
             case "hardware_mode" -> {String mode=j.get("mode").getAsString();if(!mode.equals("survival")&&!mode.equals("creative"))throw new IllegalArgumentException("Fixture game modes only");player(server,"host").setGameMode(mode.equals("survival")?GameType.SURVIVAL:GameType.CREATIVE);yield hardwareObserve(server);}
             case "browser_owner" -> {entity(server).getClass().getMethod("setOwner",browserSide.getClass(),Player.class).invoke(entity(server),browserSide,player(server,j.get("owner").getAsString()));yield browserObserve(server);}
-            case "browser_url" -> {String value=j.get("url").getAsString();if(!value.equals(ORIGINAL_URL)&&!value.equals("about:blank#muxi-console-navigated"))throw new IllegalArgumentException("Fixture URLs only");entity(server).getClass().getMethod("setScreenURL",browserSide.getClass(),String.class).invoke(entity(server),browserSide,value);yield browserObserve(server);}
+            case "browser_url" -> {String value=j.get("url").getAsString();if(!value.equals(ORIGINAL_URL)&&!value.equals("about:blank#muxi-console-navigated")&&!value.equals(MEDIA_ORIGINAL_URL)&&!value.equals(MEDIA_NAVIGATED_URL))throw new IllegalArgumentException("Fixture URLs only");entity(server).getClass().getMethod("setScreenURL",browserSide.getClass(),String.class).invoke(entity(server),browserSide,value);yield browserObserve(server);}
             default -> throw new IllegalArgumentException("Unknown review action");
         };}catch(ReflectiveOperationException|java.io.IOException e){throw new IllegalStateException(e);}
     }
@@ -107,8 +111,9 @@ final class ReviewScene {
         double dx=tx-x,dy=ty-y,dz=tz-z;float yaw=(float)Math.toDegrees(Math.atan2(-dx,dz)),pitch=(float)-Math.toDegrees(Math.atan2(dy,Math.hypot(dx,dz)));
         p.getAbilities().flying=true;p.onUpdateAbilities();p.setDeltaMovement(0,0,0);p.connection.teleport(x,y-p.getEyeHeight(),z,yaw,pitch);
     }
-    private JsonObject prepareBrowserBlocks(MinecraftServer server)throws ReflectiveOperationException,java.io.IOException{
+    private JsonObject prepareBrowserBlocks(MinecraftServer server,boolean media)throws ReflectiveOperationException,java.io.IOException{
         if(browserOrigin!=null)throw new IllegalStateException("Browser fixture already exists");fresh(server);if(!WebDisplaysBridge.available())throw new IllegalStateException("Actual WebDisplays mod is required");
+        browserOriginalUrl=media?MEDIA_ORIGINAL_URL:ORIGINAL_URL;
         var level=server.overworld();var block=BuiltInRegistries.BLOCK.get(ResourceLocation.parse("webdisplays:screen"));if(block==Blocks.AIR)throw new IllegalStateException("Actual screen block missing");
         BlockPos source=new BlockPos(10,90,8);level.setBlock(source,level.getBlockState(source).setValue(DeviceBlock.MODEL,1),3);
         Class<?> side=Class.forName("net.montoyo.wd.utilities.data.BlockSide"),vector=Class.forName("net.montoyo.wd.utilities.math.Vector2i");browserSide=side.getField("SOUTH").get(null);Object right=side.getField("right").get(browserSide);int rx=right.getClass().getField("x").getInt(right);
@@ -124,20 +129,20 @@ final class ReviewScene {
         Class<?> side=browserSide.getClass(),vector=Class.forName("net.montoyo.wd.utilities.math.Vector2i");
         Object entity=entity(server);entity.getClass().getMethod("addScreen",side,vector,vector,Player.class,boolean.class).invoke(entity,browserSide,vector.getConstructor(int.class,int.class).newInstance(3,2),vector.getConstructor(int.class,int.class).newInstance(384,256),player(server,"host"),true);
         entity.getClass().getMethod("setRights",ServerPlayer.class,side,int.class,int.class).invoke(entity,player(server,"host"),browserSide,0,0);
-        entity.getClass().getMethod("setScreenURL",side,String.class).invoke(entity,browserSide,ORIGINAL_URL);
+        entity.getClass().getMethod("setScreenURL",side,String.class).invoke(entity,browserSide,browserOriginalUrl);
         browserFaceBuilt=true;
         return browserObserve(server);
     }
     private Object entity(MinecraftServer server){if(browserOrigin==null)throw new IllegalStateException("Prepare browser first");Object result=server.overworld().getBlockEntity(browserOrigin);if(result==null)throw new IllegalStateException("Actual browser entity missing");return result;}
     JsonObject browserObserve(MinecraftServer server){
-        JsonObject out=new JsonObject();out.addProperty("bindings",BrowserLinkServer.bindingCount(server));out.addProperty("prepared",browserOrigin!=null);out.addProperty("faceCreated",browserFaceBuilt);
+        JsonObject out=new JsonObject();out.addProperty("bindings",BrowserLinkServer.bindingCount(server));out.addProperty("prepared",browserOrigin!=null);out.addProperty("faceCreated",browserFaceBuilt);out.addProperty("navigationUrl",browserOriginalUrl.equals(MEDIA_ORIGINAL_URL)?MEDIA_NAVIGATED_URL:"about:blank#muxi-console-navigated");
         if(browserOrigin!=null){out.addProperty("position",browserOrigin.asLong());out.addProperty("x",browserOrigin.getX());out.addProperty("y",browserOrigin.getY());out.addProperty("z",browserOrigin.getZ());out.addProperty("side","SOUTH");
             if(browserFaceBuilt)try{var t=WebDisplaysBridge.at(server.overworld(),browserOrigin,"SOUTH").orElseThrow();out.addProperty("url",WebDisplaysBridge.url(t));out.addProperty("hostMayChange",WebDisplaysBridge.mayChange(t,player(server,"host").getUUID()));out.addProperty("guestMayChange",WebDisplaysBridge.mayChange(t,player(server,"guest").getUUID()));}catch(Exception e){out.addProperty("error",e.toString());}}
         return out;
     }
     private void daylight(MinecraftServer server){var level=server.overworld();level.setDayTime(6000);level.setWeatherParameters(120000,0,false,false);level.getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(false,server);}
-    private JsonObject prepareShared(MinecraftServer server)throws java.io.IOException{
-        if(sharedBuilt)throw new IllegalStateException("Shared pads already prepared");fresh(server);var level=server.overworld();for(int x=4;x<=18;x++)for(int z=18;z<=28;z++){level.setBlock(new BlockPos(x,89,z),Blocks.SMOOTH_STONE.defaultBlockState(),3);for(int y=90;y<=94;y++)level.setBlock(new BlockPos(x,y,z),Blocks.AIR.defaultBlockState(),3);}for(int x:new int[]{8,14})level.setBlock(new BlockPos(x,90,20),ConsoleContent.DESK.get().defaultBlockState().setValue(DeviceBlock.FACING,Direction.SOUTH).setValue(DeviceBlock.MODEL,x==8?7:22),3);level.setBlock(new BlockPos(10,90,20),ConsoleContent.SCREEN.get().defaultBlockState().setValue(DeviceBlock.FACING,Direction.SOUTH),3);ServerPlayer p=player(server,"host");p.getInventory().setItem(0,new ItemStack(ConsoleContent.BLANK.get(),4));p.getInventory().setItem(1,new ItemStack(ConsoleContent.CONTROLLER.get(),4));p.inventoryMenu.broadcastChanges();sharedBuilt=true;daylight(server);return sharedObserve(server);
+    private JsonObject prepareShared(MinecraftServer server,boolean ordinary)throws java.io.IOException{
+        if(sharedBuilt)throw new IllegalStateException("Shared pads already prepared");fresh(server);var level=server.overworld();for(int x=4;x<=18;x++)for(int z=18;z<=28;z++){level.setBlock(new BlockPos(x,89,z),Blocks.SMOOTH_STONE.defaultBlockState(),3);for(int y=90;y<=94;y++)level.setBlock(new BlockPos(x,y,z),Blocks.AIR.defaultBlockState(),3);}for(int x:new int[]{8,14})level.setBlock(new BlockPos(x,90,20),ConsoleContent.DESK.get().defaultBlockState().setValue(DeviceBlock.FACING,Direction.SOUTH).setValue(DeviceBlock.MODEL,x==8?(ordinary?1:7):22),3);level.setBlock(new BlockPos(10,90,20),ConsoleContent.SCREEN.get().defaultBlockState().setValue(DeviceBlock.FACING,Direction.SOUTH),3);ServerPlayer p=player(server,"host");p.getInventory().setItem(0,new ItemStack(ConsoleContent.BLANK.get(),4));p.getInventory().setItem(1,new ItemStack(ConsoleContent.CONTROLLER.get(),4));p.inventoryMenu.broadcastChanges();if(ordinary)for(String role:new String[]{"host","guest"})player(server,role).setGameMode(GameType.SURVIVAL);sharedBuilt=true;daylight(server);return sharedObserve(server);
     }
     JsonObject sharedObserve(MinecraftServer server){JsonObject out=new JsonObject();out.addProperty("prepared",sharedBuilt);JsonArray devices=new JsonArray();if(sharedBuilt)for(int x:new int[]{8,10,14})if(server.overworld().getBlockEntity(new BlockPos(x,90,20)) instanceof DeviceEntity device)devices.add(ConsoleServer.view(device));out.add("devices",devices);return out;}
     JsonObject adopt(MinecraftServer server)throws java.io.IOException{

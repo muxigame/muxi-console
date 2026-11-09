@@ -69,6 +69,20 @@ def retire_profile(path: Path, digest: str):
             raise ValueError("Prior preparation run lease is not released")
         closed.append({"runId":marker["runId"],"run":str(run)})
     expected={"preparation-owner.json","preparation-result.json","validation-profile.json"}
+    # The canonical full-pack preparer always emits this public receipt, including
+    # when it needed no independent copies. Accept only that empty, bounded shape.
+    copy_receipt=root/"link-limit-copy-receipt.json"
+    if copy_receipt.exists():
+        ordinary(copy_receipt,root)
+        if copy_receipt.stat().st_size>4096:
+            raise ValueError("Unexpected canonical copy receipt size")
+        value=json.loads(copy_receipt.read_text(encoding="utf-8"))
+        if (set(value)!={"explicitlyEnabled","files","copiedBytes","securityChecksChanged","sharedSourceModified"}
+                or type(value["explicitlyEnabled"]) is not bool or value["files"]!=[]
+                or type(value["copiedBytes"]) is not int or value["copiedBytes"]!=0
+                or value["securityChecksChanged"] is not False or value["sharedSourceModified"] is not False):
+            raise ValueError("Retirement supports only the canonical empty copy receipt")
+        expected.add("link-limit-copy-receipt.json")
     expected.update(side+"/"+row["path"] for side in ("client","server") for row in profile[side+"Files"])
     actual=set()
     for entry in root.rglob("*"):

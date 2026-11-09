@@ -35,6 +35,8 @@ public final class ServerQaMod {
     private final CartridgeScene cartridgeReview=new CartridgeScene(owner);
     private final MachineScene machineReview=new MachineScene(owner);
     private final CaseScene caseReview=new CaseScene(owner);
+    private final UpgradeScene upgradeReview=new UpgradeScene(owner);
+    private final ExpansionScene expansionReview=new ExpansionScene(owner);
     private final Set<UUID> prepared = new HashSet<>();
     private boolean built;
     private final java.util.ArrayDeque<JsonObject> roomHistory=new java.util.ArrayDeque<>();
@@ -51,6 +53,11 @@ public final class ServerQaMod {
     private void sampleRooms(MinecraftServer server){try{JsonArray current=rooms(server);String key=current.toString();if(!key.equals(lastRooms)){lastRooms=key;JsonObject sample=new JsonObject();sample.addProperty("serverTick",server.getTickCount());sample.add("rooms",current);roomHistory.add(sample);while(roomHistory.size()>128)roomHistory.removeFirst();}}catch(java.io.IOException error){throw new IllegalStateException(error);}}
 
     private JsonObject dispatch(MinecraftServer server, JsonObject command) {
+        if(command.get("action").getAsString().startsWith("expansion_"))return expansionReview.command(server,command);
+        if(command.get("action").getAsString().startsWith("linkqa_"))return LinkScene.command(server,command,owner);
+        if(command.get("action").getAsString().startsWith("linkds_"))return LinkDsScene.command(server,command,owner);
+        if(command.get("action").getAsString().startsWith("link3ds_"))return Link3dsScene.command(server,command,owner);
+        if(command.get("action").getAsString().startsWith("upgrade_"))return upgradeReview.command(server,command);
         if(command.get("action").getAsString().startsWith("case_"))return caseReview.command(server,command);
         if(command.get("action").getAsString().startsWith("machine_"))return machineReview.command(server,command);
         if(command.get("action").getAsString().startsWith("cartridge_"))return cartridgeReview.command(server,command);
@@ -153,6 +160,7 @@ public final class ServerQaMod {
         result.add("devices", devices);
         try {
             var state = ConsoleServer.state(server); result.addProperty("contentBytes", state.content.usedBytes()); result.addProperty("pendingUploads", state.uploads.activeCount());
+            result.addProperty("cloudStorageConfigured",state.cloud!=null);result.addProperty("localUploadServerRunning",state.localMedia!=null);
             result.add("rooms", rooms(server));JsonArray history=new JsonArray();roomHistory.forEach(history::add);result.add("roomHistory",history);
             JsonArray snapshots = new JsonArray(); Set<UUID> currentCards = new HashSet<>();
             for (int x : new int[]{8,10,12}) if (server.overworld().getBlockEntity(new BlockPos(x,90,8)) instanceof DeviceEntity device)

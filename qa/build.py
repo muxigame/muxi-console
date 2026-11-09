@@ -26,9 +26,10 @@ def sha(path: Path) -> str:
     return digest.hexdigest()
 
 
-def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool = False, cartridge_review: bool = False) -> Path:
+def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool = False, cartridge_review: bool = False, plan_path: Path | None = None, link_review: bool = False, media_probe: Path | None = None, expansion_diagnostics: Path | None = None, large_rom_mib: int = 8, gba_link_review: bool = False, nds_link_review: bool = False, n3ds_link_review: bool = False) -> Path:
     if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", name):
         raise ValueError("Use a new lowercase QA build name")
+    if large_rom_mib not in (8,32) or large_rom_mib!=8 and not cartridge_review:raise ValueError('Large fixture must be an explicit cartridge review at 8 or 32MiB')
     product, rom, gb_rom = product.resolve(strict=True), rom.resolve(strict=True), gb_rom.resolve(strict=True)
     if REPO / "build" not in product.parents or REPO / "build/runtime-smoke" not in rom.parents:
         raise ValueError("QA inputs must be the new repository's product and original runtime diagnostic")
@@ -38,10 +39,20 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
         if "net/muxigame/console/MuxiConsole.class" not in jar.namelist():
             raise ValueError("Missing independent product entrypoint")
         catalog = jar.read("assets/muxi_console/model_catalog.json")
-    plan_path = REPO / "build/model-review-plan.json"
+        link_core=json.loads(jar.read("META-INF/muxi/sameboy-link.json")) if link_review else None
+        gba_link_core=json.loads(jar.read("META-INF/muxi/mgba-link.json")) if gba_link_review else None
+        n3ds_link_core=json.loads(jar.read("META-INF/muxi/azahar-link.json")) if n3ds_link_review else None
+        if n3ds_link_review and (hashlib.sha256(jar.read("cores/windows-x86_64/azahar_link.dll")).hexdigest()!=n3ds_link_core["platforms"]["windows-x86_64"]["librarySha256"] or n3ds_link_core["nativeApi"]["profileStateAbi"]!=2 or not n3ds_link_core["nativeDiagnostics"]["activeUdsCheckpointRestore"]):raise ValueError("Exact ABI2 active UDS restore proof required")
+        nds_link_core=json.loads(jar.read("META-INF/muxi/melondsds-link.json")) if nds_link_review else None
+        if nds_link_review and hashlib.sha256(jar.read("cores/windows-x86_64/melondsds_link.dll")).hexdigest()!=nds_link_core["platforms"]["windows-x86_64"]["librarySha256"]:raise ValueError("Packed DS bridge differs from its actual pin")
+        if gba_link_review and hashlib.sha256(jar.read("cores/windows-x86_64/mgba_link.dll")).hexdigest()!=gba_link_core["platforms"]["windows-x86_64"]["librarySha256"]:raise ValueError("Packed GBA link binary differs from its candidate pin")
+    plan_path = (plan_path or REPO / "build/model-review-plan.json").resolve(strict=True)
+    if REPO/"build" not in plan_path.parents:raise ValueError("Model plan must be a new pinned repository build artifact")
     plan = plan_path.read_bytes()
     plan_json = json.loads(plan)
-    if not plan_json.get("native_only") or sorted(row["cmd"] for row in plan_json["stations"]) != list(range(1, 23)):
+    product_catalog=json.loads(catalog)
+    model_ids=sorted(row["cmd"] for row in [*product_catalog["entries"],*product_catalog["additional_styles"]])
+    if not plan_json.get("native_only") or sorted(row["cmd"] for row in plan_json["stations"]) != model_ids:
         raise ValueError("Expected the complete independently authored native model plan")
     if catalog != (REPO / "common/src/main/resources/assets/muxi_console/model_catalog.json").read_bytes():
         raise ValueError("Product model catalog differs from current authored resources")
@@ -60,6 +71,102 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
         baseline = json.loads((REPO / "build/platform-smoke/gba-result.json").read_text(encoding="utf-8"))
         if len(gba) != 65536 or hashlib.sha256(gba).hexdigest() != baseline.get("contentSha256") or baseline.get("exitCode") != 0:
             raise ValueError("GBA fixture differs from the already verified first-party ARM diagnostic")
+    link_media={};link_report=None;link_boot=None
+    gba_link_media={};gba_link_inputs={};gba_link_baselines=[]
+    nds_link_media={};nds_link_inputs={};nds_link_baselines=[]
+    n3ds_link_media={};n3ds_link_inputs={};n3ds_link_baselines=[]
+    media=None;media_inputs={};expansion={};expansion_inputs={}
+    if expansion_diagnostics is not None:
+        expansion_diagnostics=expansion_diagnostics.resolve(strict=True)
+        if not expansion_diagnostics.is_relative_to(REPO/'build') or expansion_diagnostics.name!='diagnostics.json':raise ValueError('Expansion diagnostics must be an original repository build report')
+        original=json.loads(expansion_diagnostics.read_text(encoding='utf-8'))
+        if original.get('original')is not True or original.get('biosIncluded')is not False or original.get('gameAssetsIncluded')is not False:raise ValueError('Only our original no-BIOS expansion diagnostics may be embedded')
+        expected_sources={p.relative_to(REPO).as_posix()for pattern in('*.c','*.S')for p in(REPO/'tests/runtime/diagnostics/expansion').glob(pattern)}|{'tools/make_expansion_diagnostics.py','tools/prepare_expansion_sdk.py'}
+        if set(original.get('sources',{}))!=expected_sources or any(sha(REPO/path)!=digest for path,digest in original['sources'].items()):raise ValueError('Original expansion generator/source pins changed')
+        expansion_inputs={expansion_diagnostics:sha(expansion_diagnostics),**{REPO/path:digest for path,digest in original['sources'].items()}}
+        for platform,suffix in(('nds','nds'),('n3ds','3dsx'),('wii','dol')):
+            rows=[row for row in original['outputs']if Path(row['path']).name=='muxi-input.'+suffix]
+            if len(rows)!=1:raise ValueError('Exactly three original expansion programs required')
+            row=rows[0];path=Path(row['path']).resolve(strict=True)
+            if path.parent!=expansion_diagnostics.parent or not 0<path.stat().st_size<=4*1024*1024 or path.stat().st_size!=row['bytes']or sha(path)!=row['sha256']:raise ValueError('Original expansion ROM differs')
+            expansion[platform]={**row,'path':str(path),'suffix':suffix};expansion_inputs[path]=row['sha256']
+        if len(original['outputs'])!=3:raise ValueError('Unexpected expansion program in fixture report')
+    if media_probe is not None:
+        media_probe=media_probe.resolve(strict=True)
+        if not media_probe.is_relative_to(REPO/'build'):raise ValueError('Media probe must be a fixed original repository build')
+        media_report=json.loads(media_probe.read_text(encoding='utf-8'))
+        media_result_path=media_probe.parent/'result.json';media_result=json.loads(media_result_path.read_text(encoding='utf-8'))
+        if media_report.get('exitCode')!=0 or media_report.get('product',{}).get('sha256')!=sha(product) or media_result.get('exitCode')!=0 or media_result.get('forced') or not media_result.get('nativeTempCleaned') or media_result.get('checks',0)<10 or media_result.get('nonzeroPcmSamples',0)<1000:raise ValueError('Audible media baseline is not verified for this exact candidate')
+        media_path=Path(media_report['diagnosticRom']['path']).resolve(strict=True)
+        if media_path.parent!=media_probe.parent or sha(media_path)!=media_report['diagnosticRom']['sha256']:raise ValueError('Original media ROM changed')
+        sys.path.insert(0,str(REPO/'tools'));from runtime_smoke import diagnostic_rom
+        if media_path.read_bytes()!=diagnostic_rom(True):raise ValueError('Media diagnostic differs from original generator')
+        media_inputs={media_probe:sha(media_probe),media_result_path:sha(media_result_path),media_path:sha(media_path),REPO/'tools/runtime_smoke.py':media_report['source']['runtime_smoke.py'],REPO/'tests/runtime/NesMediaProbe.java':media_report['source']['NesMediaProbe.java']}
+        media={**media_report['diagnosticRom'],'baselineResult':str(media_result_path),'baselineResultSha256':sha(media_result_path),'probe':str(media_probe),'probeSha256':sha(media_probe)}
+    if link_review:
+        sys.path.insert(0,str(REPO/"tools"))
+        from link_diagnostic import diagnostic,boot
+        baseline=REPO/"build/link-runtime-smoke-05/result/result.json";link_report=json.loads(baseline.read_text(encoding="utf-8"))
+        if link_report.get("platform")!="gb" or link_report.get("bidirectionalSingleStateCompatibility") is not True or any(w.get("exitCode")!=0 or w.get("forced") or not w.get("nativeTempCleaned") for w in link_report["workers"]):raise ValueError("Original serial diagnostic baseline is incomplete")
+        if link_report["bridgeSHA256"]!=link_core["platforms"]["windows-x86_64"]["librarySha256"] or link_report["baseSingleCoreSHA256"]!=link_core["baseSingleCoreCompatibility"]["librarySha256"]:raise ValueError("Candidate serial bridge differs from the baseline core")
+        for n,label,challenge in [(0,"left",0x3c),(1,"right",0xa7)]:
+            path=REPO/f"build/link-runtime-smoke-05/original-endpoint-{n+1}.gb";content=path.read_bytes()
+            if content!=diagnostic(n,challenge):raise ValueError("Original serial diagnostic drift")
+            link_media[label]=(path,content)
+        link_boot=boot(False)
+        if link_boot!=(REPO/"build/link-runtime-smoke-05/system/dmg_boot.bin").read_bytes():raise ValueError("Original diagnostic-only boot drift")
+    if gba_link_review:
+        sys.path.insert(0,str(REPO/"tools"));from link_gba_diagnostic import diagnostic as gba_link_diagnostic
+        for baseline_name in ("link-gba-runtime-04","link-gba-runtime-05"):
+            report_path=REPO/"build"/baseline_name/"result/result.json";report=json.loads(report_path.read_text(encoding="utf-8"))
+            if report.get("platform")!="gba"or report.get("checks",0)<144 or not report.get("bidirectionalSingleStateCompatibility")or len(report["workers"])!=4 or any(w.get("exitCode")!=0 or w.get("forced")or not w.get("nativeTempCleaned")for w in report["workers"])or report["bridgeSHA256"]!=gba_link_core["platforms"]["windows-x86_64"]["librarySha256"]or report["baseSingleCoreSHA256"]!=gba_link_core["baseSingleCoreCompatibility"]["librarySha256"]:raise ValueError("Exact normal/reversed GBA link native baseline required")
+            gba_link_inputs[report_path]=sha(report_path);gba_link_baselines.append(dict(path=str(report_path),sha256=sha(report_path),checks=report["checks"]))
+        generator=REPO/"tools/link_gba_diagnostic.py";gba_link_inputs[generator]=sha(generator)
+        for n,label in enumerate(("left","right")):
+            path=REPO/f"build/link-gba-runtime-04/original-endpoint-{n+1}.gba";content=path.read_bytes()
+            if len(content)!=65536 or content!=gba_link_diagnostic(n):raise ValueError("Original independent GBA serial ROM drift")
+            gba_link_media[label]=(path,content);gba_link_inputs[path]=sha(path)
+    if nds_link_review:
+        diagnostic_report=REPO/'build/link-ds-diagnostic-04/diagnostics.json';original_ds=json.loads(diagnostic_report.read_text(encoding='utf-8'))
+        if original_ds.get('original')is not True or original_ds.get('vendorBIOSBundled')is not False:raise ValueError('Only original no-vendor-BIOS DS diagnostics are accepted')
+        nds_link_inputs[diagnostic_report]=sha(diagnostic_report)
+        for source_name,digest in original_ds['sourceInputs'].items():
+            path=REPO/'tests/link/diagnostics'/source_name
+            if source_name not in ('nds7.c','nds7.S','nds9.c','nds9.S')or sha(path)!=digest:raise ValueError('Original DS source differs')
+            nds_link_inputs[path]=digest
+        for n,label in enumerate(('left','right')):
+            row=original_ds['outputs'][n];path=Path(row['path']).resolve(strict=True)
+            if path.parent!=diagnostic_report.parent or row['role']!=n or sha(path)!=row['sha256']or path.stat().st_size!=row['bytes']:raise ValueError('Original DS image differs')
+            nds_link_media[label]=(path,path.read_bytes());nds_link_inputs[path]=row['sha256']
+        for native_name,count,path in [('core',10,REPO/'build/link-ds-safe-complete-05/core.log'),('group',14,REPO/'build/link-ds-safe-complete-05/group.log'),('single-compat',10,REPO/'build/link-ds-safe-single-new-01/run.log')]:
+            rows=[json.loads(line)for line in path.read_text(encoding='utf-8').splitlines()if line.startswith('{')];report=rows[-1]
+            bridge=report.get('coreSHA256',report.get('actualBridgeSHA256'))
+            if report.get('checks')!=count or bridge!=nds_link_core['platforms']['windows-x86_64']['librarySha256']:raise ValueError('DS actual native baseline differs from candidate')
+            if native_name=='core'and(not report.get('naturalExit')or not report.get('wirelessHardwareExchangeProven')):raise ValueError('Actual wireless CPU challenge is required')
+            if native_name=='group'and(report.get('naturalWorkers')!=4 or sum(report['pendingCounts_MP_transport'])<1):raise ValueError('Nonempty complete wireless queue cold restore is required')
+            if native_name=='single-compat'and(not report.get('bidirectionalSingleStateCompatibility')or report.get('baseSingleFormatSHA256')!=nds_link_core['baseSingleCoreCompatibility']['librarySha256']or report.get('actualInputCounters')!=[1,2,3]):raise ValueError('Actual single-state CPU compatibility is required')
+            nds_link_inputs[path]=sha(path);nds_link_baselines.append(dict(path=str(path),sha256=sha(path),checks=count))
+        endurance_root=REPO/'build/link-ds-endurance-foreign-01';endurance_path=endurance_root/'data/result.json';endurance=json.loads(endurance_path.read_text(encoding='utf-8'));invocation_path=endurance_root/'invocation.json';invocation=json.loads(invocation_path.read_text(encoding='utf-8'))
+        if not endurance.get('success')or not endurance.get('naturalExit')or endurance.get('framesCompleted',0)<10000 or endurance.get('backgroundEndFrame',0)-endurance.get('backgroundStartFrame',0)<12 or invocation['inputs']['core']!=nds_link_core['platforms']['windows-x86_64']['librarySha256']or invocation['variant']!='baseline'or any('CompileCommand='in value or 'TieredStopAtLevel='in value for value in invocation['childJvmOptions']):raise ValueError('DS safe foreign-fault native baseline needs actual full-JIT endurance')
+        for path in [endurance_path,invocation_path]:nds_link_inputs[path]=sha(path)
+        for pid in endurance['workers']:
+            jit=endurance_root/'private-crash-logs'/('jit-'+str(pid)+'.log')
+            if not any(' 4 'in line and'com.sun.jna.Function::invoke'in line for line in jit.read_text(encoding='utf-8').splitlines()):raise ValueError('Actual child C2 compilation evidence is required')
+            nds_link_inputs[jit]=sha(jit)
+        nds_link_baselines.append(dict(path=str(endurance_path),sha256=sha(endurance_path),checks=0,actualFrames=endurance['framesCompleted'],kind='full-JIT endurance; separate from pure check counts'))
+        nds_link_inputs[REPO/'tools/link_ds_diagnostic.py']=sha(REPO/'tools/link_ds_diagnostic.py')
+    if n3ds_link_review:
+        inputs_path=REPO/'build/3ds-radio-native-01/inputs.json';inputs=json.loads(inputs_path.read_text(encoding='utf-8'));source=REPO/'native/link/diagnostics/azahar_uds.c'
+        if sha(source)!=inputs['firstPartyRom']['sha256']:raise ValueError('Original no-BIOS UDS source changed')
+        n3ds_link_inputs.update({source:sha(source),inputs_path:sha(inputs_path)})
+        for label,row in zip(('left','right'),inputs['roms']):
+            path=inputs_path.parent/row['path']
+            if row['role']!=(0 if label=='left'else 1)or sha(path)!=row['sha256']or path.stat().st_size!=row['bytes']:raise ValueError('Actual original UDS cartridge differs')
+            n3ds_link_media[label]=(path,path.read_bytes());n3ds_link_inputs[path]=sha(path)
+        for field in [n3ds_link_core['nativeDiagnostics'],n3ds_link_core['nativeDiagnostics']['productRuntime'],n3ds_link_core['nativeDiagnostics']['productPortable']]:
+            path=REPO/field['report'];report=json.loads(path.read_text(encoding='utf-8'))
+            if sha(path)!=field['reportSha256']or not report.get('complete')or report.get('coreSHA256',report.get('coreSha256'))!=n3ds_link_core['platforms']['windows-x86_64']['librarySha256']:raise ValueError('Actual 3DS native/product checkpoint proof differs')
+            n3ds_link_inputs[path]=sha(path);n3ds_link_baselines.append(dict(path=str(path),sha256=sha(path),checks=field['checks']))
     empty_zip = io.BytesIO()
     with zipfile.ZipFile(empty_zip, "w"):
         pass
@@ -69,7 +176,7 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
     large=None;pce=None
     if cartridge_review:
         from large_gba import derive
-        large=derive(gba_rom,out/"diagnostics/large-original-arm.gba")
+        large=derive(gba_rom,out/"diagnostics/large-original-arm.gba",large_rom_mib*1024*1024)
         large.update(generator="qa/large_gba.py",generatorSha256=sha(REPO/"qa/large_gba.py"))
         pce_path=REPO/"build/platform-smoke/original.pce";pce=pce_path.read_bytes();pce_result=REPO/"build/platform-smoke/pce-result.json";pce_baseline=json.loads(pce_result.read_text(encoding="utf-8"))
         if len(pce)!=32768 or hashlib.sha256(pce).hexdigest()!=pce_baseline.get("contentSha256")or pce_baseline.get("exitCode")!=0:raise ValueError("PCE fixture differs from verified first-party diagnostic")
@@ -82,6 +189,13 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
     pins = {"product.sha256": sha(product), "rom.sha256": sha(rom), "gb-rom.sha256": sha(gb_rom), "n64-rom.sha256": sha(n64_rom), "pong-zip.sha256": hashlib.sha256(pong).hexdigest(), "model-plan.sha256": sha(plan_path)}
     if gba is not None:
         pins["gba-rom.sha256"] = hashlib.sha256(gba).hexdigest()
+    for label,(path,content) in link_media.items():pins[f"link-{label}-rom.sha256"]=hashlib.sha256(content).hexdigest()
+    for label,(path,content)in gba_link_media.items():pins[f"gba-link-{label}-rom.sha256"]=hashlib.sha256(content).hexdigest()
+    for label,(path,content)in nds_link_media.items():pins[f"nds-link-{label}-rom.sha256"]=hashlib.sha256(content).hexdigest()
+    for label,(path,content)in n3ds_link_media.items():pins[f"n3ds-link-{label}-rom.sha256"]=hashlib.sha256(content).hexdigest()
+    if link_boot is not None:pins["link-boot.sha256"]=hashlib.sha256(link_boot).hexdigest()
+    if media is not None:pins['media-rom.sha256']=media['sha256']
+    for platform,row in expansion.items():pins[f'expansion-{platform}-rom.sha256']=row['sha256']
     if large is not None:
         pins["large-gba-rom.sha256"]=large["sha256"];pins["pce-rom.sha256"]=hashlib.sha256(pce).hexdigest()
     manifest = {"schema": 1, "product": {"path": str(product), "sha256": pins["product.sha256"]},
@@ -99,7 +213,21 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
     if large is not None:
         large["baseGeneratorSha256"]=manifest["gbaDiagnosticRom"]["generatorSha256"];large["baselineResultSha256"]=manifest["gbaDiagnosticRom"]["baselineResultSha256"];manifest["largeGbaDiagnosticRom"]=large
         manifest["pceDiagnosticRom"]={"path":str(pce_path),"sha256":pins["pce-rom.sha256"],"bytes":len(pce),"generator":"tools/platform_smoke_software.py","generatorSha256":sha(REPO/"tools/platform_smoke_software.py"),"baselineResult":str(pce_result),"baselineResultSha256":sha(pce_result)}
+    if link_media:
+        manifest["linkDiagnostics"]={label:{"path":str(path),"sha256":pins[f"link-{label}-rom.sha256"],"bytes":len(content)}for label,(path,content)in link_media.items()}
+        manifest["linkDiagnostics"].update(generator="tools/link_diagnostic.py",generatorSha256=sha(REPO/"tools/link_diagnostic.py"),baselineResult=str(baseline),baselineResultSha256=sha(baseline),diagnosticOnlyBootSha256=pins["link-boot.sha256"],bridgeSha256=link_report["bridgeSHA256"],baseSingleCoreSha256=link_report["baseSingleCoreSHA256"])
+    if gba_link_media:
+        manifest["gbaLinkDiagnostics"]={label:dict(path=str(path),sha256=sha(path),bytes=len(content))for label,(path,content)in gba_link_media.items()}
+        manifest["gbaLinkDiagnostics"].update(generator="tools/link_gba_diagnostic.py",generatorSha256=sha(generator),baselines=gba_link_baselines,bridgeSha256=gba_link_core["platforms"]["windows-x86_64"]["librarySha256"],baseSingleCoreSha256=gba_link_core["baseSingleCoreCompatibility"]["librarySha256"])
+    if nds_link_media:
+        manifest['ndsLinkDiagnostics']={label:dict(path=str(path),sha256=sha(path),bytes=len(content))for label,(path,content)in nds_link_media.items()}
+        manifest['ndsLinkDiagnostics'].update(generator='tools/link_ds_diagnostic.py',generatorSha256=sha(REPO/'tools/link_ds_diagnostic.py'),report=str(diagnostic_report),reportSha256=sha(diagnostic_report),baselines=nds_link_baselines,bridgeSha256=nds_link_core['platforms']['windows-x86_64']['librarySha256'],baseSingleCoreSha256=nds_link_core['baseSingleCoreCompatibility']['librarySha256'])
+    if media is not None:manifest['mediaDiagnosticRom']=media
+    if expansion:manifest['expansionDiagnostics']={"programs":expansion,"report":str(expansion_diagnostics),"reportSha256":sha(expansion_diagnostics),"sources":original['sources'],"scope":"Original diagnostic-only DS/3DS/Wii programs; no third-party game or BIOS; build provenance is not Minecraft acceptance"}
     input_hashes = {str(path.relative_to(REPO)): sha(path) for path in sources.glob("*.java")}
+    if n3ds_link_review:
+        manifest['n3dsLinkDiagnostics']={label:dict(path=str(path),sha256=sha(path),bytes=len(content))for label,(path,content)in n3ds_link_media.items()}
+        manifest['n3dsLinkDiagnostics'].update(source=str(source),sourceSha256=sha(source),baselines=n3ds_link_baselines,bridgeSha256=n3ds_link_core['platforms']['windows-x86_64']['librarySha256'],baseSingleCoreSha256=n3ds_link_core['baseSingleCoreCompatibility']['librarySha256'],queueCheckpoint=False)
     for side, entry in (("server", "ServerQaMod.java"), ("client", "ClientQaMod.java")):
         classes = out / (side + "-classes")
         classes.mkdir()
@@ -112,6 +240,11 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
             args.append(str(sources / "CartridgeScene.java"))
             args.append(str(sources / "MachineScene.java"))
             args.append(str(sources / "CaseScene.java"))
+            args.append(str(sources / "UpgradeScene.java"))
+            args.append(str(sources / "LinkScene.java"))
+            args.append(str(sources / "LinkDsScene.java"))
+            args.append(str(sources / "Link3dsScene.java"))
+            args.append(str(sources / "ExpansionScene.java"))
         else:
             args.append(str(sources / "HeldActions.java"))
             args.append(str(sources / "PolishActions.java"))
@@ -120,6 +253,13 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
             args.append(str(sources / "CaseActions.java"))
             args.append(str(sources / "IconActions.java"))
             args.append(str(sources / "IconReviewScreen.java"))
+            args.append(str(sources / "UpgradeActions.java"))
+            args.append(str(sources / "LinkActions.java"))
+            args.append(str(sources / "LinkDsActions.java"))
+            args.append(str(sources / "Link3dsActions.java"))
+            args.append(str(sources / "MediaMetrics.java"))
+            args.append(str(sources / "TransferActions.java"))
+            args.append(str(sources / "ExpansionActions.java"))
         argument_file = out / (side + ".args")
         sdk.argfile(argument_file, args)
         command = [str(jdk / "javac.exe"), "-J-Xmx512m", "-J-XX:ActiveProcessorCount=1", "-J-Dfile.encoding=UTF-8", "-J-Duser.language=en", "@" + str(argument_file)]
@@ -138,6 +278,13 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
         resources["diagnostics/pong.zip"] = pong
         if gba is not None:
             resources["diagnostics/original-arm.gba"] = gba
+        if media is not None:resources['diagnostics/original-two-port-tone.nes']=media_path.read_bytes()
+        for row in expansion.values():resources['diagnostics/original-expansion.'+row['suffix']]=Path(row['path']).read_bytes()
+        for label,(path,content) in link_media.items():resources[f"diagnostics/original-link-{label}.gb"]=content
+        for label,(path,content)in gba_link_media.items():resources[f"diagnostics/original-link-{label}.gba"]=content
+        for label,(path,content)in nds_link_media.items():resources[f"diagnostics/original-link-{label}.nds"]=content
+        for label,(path,content)in n3ds_link_media.items():resources[f"diagnostics/original-link-{label}.3dsx"]=content
+        if link_boot is not None:resources["diagnostics/original-link-boot.bin"]=link_boot
         if pce is not None:resources["diagnostics/original.pce"]=pce
         resources["diagnostics/model-review-plan.json"] = plan
         resources["META-INF/neoforge.mods.toml"] = (f'modLoader="javafml"\nloaderVersion="[4,)"\nlicense="Private test fixture; not a product"\n'
@@ -159,6 +306,11 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
     if gba is not None and (sha(gba_rom) != pins["gba-rom.sha256"] or sha(REPO / "tools/gba_diagnostic.py") != manifest["gbaDiagnosticRom"]["generatorSha256"] or sha(REPO / "build/platform-smoke/gba-result.json") != manifest["gbaDiagnosticRom"]["baselineResultSha256"] or sha(REPO / "tests/runtime/GbaSmoke.java") != manifest["gbaDiagnosticRom"]["baselineTestSha256"]):
         raise RuntimeError("Original GBA fixture inputs changed during compilation")
     if large is not None and(sha(Path(large["path"]))!=large["sha256"]or sha(REPO/"qa/large_gba.py")!=large["generatorSha256"]or sha(pce_path)!=pins["pce-rom.sha256"]or sha(pce_result)!=manifest["pceDiagnosticRom"]["baselineResultSha256"]or sha(REPO/"tools/platform_smoke_software.py")!=manifest["pceDiagnosticRom"]["generatorSha256"]):raise RuntimeError("Cartridge diagnostic inputs changed during compilation")
+    if any(sha(path)!=digest for path,digest in media_inputs.items()):raise RuntimeError('Original media probe inputs changed during QA compilation')
+    if any(sha(path)!=digest for path,digest in n3ds_link_inputs.items()):raise RuntimeError('Original 3DS link inputs changed during QA compilation')
+    if any(sha(path)!=digest for path,digest in expansion_inputs.items()):raise RuntimeError('Original expansion inputs changed during QA compilation')
+    if any(sha(p)!=digest for p,digest in gba_link_inputs.items()):raise ValueError("GBA link QA source/baseline changed while compiling")
+    if any(sha(p)!=digest for p,digest in nds_link_inputs.items()):raise ValueError('DS link baseline/source changed during QA build')
     manifest["sources"] = input_hashes
     report = out / "qa-build.json"
     report.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -174,5 +326,13 @@ if __name__ == "__main__":
     parser.add_argument("--gb-rom", type=Path, default=REPO / "build/platform-smoke/original.gb")
     parser.add_argument("--pixel-review", action="store_true")
     parser.add_argument("--cartridge-review",action="store_true")
+    parser.add_argument("--model-plan",type=Path)
+    parser.add_argument("--link-review",action="store_true")
+    parser.add_argument("--gba-link-review",action="store_true")
+    parser.add_argument("--nds-link-review",action="store_true")
+    parser.add_argument("--n3ds-link-review",action="store_true")
+    parser.add_argument('--media-probe',type=Path,help='Exact candidate native audible NES probe.json for media transport QA')
+    parser.add_argument('--expansion-diagnostics',type=Path,help='Pinned original no-BIOS DS/3DS/Wii diagnostic build report')
+    parser.add_argument('--large-rom-mib',type=int,choices=(8,32),default=8,help='Only FF padding after the original 64KiB GBA program; 32MiB for slow resumable transfer QA')
     options = parser.parse_args()
-    build(options.name, options.product, options.rom, options.gb_rom, options.pixel_review,options.cartridge_review)
+    build(options.name, options.product, options.rom, options.gb_rom, options.pixel_review,options.cartridge_review,options.model_plan,options.link_review,options.media_probe,options.expansion_diagnostics,options.large_rom_mib,options.gba_link_review,options.nds_link_review,options.n3ds_link_review)

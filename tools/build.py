@@ -42,15 +42,16 @@ def build(name, tests, release=False):
     compile_set(sources,classes,classpath,'compile')
     test_results=[]
     if tests:
-        files=[p for folder in ['domain','runtime','input','save','compat','hardware','audio','stream'] for p in sorted((ROOT/'tests'/folder).rglob('*.java'))]
+        files=[p for folder in ['domain','runtime','input','save','compat','hardware','audio','stream','transfer','storage','link'] for p in sorted((ROOT/'tests'/folder).rglob('*.java'))]
         if files:
             tc=out/'test-classes';tc.mkdir(); compile_set(files,tc,str(classes)+os.pathsep+classpath,'tests')
             for p in files:
                 body=p.read_text(encoding='utf-8')
                 # Runtime probes require an explicit official core/ROM, exercised by runtime_smoke.py.
-                if 'static void main(' not in body or p.is_relative_to(ROOT/'tests/runtime'): continue
-                package=re.search(r'package\s+([\w.]+);',body).group(1)
-                r=subprocess.run([str(jdk/'java.exe'),'-Xmx128m','-XX:ActiveProcessorCount=1','-ea','-cp',os.pathsep.join([str(tc),str(classes),str(ROOT/'common/src/main/resources'),classpath]),package+'.'+p.stem,str(out/'test-data')],capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=60,cwd=ROOT)
+                if 'static void main(' not in body or p.is_relative_to(ROOT/'tests/runtime') or p.is_relative_to(ROOT/'tests/link/native'): continue
+                package=re.search(r'package\s+([\w.]+);',body)
+                main_class=(package.group(1)+'.' if package else '')+p.stem
+                r=subprocess.run([str(jdk/'java.exe'),'-Xmx128m','-XX:ActiveProcessorCount=1','-ea','-cp',os.pathsep.join([str(tc),str(classes),str(ROOT/'common/src/main/resources'),classpath]),main_class,str(out/'test-data')],capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=60,cwd=ROOT)
                 (out/(p.stem+'.log')).write_text(r.stdout+r.stderr,encoding='utf-8');print(r.stdout.strip())
                 if r.returncode: raise RuntimeError(p.stem+' failed: '+r.stderr[-2000:])
                 test_results.append(p.stem)
@@ -85,6 +86,17 @@ def build(name, tests, release=False):
             info=zipfile.ZipInfo(p.relative_to(classes).as_posix(),(2026,1,1,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED;bundle.writestr(info,p.read_bytes())
     resources['worker/runtime.jar']=worker.getvalue()
     core_manifest=json.loads((ROOT/'third-party/cores.json').read_text(encoding='utf-8'))
+    system_manifest=json.loads((ROOT/'third-party/system-resources.json').read_text(encoding='utf-8'))
+    for pin in system_manifest['resources']:
+        path=(WORKSPACE/pin['archive']).resolve()
+        if not path.is_relative_to((WORKSPACE/'test-environment/cache/muxi-console').resolve()) or not path.is_file() or path.stat().st_size!=pin['archiveBytes'] or sha(path)!=pin['archiveSha256']:
+            raise ValueError('Core system resources differ from their source-bound pin')
+        if not re.fullmatch(r'system/[a-z0-9_-]+\.zip',pin['entry']):
+            raise ValueError('Invalid core system resource entry')
+        if release and not pin.get('releaseReady'):
+            raise ValueError('Core system resource licensing/source review is incomplete')
+        resources[pin['entry']]=path.read_bytes()
+    resources['META-INF/muxi/system-resources.json']=json.dumps(system_manifest,indent=2).encode()
     source_delivery=None
     if release:
         if any(not core.get('releaseReady') for core in core_manifest['cores'].values() if core.get('purpose') in ('software-emulation','emulation')):
@@ -106,6 +118,25 @@ def build(name, tests, release=False):
             'source-bundle.zip SHA256: '+source_delivery['sha256']+'\n'
         ).encode('utf-8')
     resources['META-INF/muxi/cores.json']=json.dumps(core_manifest,indent=2).encode()
+    for link_id, library_id in [("sameboy-link", "sameboy_link"), ("mgba-link", "mgba_link"), ("melondsds-link", "melondsds_link"), ("azahar-link", "azahar_link")]:
+        link_manifest_path=ROOT/"third-party"/(link_id+".json")
+        if link_manifest_path.is_file():
+            link=json.loads(link_manifest_path.read_text(encoding='utf-8'))
+            if release and not link.get('releaseReady'):
+                raise ValueError('Link bridge source delivery has not completed release review')
+            resources["META-INF/muxi/"+link_id+".json"]=link_manifest_path.read_bytes()
+            for platform,pin in link['platforms'].items():
+                archive=(WORKSPACE/pin['archive']).resolve()
+                if not archive.is_relative_to((WORKSPACE/'test-environment/cache/muxi-console').resolve()) or not archive.is_file() or archive.stat().st_size!=pin['archiveBytes'] or sha(archive)!=pin['archiveSha256']:
+                    raise ValueError('Link bridge archive differs from its source-bound pin')
+                with zipfile.ZipFile(archive) as z:
+                    members=[p for p in z.infolist() if p.filename==pin['libraryName'] and not p.is_dir()]
+                    if len(members)!=1 or members[0].file_size!=pin['libraryBytes'] or members[0].file_size>64*1024*1024:
+                        raise ValueError('Link bridge archive library is not uniquely bounded')
+                    body=z.read(members[0])
+                if hashlib.sha256(body).hexdigest()!=pin['librarySha256']:
+                    raise ValueError('Link bridge library differs from its source-bound pin')
+                resources['cores/'+platform+'/'+library_id+('.dll' if platform.startswith('windows') else '.so')]=body
     for name,core in core_manifest['cores'].items():
         if core.get('purpose') not in ('software-emulation','emulation'):continue
         for platform,pin in core['platforms'].items():
@@ -115,8 +146,8 @@ def build(name, tests, release=False):
                 body=z.read(pin['libraryName'])
             if hashlib.sha256(body).hexdigest()!=pin['librarySha256']:raise ValueError('Official core library changed: '+name)
             resources['cores/'+platform+'/'+name+('.dll' if platform.startswith('windows') else '.so')]=body
-    resources['META-INF/muxi/extract-hashes.json']=json.dumps({k:hashlib.sha256(v).hexdigest() for k,v in resources.items() if k.startswith(('worker/','cores/'))},sort_keys=True).encode()
-    resources['META-INF/muxi/extract-sizes.json']=json.dumps({k:len(v) for k,v in resources.items() if k.startswith(('worker/','cores/'))},sort_keys=True).encode()
+    resources['META-INF/muxi/extract-hashes.json']=json.dumps({k:hashlib.sha256(v).hexdigest() for k,v in resources.items() if k.startswith(('worker/','cores/','system/'))},sort_keys=True).encode()
+    resources['META-INF/muxi/extract-sizes.json']=json.dumps({k:len(v) for k,v in resources.items() if k.startswith(('worker/','cores/','system/'))},sort_keys=True).encode()
     with zipfile.ZipFile(artifact,'w',zipfile.ZIP_DEFLATED) as jar:
         for p in classes.rglob('*.class'):resources[p.relative_to(classes).as_posix()]=p.read_bytes()
         for path,body in sorted(resources.items()):

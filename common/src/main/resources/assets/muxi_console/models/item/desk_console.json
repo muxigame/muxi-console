@@ -132,6 +132,24 @@
         "custom_model_data": 22
       },
       "model": "muxi_console:item/desk_console_arcade_2p"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 23
+      },
+      "model": "muxi_console:item/desk_console_nds"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 24
+      },
+      "model": "muxi_console:item/desk_console_n3ds"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 25
+      },
+      "model": "muxi_console:item/desk_console_wii"
     }
   ],
   "display": {

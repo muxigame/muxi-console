@@ -39,7 +39,7 @@ def run(run_path, profile_path, plan_path, profile_bytes, result_name="console-f
         if any(any(i.endswith("_qa") or "_qa_" in i for i in r.get("modIds", [])) for r in profile[side + "Files"]): raise ValueError("No private Console QA mod belongs in this full-pack profile")
     out = dict(runId=marker["runId"], productSha256=product["sha256"], profile=str(profile_path), profileBytes=profile_bytes, profileSha256=sha(profile_path),
                plan=str(plan_path.resolve()), planSha256=sha(plan_path), scenarioComplete=False, physicalOSInput=False,
-               visualAcceptance=False, scope="Full-pack startup, two real clients, empty product item/menu/writer network roundtrips and canonical native drops; no ROM/core/save matrix", checks=[], receipts=[], probes=[])
+               visualAcceptance=False, scope="Full-pack startup, two real clients, unplayable empty game core, cartridge case/writer network roundtrips and canonical native drops; no ROM/core/save matrix", checks=[], receipts=[], probes=[])
     if previous_sha:
         original = root / "console-fullpack-smoke.json"; old = read_json(original)
         if sha(original) != previous_sha or old.get("scenarioComplete") or old.get("failure") != "host has genuinely empty ordinary fixture slots" or old["runId"] != out["runId"] or old["productSha256"] != out["productSha256"] or old["profileSha256"] != out["profileSha256"] or old["planSha256"] != out["planSha256"] or len(old["checks"]) != 7 or not all(c["passed"] for c in old["checks"][:6]) or old["checks"][-1]["passed"] or len(old["receipts"]) != 2:
@@ -136,9 +136,10 @@ def run(run_path, profile_path, plan_path, profile_bytes, result_name="console-f
                 call("server", dict(type="inventory-set", player=names[role], slot=slot, item=item, count=1))
                 call(role, dict(type="select", slot=slot))
                 v = call(role, dict(type="use", duration=1))["status"]
-                expected = "HandheldModelScreen" if key == "handheld" else "ContainerScreen"
+                expected = "NONE" if key == "handheld" else "ContainerScreen"
                 v = screen(role, v, expected)
-                check(v["screen"] == expected and v["connected"], role + " normal " + key + " use opens its actual client screen", v)
+                label = " normal game-core use leaves the player in the world without opening a playable device" if key == "handheld" else " normal cartridge-case use opens its actual container"
+                check(v["screen"] == expected and v["connected"], role + label, v)
             # An empty slot avoids passing a cartridge or held console into writer interaction.
             call(role, dict(type="select", slot=fixtures[role]["diamond"]))
             probe(dim, "if block 1029 90 1028 muxi_console:cartridge_writer", role + " writer still exists before native use")

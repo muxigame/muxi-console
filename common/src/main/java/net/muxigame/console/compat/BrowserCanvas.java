@@ -9,7 +9,7 @@ public final class BrowserCanvas {
     private final String marker="mx"+UUID.randomUUID().toString().replace("-","");
     private final String url;
     public BrowserCanvas(){
-        String html="<!doctype html><meta charset=utf-8><meta http-equiv=Content-Security-Policy content=\"default-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'\"><title>木犀游戏机</title><style>html,body{margin:0;width:100%;height:100%;background:#091b20;overflow:hidden}canvas{display:block;width:100%;height:100%;object-fit:contain;image-rendering:pixelated}</style><canvas id="+marker+" width=320 height=240></canvas>";
+        String html="<!doctype html><meta charset=utf-8><meta http-equiv=Content-Security-Policy content=\"default-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'\"><title>PlayStation</title><style>html,body{margin:0;width:100%;height:100%;background:#091b20;overflow:hidden}canvas{display:block;width:100%;height:100%;object-fit:contain;image-rendering:pixelated}</style><canvas id="+marker+" width=320 height=240></canvas>";
         url="data:text/html;base64,"+Base64.getEncoder().encodeToString(html.getBytes(StandardCharsets.UTF_8));
     }
     public String url(){return url;}

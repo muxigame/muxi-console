@@ -56,6 +56,7 @@ public final class ClientQaMod {
     private String historyLease="";
     private String stateProbe="",stateProbeRequest="";
     private long sharedPcmBytes,sharedPcmNonzeroSamples;
+    private final MediaMetrics mediaMetrics=new MediaMetrics();
     private final DockActions dockActions=new DockActions();
     private final HeldActions heldActions=new HeldActions();
     private final PolishActions polishActions=new PolishActions();
@@ -63,11 +64,19 @@ public final class ClientQaMod {
     private void systemMessage(ClientChatReceivedEvent.System event){if(event.isOverlay())CartridgeActions.message(event.getMessage().getString());}
     private void tick(ClientTickEvent.Post event) {
         clientTicks++;
+        TransferActions.tick();
+        LinkDsActions.tick();
         sampleShared();
         if (!listening) {
             var productReceiver = ClientGate.receiver;
             ClientGate.receiver = message -> {
+                mediaMetrics.accept(message);
+                if(TransferActions.delay(message,productReceiver))return;
+                ExpansionActions.received(message);
                 productReceiver.accept(message);
+                LinkActions.received(message);
+                LinkDsActions.received(message);
+                Link3dsActions.received(message);
                 if (message.operation().equals("writer_open")) writerContext = message.body().deepCopy();
                 if (message.operation().equals("session_start")) sessionContext = message.body().deepCopy();
                 if (message.operation().equals("error")) lastCode = message.body().get("code").getAsString();
@@ -89,6 +98,12 @@ public final class ClientQaMod {
     private JsonObject dispatch(JsonObject command) {
         Minecraft client = Minecraft.getInstance();
         String action = command.get("action").getAsString();
+        if(action.startsWith("transfer_")){TransferActions.command(command);return observe(client);}
+        if(action.startsWith("expansion_")){try{ExpansionActions.command(client,command);return observe(client);}catch(Exception e){throw new IllegalStateException(e);}}
+        if(action.startsWith("linkqa_")){try{LinkActions.command(client,command,owner);return observe(client);}catch(Exception e){throw new IllegalStateException(e);}}
+        if(action.startsWith("linkds_")){LinkDsActions.command(client,command);return observe(client);}
+        if(action.startsWith("link3ds_")){Link3dsActions.command(client,command);return observe(client);}
+        if(action.startsWith("upgrade_")){try{UpgradeActions.command(client,command);return observe(client);}catch(Exception e){throw new IllegalStateException(e);}}
         if(action.startsWith("icon_")){IconActions.command(client,command);return observe(client);}
         if(action.startsWith("case_")){CaseActions.command(client,command);return observe(client);}
         if(action.startsWith("cartridge_")){try{CartridgeActions.command(client,command);JsonObject result=observe(client);if(action.equals("cartridge_cache"))result.add("cacheCheck",CartridgeActions.cache(client,command.get("hash").getAsString()));return result;}catch(Exception e){throw new IllegalStateException(e);}}
@@ -133,7 +148,7 @@ public final class ClientQaMod {
                 case "writer_drop" -> {
                     if (!(client.screen instanceof WriterScreen writer)) throw new IllegalStateException("The real writer screen must be open");
                     String rom=command.has("rom")?command.get("rom").getAsString():"nes";
-                    writer.onFilesDrop(List.of(switch(rom){case "gb"->gbDiagnostic();case "gba"->extraDiagnostic("original-arm.gba");case "large_gba"->extraDiagnostic("large-original-arm.gba");case "pce"->extraDiagnostic("original.pce");case "n64"->extraDiagnostic("original-vi.z64");case "arcade"->extraDiagnostic("pong.zip");default->diagnostic();}));
+                    writer.onFilesDrop(List.of(switch(rom){case "link_3ds_left"->extraDiagnostic("original-link-left.3dsx");case "link_3ds_right"->extraDiagnostic("original-link-right.3dsx");case "link_nds_left"->extraDiagnostic("original-link-left.nds");case "link_nds_right"->extraDiagnostic("original-link-right.nds");case "media_nes"->extraDiagnostic("original-two-port-tone.nes");case "link_gba_left"->extraDiagnostic("original-link-left.gba");case "link_gba_right"->extraDiagnostic("original-link-right.gba");case "link_left"->extraDiagnostic("original-link-left.gb");case "link_right"->extraDiagnostic("original-link-right.gb");case "gb"->gbDiagnostic();case "gba"->extraDiagnostic("original-arm.gba");case "large_gba"->extraDiagnostic("large-original-arm.gba");case "pce"->extraDiagnostic("original.pce");case "n64"->extraDiagnostic("original-vi.z64");case "arcade"->extraDiagnostic("pong.zip");default->diagnostic();}));
                 }
                 case "writer_confirm" -> {
                     if (!(client.screen instanceof WriterScreen)) throw new IllegalStateException("Writer screen required");
@@ -226,7 +241,7 @@ public final class ClientQaMod {
         return gbDiagnostic;
     }
     private Path extraDiagnostic(String name)throws IOException{
-        if(!java.util.Set.of("original-vi.z64","original-arm.gba","large-original-arm.gba","original.pce","pong.zip").contains(name))throw new IOException("Known authored diagnostics only");Path directory=owner.validatedRoot().resolve(System.getProperty("qa.local.role")).resolve("console-qa");Files.createDirectories(directory);Path target=directory.resolve(name);if(!Files.exists(target))try(var input=ClientQaMod.class.getResourceAsStream("/diagnostics/"+name)){if(input==null)throw new IOException("Missing original diagnostic");Files.copy(input,target);}return target;
+        if(!java.util.Set.of("original-link-left.3dsx","original-link-right.3dsx","original-link-left.nds","original-link-right.nds","original-two-port-tone.nes","original-link-left.gb","original-link-right.gb","original-link-left.gba","original-link-right.gba","original-vi.z64","original-arm.gba","large-original-arm.gba","original.pce","pong.zip").contains(name))throw new IOException("Known authored diagnostics only");Path directory=owner.validatedRoot().resolve(System.getProperty("qa.local.role")).resolve("console-qa");Files.createDirectories(directory);Path target=directory.resolve(name);if(!Files.exists(target))try(var input=ClientQaMod.class.getResourceAsStream("/diagnostics/"+name)){if(input==null)throw new IOException("Missing original diagnostic");Files.copy(input,target);}return target;
     }
     private static void UUIDCheck(String value){java.util.UUID.fromString(value);}
     private static JsonObject publicRecord(Object value)throws ReflectiveOperationException{
@@ -250,6 +265,8 @@ public final class ClientQaMod {
         result.add("qaChannel",owner.replyStatus());
         result.addProperty("stateProbe",stateProbe);
         result.addProperty("sharedPcmBytes",sharedPcmBytes);result.addProperty("sharedPcmNonzeroSamples",sharedPcmNonzeroSamples);
+        result.add("mediaMetrics",mediaMetrics.snapshot());
+        result.add("transferFixture",TransferActions.observe());
         JsonArray pads=new JsonArray();for(var device:net.muxigame.console.client.input.InputProfiles.availableGamepads()){JsonObject pad=new JsonObject();pad.addProperty("id",device.id());pad.addProperty("name",device.name());try{pad.addProperty("guidSha256",java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(device.guid().getBytes(java.nio.charset.StandardCharsets.UTF_8))));}catch(java.security.NoSuchAlgorithmException impossible){throw new IllegalStateException(impossible);}pads.add(pad);}result.add("availableGamepads",pads);
         result.add("shared",shared());JsonObject video=new JsonObject(),audio=new JsonObject();videoHistory.forEach((k,v)->video.addProperty(k.toString(),v));audioHistory.forEach((k,v)->audio.addProperty(k.toString(),v));result.add("sharedVideoHistory",video);result.add("sharedAudioHistory",audio);
         result.add("picture",NativeReview.picture(client));
@@ -260,6 +277,11 @@ public final class ClientQaMod {
         result.add("machine",MachineActions.observe());
         result.add("case",CaseActions.observe(client));
         result.add("icons",IconActions.observe(client));
+        result.add("upgrade",UpgradeActions.observe(client));
+        result.add("expansion",ExpansionActions.observe(client));
+        result.add("linkReview",LinkActions.observe());
+        result.add("linkDs",LinkDsActions.observe(client));
+        result.add("link3ds",Link3dsActions.observe(client));
         var state = ConsoleClient.INSTANCE.snapshot();
         result.addProperty("status", state.status()); result.addProperty("room", state.room()); result.addProperty("epoch", state.epoch());
         result.addProperty("port", state.port()); result.addProperty("ready", state.ready()); result.addProperty("frames", state.frames()); result.addProperty("crc", state.frameCrc());

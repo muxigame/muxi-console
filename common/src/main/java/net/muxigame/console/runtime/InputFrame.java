@@ -9,5 +9,6 @@ public record InputFrame(List<PortInput> ports) {
         if (ports.size() > MAX_PORTS) throw new IllegalArgumentException("At most four controller ports");
     }
     public static InputFrame idle() { return new InputFrame(List.of()); }
+    public InputFrame withoutMicrophone(){return new InputFrame(ports.stream().map(PortInput::withoutMicrophone).toList());}
     public PortInput port(int index) { return index >= 0 && index < ports.size() ? ports.get(index) : PortInput.IDLE; }
 }

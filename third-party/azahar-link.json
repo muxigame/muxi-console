@@ -1,0 +1,157 @@
+{
+  "schemaVersion": 1,
+  "id": "azahar-link",
+  "purpose": "emulation-link",
+  "systems": [
+    "n3ds"
+  ],
+  "renderer": "opengl",
+  "binaryOrigin": "source-rebuild",
+  "source": "https://github.com/azahar-emu/azahar",
+  "sourceRevision": "219d743a1e698101fe1ab8bef43e6563126c3c27",
+  "sourceRevisionVerified": true,
+  "license": "GPL-2.0-or-later; upstream vendor licenses retained",
+  "licenseUrl": "https://github.com/azahar-emu/azahar/blob/219d743a1e698101fe1ab8bef43e6563126c3c27/license.txt",
+  "accessPatchLicense": "GPL-2.0-or-later as changes to the upstream frontend and native filesystem serialization",
+  "originalAdapterLicense": "MIT",
+  "binaryVersion": "Azahar 2126.2 + original private Room ABI1 + complete bounded radio/native-profile state ABI2",
+  "platforms": {
+    "windows-x86_64": {
+      "archive": "test-environment/cache/muxi-console/rebuild-azahar-link/build-02/public-01/muxi_azahar_link.dll.zip",
+      "libraryName": "muxi_azahar_link.dll",
+      "archiveBytes": 9974714,
+      "archiveSha256": "38ce45f65b5b0a75bb26dc813945339b6ae94d21e612336eb19e0e470753effe",
+      "libraryBytes": 40857088,
+      "librarySha256": "19b7331fef796c243577ac1e5d442c69d700ee1282f2c1bcb6227b33a3d50e69"
+    }
+  },
+  "sourceDelivery": {
+    "method": "complete exact official unified source with all vendor trees, four explicit GPL patches and bounded GPL NWM serializer, exact portable single-job build driver, separate original MIT C ABI adapter",
+    "archive": "test-environment/cache/muxi-console/rebuild-azahar-link/build-02/public-01/corresponding-source.tar.gz",
+    "format": "tar.gz",
+    "archiveBytes": 65537592,
+    "archiveSha256": "7c72d790f436f524304267298e11e0f055b4e76c798ac1c194d4229e599aa0b9",
+    "buildReport": "test-environment/cache/muxi-console/rebuild-azahar-link/build-02/public-01/rebuild-public-report.json",
+    "buildReportSha256": "1e3bef59be681f46577949a2166697cff2b8165e2950921fab7e835b8b52dd05",
+    "patchesApplied": true
+  },
+  "nativeApi": {
+    "roomAbi": 1,
+    "statusBytes": 72,
+    "profileStateAbi": 2,
+    "roomBindAddress": "127.0.0.1",
+    "maximumMembers": 2,
+    "passwordRequired": true,
+    "exports": [
+      "muxi_azahar_link_init",
+      "muxi_azahar_link_host",
+      "muxi_azahar_link_join",
+      "muxi_azahar_link_status",
+      "muxi_azahar_link_leave",
+      "muxi_azahar_link_shutdown",
+      "muxi_azahar_link_wifi_sent",
+      "muxi_azahar_profile_state_abi"
+    ],
+    "supportsQueueCheckpoint": false
+  },
+  "serializationBoundary": {
+    "nativeFormatChanged": true,
+    "oldOfficialQuickstateCompatibilityClaimed": false,
+    "oldAbi1QuickstateCompatibilityClaimed": false,
+    "ordinaryCoreUnificationPending": false,
+    "scope": "Ordinary and Room now use the exact same ABI2 DLL. MXS3 requires the exact DLL format SHA and matching native ABI. ABI1 and old official quickstates are not silently adopted; native machine files and prior snapshots remain preserved. ENet in-flight transport queues are not checkpointed.",
+    "ordinaryCorePinChanged": true
+  },
+  "nativeDiagnostics": {
+    "report": "build/3ds-radio-native-01/result.json",
+    "reportSha256": "37617b6f0fddccdd33cf230ebc5b7a1a4b32936dffaecdd61290f1beb1135e25",
+    "inputsSha256": "21854bc8fee33ff7f23ea4060489af84d6f9da56566dde4c57d06e90289a6fd4",
+    "checks": 17,
+    "workers": 5,
+    "actualWindowsHandlesSignaled": true,
+    "normalExits": true,
+    "forcedTermination": false,
+    "realGuestUdsChallengeExchange": true,
+    "independentDualScreenVideo": true,
+    "nonzeroAudioTested": false,
+    "crossProfileNativeFilesystemColdRestore": true,
+    "combinedWirelessQueueColdRestore": false,
+    "originalHomebrewOnly": true,
+    "commercialCompatibilityClaimed": false,
+    "activeUdsCheckpointRestore": true,
+    "activeUdsCheckpointRestoreTest": "fresh Room plus restored guest NWM/Kernel state; real guest B changes both application challenges after restore and both opposite new values must be received; no ENet queue checkpoint",
+    "crossRomPathColdRestore": true,
+    "productRuntime": {
+      "report": "build/3ds-radio-runtime-01/result.json",
+      "reportSha256": "fc07e9f1c02efb2c832f2afe37d33dfab400577e600ca49333dd577129189f79",
+      "inputsSha256": "088beae1441a7f0062b2e4f820a61d5aafa33e7c79ac32dac02334cecbf6b421",
+      "checks": 21,
+      "pureChecks": 25,
+      "workers": 7,
+      "activeUdsCheckpointRestore": true,
+      "freshGuestInputChallenge": true,
+      "ordinaryExportAndRestore": true,
+      "actualInputAndBottomTouch": true,
+      "sharedReadonlyFirmware": true,
+      "naturalWindowsSignaledExit": true
+    },
+    "productPortable": {
+      "report": "build/3ds-radio-portable-01/result.json",
+      "reportSha256": "2c45c2e65561700d5fc0aab689abab8a83cf2396ad6bd85ba0aa8a49b0a633d1",
+      "inputsSha256": "1993b21b416b09e253f5e6e58246853635fd3c9d7bff880c60877820db8dde95",
+      "checks": 9,
+      "pureChecks": 25,
+      "workers": 3,
+      "crossProfileAndActualRomPath": true,
+      "oldRomPathUnavailable": true,
+      "actualPriorAbi1Mxs3Rejected": true,
+      "priorStateSha256": "6ac6404c81db49912165e82dc3b55562087df00595943f38c94504e919e16686",
+      "oldProfileUnchanged": true,
+      "naturalWindowsSignaledExit": true
+    },
+    "priorFailures": [
+      {
+        "report": "build/3ds-room-native-01/result.json",
+        "reportSha256": "81db70ae042f66e09e46f784be80d3d5d5b3dae44ef0b47f659b0c2c3e15713a",
+        "scope": "initial guest evidence observation was incomplete; no UDS success claimed"
+      },
+      {
+        "report": "build/3ds-runtime-native-01/result.json",
+        "reportSha256": "4e53589d9ec2b28e875fc519a5c797dcc6becddb34874d1ae7c7894d6122d857",
+        "scope": "shared-prefix native nickname collision before full-UUID identity fix"
+      },
+      {
+        "report": "build/3ds-runtime-native-02/result.json",
+        "reportSha256": "513304c2047730f43fcfc5c352b1a04b765c17db5528a8950332e992b15b41a4",
+        "scope": "ABI1/e83 omitted native NWM radio context; active-context restore failed and is not inherited as a success"
+      }
+    ]
+  },
+  "minecraftIntegrationTested": true,
+  "releaseReady": true,
+  "baseSingleCoreCompatibility": {
+    "librarySha256": "19b7331fef796c243577ac1e5d442c69d700ee1282f2c1bcb6227b33a3d50e69",
+    "scope": "Identical patched DLL only. ABI1/e83 and original official quickstates are not this native format."
+  },
+  "minecraftVerification": {
+    "records": [
+      {
+        "report": "test-environment/client-2/runs/console-3ds-link-native-03/console-qa/n3ds-link-result.json",
+        "reportSha256": "e92f7f6d336607f5e361ea5c11072e359bb741753baa1bdabf54c42521bf0100",
+        "scenarioComplete": false,
+        "checks": 38
+      },
+      {
+        "report": "test-environment/client-2/runs/console-3ds-link-native-03/console-qa/n3ds-link-continuation-result.json",
+        "reportSha256": "0cf1b988918137d48026a33431ae5525820d613f1ee3049a5ff385543a2e006c",
+        "scenarioComplete": true,
+        "checks": 41
+      }
+    ],
+    "combinedScopeComplete": true,
+    "originalFalseResultsRetained": true,
+    "commercialCompatibilityClaimed": false,
+    "queueCheckpoint": false,
+    "scope": "Original real UDS nonce, own inputs, background and final CPU/profile saves, fresh-Room cold restore, ordinary export and preparation back to Room; 38 original records plus 41 continuation records have overlapping rechecks, not 79 independent features"
+  }
+}

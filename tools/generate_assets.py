@@ -22,6 +22,7 @@ import pixel_hardware as hardware
 import inserted_media as attachments
 import cartridge_case_assets as case_assets
 import gui_item_fit
+import dual_screen_hardware as dual_hardware
 
 ROOT = Path(__file__).resolve().parents[1]
 RESOURCES = ROOT / "common/src/main/resources"
@@ -52,7 +53,17 @@ PLATFORMS = [
     ("vb", "Virtual Boy", "VB", "DA6E76"),
     ("fds", "Famicom Disk System", "FDS", "CB6C56"),
     ("arcade", "街机", "ARC", "DD9E56"),
+    ("nds", "Nintendo DS", "NDS", "7F93A5"),
+    ("n3ds", "Nintendo 3DS", "3DS", "57AAB8"),
+    ("wii", "Wii", "WII", "9AC9DC"),
 ]
+MODEL_IDS={platform:index for index,(platform,*_) in enumerate(PLATFORMS[:21],1)}
+MODEL_IDS.update({"nds":23,"n3ds":24,"wii":25})
+def platform_rows():return [(MODEL_IDS[row[0]],row) for row in PLATFORMS]
+def hardware_palette(platform):return dual_hardware.palette(platform,NS) if platform in dual_hardware.PALETTES else hardware.palette(platform,NS)
+def media_slot(platform):return dual_hardware.slot(platform) if platform in dual_hardware.PALETTES else attachments.slot(platform)
+def control_surfaces(platform):return dual_hardware.controls(platform,box) if platform in dual_hardware.PALETTES else hardware.control_surfaces(platform,box,HANDHELD_PLANES,ARCADE_PLANES)
+def button_regions(platform):return dual_hardware.regions(platform,box) if platform in dual_hardware.PALETTES else hardware.button_regions(platform,box,HANDHELD_PLANES,ARCADE_PLANES)
 BLOCKS = ("desk_console", "screen", "cartridge_writer", "handheld_dock")
 ITEMS = (*BLOCKS, "handheld", "cartridge", "blank_cartridge", "controller")
 LARGE_SCREEN_PLANE = (-31.25, .5, 15.25, 31.5, 6.94)
@@ -273,7 +284,7 @@ HANDHELD_PLANES = {
     "wsc": (3.25, 5.0, 10.6, 9.725, 5.45),
 }
 DESKTOP_PORTS = {"nes": 4, "snes": 4, "md": 4, "n64": 4, "sms": 2,
-                 "sg1000": 2, "pce": 4, "a2600": 2, "a7800": 2, "fds": 4,"arcade":2}
+                 "sg1000": 2, "pce": 4, "a2600": 2, "a7800": 2, "fds": 4,"arcade":2,"wii":4}
 ARCADE_PLANES = {"single":(4.4,8.4,11.6,13.8,4.70),"double":(3.2,7,12.8,14.2,4.30)}
 SILHOUETTES = {
     "nes": "wide front-loading deck with two-level rear lid and flap",
@@ -297,6 +308,9 @@ SILHOUETTES = {
     "wsc": "slender blue-gray handheld with two separated four-key directional groups and right-side screen",
     "vb": "wide red visor with a joined black eye mask and hinged tabletop tripod",
     "arcade": "upright single-seat cabinet with projecting control ledge and tall marquee",
+    "nds":"open two-leaf charcoal clamshell with two 4:3 LCDs, rear card mouth and stepped hinge",
+    "n3ds":"wide teal clamshell with a 5:3 upper LCD, 4:3 lower touchscreen and separate circle pad",
+    "wii":"slender vertical ivory disc console on a broad low foot, lit slot and rear sockets",
 }
 
 
@@ -328,7 +342,7 @@ def top_label(x0, y, z0, x1, z1):
 
 
 def platform_geometry(platform):
-    return hardware.geometry(platform, box, HANDHELD_PLANES, ARCADE_PLANES)
+    return dual_hardware.geometry(platform,box) if platform in dual_hardware.PALETTES else hardware.geometry(platform, box, HANDHELD_PLANES, ARCADE_PLANES)
 
 
 def arcade_geometry(double=False):
@@ -336,13 +350,13 @@ def arcade_geometry(double=False):
 
 
 def media_geometry(platform, index):
-    return hardware.media(platform, index, box)
+    return dual_hardware.media(platform,box) if platform in dual_hardware.PALETTES else hardware.media(platform, index, box)
 
 
 def model_catalog():
     entries = []
-    for cmd,(platform,zh,en,color) in enumerate(PLATFORMS,1):
-        form = "handheld" if platform in HANDHELD_PLANES else "viewer" if platform == "vb" else "arcade" if platform == "arcade" else "desktop"
+    for cmd,(platform,zh,en,color) in platform_rows():
+        form = "handheld" if platform in HANDHELD_PLANES or platform in dual_hardware.PLANES else "viewer" if platform == "vb" else "arcade" if platform == "arcade" else "desktop"
         plane = ARCADE_PLANES["single"] if platform == "arcade" else HANDHELD_PLANES.get(platform)
         geometry = platform_geometry(platform)
         media = media_geometry(platform,cmd)
@@ -350,17 +364,19 @@ def model_catalog():
                       "max":[max(e["to"][axis] for e in media) for axis in range(3)]}
         bounds = {"min":[min(e["from"][axis] for e in geometry) for axis in range(3)],
                   "max":[max(e["to"][axis] for e in geometry) for axis in range(3)]}
-        entries.append({"platform":platform,"cmd":cmd,"name":en,"zh_name":zh,"form_factor":form,
+        code={"sg1000":"SG-1000","n3ds":"3DS"}.get(platform,platform.upper())
+        entries.append({"platform":platform,"cmd":cmd,"name":code,"zh_name":f"{code} · {zh}","form_factor":form,
             "geometry":f"{NS}:block/desk_console_{platform}",
             "item":f"{NS}:item/{'handheld' if form in ('handheld','viewer') else 'desk_console'}_{platform}",
-            "media":f"{NS}:item/cartridge_{platform}","media_kind":"disk" if platform == "fds" else "card" if platform in ("pce","lynx") else "cartridge",
+            "media":f"{NS}:item/cartridge_{platform}","media_kind":"disc" if platform=="wii" else "disk" if platform == "fds" else "card" if platform in ("pce","lynx","nds","n3ds") else "cartridge",
             "controller_ports":DESKTOP_PORTS.get(platform,1),"silhouette":SILHOUETTES[platform],
-            "bounds":bounds,"media_bounds":media_bounds,"media_slot":attachments.slot(platform),
-            "control_surfaces":hardware.control_surfaces(platform,box,HANDHELD_PLANES,ARCADE_PLANES),
-            "button_regions":hardware.button_regions(platform,box,HANDHELD_PLANES,ARCADE_PLANES),
+            "bounds":bounds,"media_bounds":media_bounds,"media_slot":media_slot(platform),
+            "control_surfaces":control_surfaces(platform),
+            "button_regions":button_regions(platform),
             "screen_plane":None if plane is None else {"from":[plane[0],plane[1],plane[4]],"to":[plane[2],plane[3],plane[4]],"facing":"north"},
             "review":{"row":(cmd-1)//5,"column":(cmd-1)%5,"station":[((cmd-1)%5)*4,64,((cmd-1)//5)*7],
                 "camera_offset":[2.8,2.0,-3.9],"camera_pitch":20,"image":f"{cmd:02d}-{platform}.png"}})
+        if platform in dual_hardware.PLANES:entries[-1]["screen_planes"]=dual_hardware.planes(platform)
         if platform == "vb":
             entries[-1]["screen_planes"] = [
                 {"from":[3.4,9.4833333333,4.48],"to":[6.2,11.1166666667,4.48],"facing":"north","uv":[0,0,1,1],"eye":"left"},
@@ -386,7 +402,7 @@ def model_catalog():
         "dock_layout":{"geometry":f"{NS}:block/handheld_dock",
             "bounds":{"min":[1,0,2],"max":[15,3,14]},"slot_top_y":3,
             "display_min_y":4,"display_motion":"rotation_only","display_source":"stored_handheld_item"},
-        "entries":entries,"additional_styles":[{"platform":"arcade","cmd":22,"style":"double",
+        "entries":entries,"additional_styles":[{"platform":"arcade","cmd":22,"style":"double","name":"ARCADE · 2P","zh_name":"ARCADE · 双人街机",
             "geometry":f"{NS}:block/arcade_cabinet_2p","item":f"{NS}:item/desk_console_arcade_2p",
             "bounds":{"min":[.25,0,1.8],"max":[15.75,15.75,14]},"cabinet_seats":2,
             "controller_ports":2,"screen_plane":{"from":[3.2,7,4.30],"to":[12.8,14.2,4.30],"facing":"north"},
@@ -578,9 +594,9 @@ def models():
         result[f"item/{name}"] = {"parent": f"{NS}:item/template_{name}"}
     for name in ("desk_console", "handheld", "cartridge"):
         result[f"item/{name}"]["overrides"] = []
-        for index, (platform, _, _, _) in enumerate(PLATFORMS, 1):
+        for index, (platform, _, _, _) in platform_rows():
             variant = f"item/{name}_{platform}"
-            textures = hardware.palette(platform, NS)
+            textures = hardware_palette(platform)
             if name == "cartridge":
                 textures["label"] = f"{NS}:item/label_{platform}"
             if name == "cartridge":
@@ -599,29 +615,32 @@ def models():
     result["item/desk_console_arcade_2p"] = {"parent":f"{NS}:block/arcade_cabinet_2p"}
     result["item/arcade_cabinet_2p"] = {"parent":f"{NS}:block/arcade_cabinet_2p"}
     result["item/desk_console"]["overrides"].append({"predicate":{"custom_model_data":22},"model":f"{NS}:item/desk_console_arcade_2p"})
+    result["item/desk_console"]["overrides"].sort(key=lambda override:override["predicate"]["custom_model_data"])
     return result
 
 
 def languages():
     pairs = {
-        "itemGroup.muxi_console": ("木犀游戏机", "Muxi Console"),
-        "block.muxi_console.desk_console": ("木犀桌面游戏机", "Muxi Desktop Console"),
-        "block.muxi_console.screen": ("木犀屏幕", "Muxi Screen"),
-        "block.muxi_console.handheld_dock": ("木犀掌机底座", "Muxi Handheld Dock"),
+        "itemGroup.muxi_console": ("PlayStation", "PlayStation"),
+        "block.muxi_console.desk_console": ("桌面游戏机核心", "Desktop Console Core"),
+        "block.muxi_console.screen": ("电脑显示器", "Computer Monitor"),
+        "block.muxi_console.handheld_dock": ("掌机底座", "Handheld Dock"),
         "block.muxi_console.cartridge_writer": ("卡带刻录机", "Cartridge Writer"),
-        "item.muxi_console.handheld": ("木犀掌机", "Muxi Handheld"),
+        "item.muxi_console.handheld": ("游戏机核心", "Handheld Console Core"),
         "item.muxi_console.cartridge": ("游戏卡带", "Game Cartridge"),
         "item.muxi_console.blank_cartridge": ("空白卡带", "Blank Cartridge"),
-        "item.muxi_console.controller": ("木犀控制器", "Muxi Controller"),
+        "item.muxi_console.controller": ("控制器", "Controller"),
         "block.muxi_console.cartridge_case": ("卡带收纳盒", "Cartridge Case"),
         "item.muxi_console.cartridge_case": ("卡带收纳盒", "Cartridge Case"),
         "tooltip.muxi_console.cartridge_case": ("仅收纳卡带 · 右键打开，潜行放置", "Cartridges only · right-click to open; sneak-use to place"),
-        "key.categories.muxi_console": ("木犀游戏机", "Muxi Console"),
+        "key.categories.muxi_console": ("PlayStation", "PlayStation"),
+        "key.categories.muxi_console.link": ("PlayStation 连线", "PlayStation link"),
+        "key.muxi_console.link": ("游戏机连线", "Console link"),
         "key.muxi_console.menu": ("打开游戏菜单", "Open game menu"),
         "key.muxi_console.release": ("释放游戏控制", "Release game controls"),
         "key.muxi_console.pause": ("暂停 / 继续", "Pause / resume"),
         "key.muxi_console.fullscreen": ("切换全屏", "Toggle fullscreen"),
-        "ui.muxi_console.title": ("木犀游戏机", "Muxi Console"),
+        "ui.muxi_console.title": ("PlayStation", "PlayStation"),
         "ui.muxi_console.library": ("我的游戏", "My games"),
         "ui.muxi_console.upload": ("添加游戏", "Add game"),
         "ui.muxi_console.choose_file": ("选择文件", "Choose file"),
@@ -640,7 +659,7 @@ def languages():
         "ui.muxi_console.pause": ("暂停", "Pause"),
         "ui.muxi_console.stop": ("结束游戏", "Stop game"),
         "ui.muxi_console.eject": ("取出卡带", "Eject cartridge"),
-        "ui.muxi_console.controls": ("按键与手柄", "Keys and controllers"),
+        "ui.muxi_console.controls": ("游戏机键位绑定", "Console bindings"),
         "ui.muxi_console.volume": ("音量", "Volume"),
         "ui.muxi_console.fullscreen": ("全屏", "Fullscreen"),
         "ui.muxi_console.back": ("返回", "Back"),
@@ -667,13 +686,51 @@ def languages():
         "tooltip.muxi_console.blank_cartridge": ("在刻录机中写入你的游戏", "Write one of your games at a cartridge writer"),
         "tooltip.muxi_console.cartridge": ("%s · %s", "%s · %s"),
         "tooltip.muxi_console.transferable": ("可交给其他玩家使用", "Can be given to another player"),
-        "tooltip.muxi_console.handheld": ("手持使用，随时游玩", "Use while held to play anywhere"),
+        "tooltip.muxi_console.handheld": ("将卡带装入兼容机型后游玩", "Insert a compatible cartridge to play"),
         "tooltip.muxi_console.desk_console": ("插入卡带后使用", "Insert a cartridge, then use"),
         "tooltip.muxi_console.screen": ("2 × 2 × 1 格电脑显示器 · 薄面板与支架", "2 × 2 × 1 computer monitor · thin panel and support"),
         "tooltip.muxi_console.handheld_dock": ("放入掌机后连接大屏，潜行空手使用取出", "Insert a handheld and connect a display; sneak-use with an empty hand to remove"),
         "tooltip.muxi_console.controller": ("使用游戏机加入控制席", "Use a console to take a player seat"),
     }
     pairs.update({
+        "ui.muxi_console.bindings":("游戏机键位绑定","Console bindings"),
+        "ui.muxi_console.bindings.family.home":("家用机","Home consoles"),
+        "ui.muxi_console.bindings.family.handheld":("掌机","Handhelds"),
+        "ui.muxi_console.bindings.family.arcade":("街机","Arcade"),
+        "ui.muxi_console.bindings.section.direction":("方向","Direction"),
+        "ui.muxi_console.bindings.section.buttons":("操作按键","Buttons"),
+        "ui.muxi_console.bindings.section.system":("系统按键","System"),
+        "ui.muxi_console.bindings.section.analog":("摇杆","Analog"),
+        "ui.muxi_console.bindings.section.sensors":("模拟动作","Virtual input"),
+        "ui.muxi_console.bindings.device":("Wii控制器类型","Wii controller"),
+        "ui.muxi_console.bindings.device.1":("Wii Remote（竖向）","Wii Remote upright"),
+        "ui.muxi_console.bindings.device.513":("Wii Remote（横向）","Wii Remote sideways"),
+        "ui.muxi_console.bindings.device.769":("Wii Remote + Nunchuk","Wii Remote + Nunchuk"),
+        "ui.muxi_console.bindings.device.1025":("Classic Controller","Classic Controller"),
+        "ui.muxi_console.bindings.device.1793":("Wii MotionPlus","Wii MotionPlus"),
+        "ui.muxi_console.bindings.device.2305":("Wii MotionPlus + Nunchuk","Wii MotionPlus + Nunchuk"),
+        "ui.muxi_console.bindings.pointer_reserved":("左键用于触摸和指针，请选择其他按键","Left click operates the touch surface or pointer"),
+        "ui.muxi_console.bindings.virtual_hint":("模拟倾斜、摇晃和吹气；不会开启实体麦克风","Simulated motion and blowing; no physical microphone capture"),
+        "ui.muxi_console.bindings.capture":("按下按键；Esc取消，Delete清除","Press a key; Esc cancels, Delete clears"),
+        "ui.muxi_console.bindings.reserved":("右键用于切换全屏，请选择其他按键","Right click changes fullscreen mode; choose another key"),
+        "ui.muxi_console.bindings.save_failed":("设置未能保存，请重试","Could not save settings; please retry"),
+        "ui.muxi_console.bindings.gamepad_hint":("摇杆和扳机保持模拟输入","Sticks and triggers retain analog input"),
+        "ui.muxi_console.writer.dependencies":("依赖","Deps"),
+        "ui.muxi_console.writer.dependencies_hint":("添加街机父集或BIOS ZIP","Add an arcade parent set or BIOS ZIP"),
+        "ui.muxi_console.writer.clear":("清空","Clear"),
+        "ui.muxi_console.writer.rights_short":("我有权上传与使用此文件","I may use this file"),
+        "ui.muxi_console.writer.burn":("上传并刻录","Upload and write"),
+        "ui.muxi_console.writer.automatic":("自动识别","Automatic"),
+        "ui.muxi_console.writer.drop_file":("拖入游戏文件","Drop a game file"),
+        "ui.muxi_console.writer.result":("成品卡带","Written card"),
+        "ui.muxi_console.writer.slot":("空白卡带","Blank card"),
+        "ui.muxi_console.core":("游戏机核心","Console core"),
+        "ui.muxi_console.reshape_hint":("将游戏机核心与对应染料放入合成栏制作机型；已装卡带须与新机型兼容。","Craft a console core with its dye to choose hardware. An installed cartridge must remain compatible."),
+        "tooltip.muxi_console.slot":("卡带槽","Cartridge slot"),
+        "tooltip.muxi_console.slot_empty":("未插入卡带","Empty"),
+        "tooltip.muxi_console.core":("合成用核心，不能直接游玩","Crafting core; cannot play games directly"),
+        "tooltip.muxi_console.reshape":("与对应染料合成机型，机器进度保持","Craft with a dye to reshape; machine progress stays"),
+        "tooltip.muxi_console.inventory_slot":("在背包中用鼠标右键放入或取出卡带","Right-click in your inventory to insert or remove a cartridge"),
         "options.muxi_console.platform":("游戏机平台","Console platform"),
         "options.muxi_console.gamepad":("游戏手柄","Gamepad"),
         "options.muxi_console.automatic":("自动","Automatic"),
@@ -685,8 +742,9 @@ def languages():
         "md":["A","X","Mode","Start","↑","↓","←","→","B","Y","Z","C","L2（未用）","R2（未用）","L3（未用）","R3（未用）"],
         "n64":["A / C↓模式","B / C←模式","Select（未用）","Start","十字↑","十字↓","十字←","十字→","C→","C↑","L","R","Z 扳机","C 按钮模式","L3（未用）","R3（未用）"]}
     for platform, zh, en, _ in PLATFORMS:
-        pairs[f"platform.{NS}.{platform}"] = (zh, en)
-        pairs[f"key.categories.{NS}.{platform}"]=(f"木犀游戏机 · {zh}",f"Muxi Console · {en}")
+        code={"sg1000":"SG-1000","n3ds":"3DS"}.get(platform,platform.upper())
+        pairs[f"platform.{NS}.{platform}"] = (f"{code} · {zh}", code)
+        pairs[f"key.categories.{NS}.{platform}"]=(f"{code} · {zh}",code)
         names=list(specific.get(platform,default_names))
         if platform=="fds":names[10]="磁盘换面";names[11]="弹出 / 插入磁盘"
         for bit,name in enumerate(names):
@@ -696,8 +754,57 @@ def languages():
                 ["左摇杆←","左摇杆→","左摇杆↑","左摇杆↓","右摇杆←","右摇杆→","右摇杆↑","右摇杆↓"],
                 ["Left stick ←","Left stick →","Left stick ↑","Left stick ↓","Right stick ←","Right stick →","Right stick ↑","Right stick ↓"])):
             pairs[f"key.{NS}.{platform}.axis.{direction}"]=(zh_axis,en_axis)
+        if platform in ("nds","n3ds","wii"):
+            for extra,zh_extra,en_extra in (
+                ("tilt_left","模拟向左倾斜","Simulate left tilt"),("tilt_right","模拟向右倾斜","Simulate right tilt"),
+                ("tilt_forward","模拟向前倾斜","Simulate forward tilt"),("tilt_backward","模拟向后倾斜","Simulate backward tilt"),
+                ("shake","模拟摇晃","Simulate shaking"),("centre","回正","Centre motion"),("blow","模拟吹气","Simulate blowing")):
+                pairs[f"key.{NS}.{platform}.extra.{extra}"]=(zh_extra,en_extra)
     return {"zh_cn": {key: pair[0] for key, pair in pairs.items()},
             "en_us": {key: pair[1] for key, pair in pairs.items()}}
+
+
+def accessory_hand_poses(files):
+    """Centre each accessory's actual shell in the hand, rather than its block origin.
+
+    Minecraft reflects X translation and Y/Z rotation for the left-hand item
+    transform. Compute each physical side explicitly; a low, thin case must
+    receive the same usable lift as an upright cartridge. GUI and placed
+    models, and all console/handheld bodies, keep their existing transforms.
+    """
+    poses = {
+        "handheld_dock": ([35,180,-7], (8.4,5.6,9), .60),
+        "cartridge_writer": ([25,180,-7], (8.4,6.2,9), .60),
+        "cartridge_case": ([55,180,-8], (8.4,5.0,9), .64),
+        "controller": ([10,180,-5], (8.0,5.4,5), .60),
+    }
+    for name in ("template_cartridge","cartridge","blank_cartridge",*("cartridge_"+p[0] for p in PLATFORMS)):
+        poses[name]=([6,180,-8],(6.6,6.2,4),.66)
+    updates={}
+    for name,(rotation,limits,maximum) in poses.items():
+        path=f"{ASSETS}/models/item/{name}.json"
+        full=gui_item_fit.resolve(files,NS,path)
+        bounds=gui_item_fit.body_bounds(full)
+        points=[[point[a]-8 for a in range(3)] for point in gui_item_fit.corners(bounds)]
+        transforms={}
+        for first in (True,False):
+            angles=rotation if first else ([0,180,0] if "cartridge" in name and name!="cartridge_writer" and name!="cartridge_case" else [35,180,-5])
+            for left in (False,True):
+                actual=[angles[0],-angles[1] if left else angles[1],-angles[2] if left else angles[2]]
+                rotated=[gui_item_fit.rotate(point,actual) for point in points]
+                extent=gui_item_fit.bounds_of(rotated)
+                scale=min(maximum if first else .5,*(limits[a]/(extent[a+3]-extent[a]) for a in range(3)))
+                centre=[(extent[a]+extent[a+3])/2*scale for a in range(3)]
+                target=([3.5 if left else -3.5,5.4,-2] if first else [0,2,0])
+                translation=[target[a]-centre[a] for a in range(3)]
+                if left:translation[0]=-translation[0]
+                transforms[("firstperson" if first else "thirdperson")+("_lefthand" if left else "_righthand")]={
+                    "rotation":angles,"translation":[round(value,7) for value in translation],"scale":[round(scale,7)]*3}
+        updates[path]=transforms
+    # Resolve all inherited inputs before writing any parent transform.
+    for path,transforms in updates.items():
+        model=json.loads(files[path]);model.setdefault("display",{}).update(transforms)
+        files[path]=(json.dumps(model,ensure_ascii=False,indent=2)+"\n").encode("utf-8")
 
 
 def generated_files():
@@ -709,7 +816,7 @@ def generated_files():
     for name, color in COLORS.items():
         files[f"{ASSETS}/textures/block/common/{name}.png"] = surface(color)
     # New private hardware swatches must not recolor any existing TV material.
-    for color in hardware.colors():
+    for color in sorted(set(hardware.colors())|dual_hardware.colors()):
         files[f"{ASSETS}/textures/block/hardware/c_{color.lower()}.png"] = surface(color)
     idle_mono = canvas(16, 16, "748763")
     idle_color = canvas(16, 16, "111922")
@@ -739,7 +846,7 @@ def generated_files():
         text_pixels(etched,32,2,1,short[:3],"87918F")
         for x in range(18,30,2):rect(etched,32,x,3,x+1,5,"56615F")
         files[f"{ASSETS}/textures/block/hardware/engraving_{platform}.png"]=png(32,8,etched)
-    for index, (platform, _, short, color) in enumerate(PLATFORMS, 1):
+    for index, (platform, _, short, color) in platform_rows():
         files[f"{ASSETS}/textures/block/common/platform_{platform}.png"] = surface(color)
         files[f"{ASSETS}/textures/item/label_{platform}.png"] = label_texture(short, color, index)
     files[f"{ASSETS}/textures/item/label_blank.png"] = label_texture("MUXI", COLORS["amber"], 0)
@@ -783,7 +890,7 @@ def generated_files():
             (f"facing={direction},model={cmd}" if name == "desk_console" else f"facing={direction}"):
                 {"model":f"{NS}:block/{model}","y":angle}
             for direction, angle in (("north", 0), ("east", 90), ("south", 180), ("west", 270))
-            for cmd,model in ([(0,"desk_console"),*[(index,f"desk_console_{p[0]}") for index,p in enumerate(PLATFORMS,1)],(22,"arcade_cabinet_2p")]
+            for cmd,model in ([(0,"desk_console"),*[(index,f"desk_console_{p[0]}") for index,p in platform_rows()],(22,"arcade_cabinet_2p")]
                               if name == "desk_console" else [(0,name)])}})
         js(f"{DATA}/loot_table/blocks/{name}.json", {"type": "minecraft:block", "pools": [{
             "rolls": 1, "entries": [{"type": "minecraft:item", "name": f"{NS}:{name}"}],
@@ -802,6 +909,8 @@ def generated_files():
         js(f"{DATA}/recipe/{name}.json", {"type": "minecraft:crafting_shaped", "category": "misc",
             "pattern": pattern, "key": {symbol: {"item": f"minecraft:{item}"} for symbol, item in ingredients.items()},
             "result": {"id": f"{NS}:{name}", "count": count}})
+    # The special recipe copies the actual device; a static result would lose its machine and cartridge components.
+    js(f"{DATA}/recipe/hardware_recolor.json",{"type":f"{NS}:hardware_recolor","category":"misc"})
     # The new case is independent of the historical BLOCKS/ITEMS collections;
     # those generated recipes, tags and model bytes remain unchanged.
     case_model,case_textures=case_assets.resources(NS,box,base_model,surface)
@@ -820,6 +929,7 @@ def generated_files():
     js(f"{ASSETS}/model_catalog.json",model_catalog())
     # Apply only per-item inventory transforms; world and hand geometry stay authored.
     gui_item_fit.fit(files,NS)
+    accessory_hand_poses(files)
     return files
 
 
@@ -891,6 +1001,11 @@ def check_closure(files):
                 for variant in data["variants"].values():
                     require(local_model(variant["model"]))
             if "/recipe/" in path:
+                if data.get("type")==f"{NS}:hardware_recolor":
+                    if path!=f"{DATA}/recipe/hardware_recolor.json" or data!={"type":f"{NS}:hardware_recolor","category":"misc"}:
+                        raise ValueError("Hardware reshape must retain its special full-stack recipe")
+                    checks+=1
+                    continue
                 output = data["result"]["id"].split(":", 1)[1]
                 if output not in (*ITEMS,"cartridge_case") or output == "cartridge":
                     raise ValueError(f"Invalid crafting output: {output}")
@@ -936,7 +1051,7 @@ def check_closure(files):
     # geometry coordinates so textures, labels and colors have no influence.
     shape_signatures = {}
     media_signatures = {}
-    for cmd,(platform,*_) in enumerate(PLATFORMS,1):
+    for cmd,(platform,*_) in platform_rows():
         model_path = f"{ASSETS}/models/block/desk_console_{platform}.json"
         full = resolved(model_path)
         coords = [(e["from"],e["to"]) for e in full["elements"]]
@@ -950,7 +1065,7 @@ def check_closure(files):
             raise ValueError(f"Platforms share media geometry: {platform}, {media_signatures[signature]}")
         media_signatures[signature] = platform
         for item in ("desk_console","handheld","cartridge"):
-            override = json.loads(files[f"{ASSETS}/models/item/{item}.json"])["overrides"][cmd-1]
+            override = next((v for v in json.loads(files[f"{ASSETS}/models/item/{item}.json"])["overrides"] if v["predicate"]["custom_model_data"]==cmd),None)
             if override != {"predicate":{"custom_model_data":cmd},"model":f"{NS}:item/{item}_{platform}"}:
                 raise ValueError(f"Unstable CMD mapping: {platform}/{item}")
             checks += 1
@@ -961,6 +1076,16 @@ def check_closure(files):
             if not math.isclose((x1-x0)/(y1-y0),expected,rel_tol=1e-8):
                 raise ValueError(f"Handheld display aspect mismatch: {platform}")
             checks += 1
+        if platform in dual_hardware.PLANES:
+            for name,plane,size,touchable in dual_hardware.PLANES[platform]:
+                if not math.isclose((plane[2]-plane[0])/(plane[3]-plane[1]),size[0]/size[1],rel_tol=1e-8) or touchable!=(name=="bottom"):
+                    raise ValueError("Dual-screen plane differs from its native aspect or touch ownership")
+                checks+=1
+    for item in ("desk_console","handheld","cartridge"):
+        overrides=json.loads(files[f"{ASSETS}/models/item/{item}.json"])["overrides"]
+        values=[v["predicate"]["custom_model_data"] for v in overrides]
+        if values!=sorted(set(values)):raise ValueError("Model overrides must be ascending thresholds; CMD22 cannot shadow new bodies")
+        checks+=1
     double = resolved(f"{ASSETS}/models/block/arcade_cabinet_2p.json")
     single = resolved(f"{ASSETS}/models/block/desk_console_arcade.json")
     if [(e["from"],e["to"]) for e in single["elements"]] == [(e["from"],e["to"]) for e in double["elements"]]:
@@ -1080,7 +1205,7 @@ def check_closure(files):
                  "gba": {0,2,3,4,5,6,7,8,10,11}, "gg": {0,3,4,5,6,7,8},
                  "lynx": {0,3,4,5,6,7,8,10,11}, "ngp": {0,3,4,5,6,7,8},
                  "ngpc": {0,3,4,5,6,7,8}, "ws": {0,3,4,5,6,7,8,10,11,12,13},
-                 "wsc": {0,3,4,5,6,7,8,10,11,12,13}}
+                 "wsc": {0,3,4,5,6,7,8,10,11,12,13},"nds":set(range(12)),"n3ds":set(range(14))}
     for entry in catalog["entries"]:
         platform = entry["platform"]
         if platform not in essential:
@@ -1284,7 +1409,7 @@ def review_plan():
                 "properties":{"facing":"north","model":cmd}},
             "held_or_displayed_item":{"id":f"{NS}:{'handheld' if portable else 'desk_console'}",
                 "custom_model_data":cmd},
-            "media_item":{"id":f"{NS}:cartridge","custom_model_data":min(cmd,21)},
+            "media_item":{"id":f"{NS}:cartridge","custom_model_data":21 if cmd==22 else cmd},
             "external_screen":None if portable or form == "arcade" else {"block":f"{NS}:screen","position":[x,y,z+2],"facing":"north"},
             "camera":{"position":[x+2.8,y+2.0,z-3.9],"target":[x+.5,y+.5,z+.5],"fov":45},
             "checks":["unique silhouette visible","correct platform media visible","no missing texture","normal world lighting", "handheld held by real player" if portable else "placed platform block matches inventory model"]})

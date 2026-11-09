@@ -7,9 +7,8 @@ import java.nio.file.Files;
 import java.util.*;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.CycleButton;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.OptionsList;
-import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.muxigame.console.MuxiConsole;
@@ -30,10 +29,12 @@ import org.lwjgl.glfw.GLFW;
 @EventBusSubscriber(modid=MuxiConsole.ID,value=Dist.CLIENT)
 public final class NativeControls {
     private static final EnumMap<Platform,KeyMapping[]> MAPPINGS=new EnumMap<>(Platform.class);
+    private static final EnumMap<Platform,KeyMapping[]> AUXILIARY=new EnumMap<>(Platform.class);
+    private static final EnumMap<Platform,VirtualConsoleInput> VIRTUAL=new EnumMap<>(Platform.class);
+    public enum Extra { TILT_LEFT,TILT_RIGHT,TILT_FORWARD,TILT_BACKWARD,SHAKE,CENTRE,BLOW }
+    private static final int[] EXTRA_DEFAULTS={GLFW.GLFW_KEY_KP_4,GLFW.GLFW_KEY_KP_6,GLFW.GLFW_KEY_KP_8,GLFW.GLFW_KEY_KP_2,GLFW.GLFW_KEY_KP_5,GLFW.GLFW_KEY_KP_0,GLFW.GLFW_KEY_M};
     private static final Set<InputConstants.Key> DOWN=java.util.concurrent.ConcurrentHashMap.newKeySet();
     private static boolean initialized;
-    private static Platform selectedPlatform=Platform.NES;
-    private static final String[] PAD_NAMES={"A / Cross","B / Circle","X / Square","Y / Triangle","L1","R1","Back","Start","Guide","L3","R3","D-pad Up","D-pad Right","D-pad Down","D-pad Left","L2","R2"};
 
     private record Context(Platform platform) implements IKeyConflictContext {
         @Override public boolean isActive(){return Minecraft.getInstance().screen instanceof GameScreen&&ConsoleClient.INSTANCE.inputFeedback().platform()==platform;}
@@ -55,11 +56,19 @@ public final class NativeControls {
                 event.register(row[i]);
             }
             MAPPINGS.put(platform,row);
+            if(hasExtras(platform)){
+                var auxiliary=new KeyMapping[Extra.values().length];
+                for(Extra extra:Extra.values()){auxiliary[extra.ordinal()]=new Mapping("key.muxi_console."+platform.id()+".extra."+extra.name().toLowerCase(Locale.ROOT),context,EXTRA_DEFAULTS[extra.ordinal()],"key.categories.muxi_console."+platform.id());event.register(auxiliary[extra.ordinal()]);}
+                AUXILIARY.put(platform,auxiliary);
+            }
         }
     }
     private static String name(Platform platform,int index){return "key.muxi_console."+platform.id()+(index<16?".button.":".axis.")+(index<16?index:index-16);}
     public static KeyMapping key(Platform platform,int bit){if(bit<0||bit>=16)throw new IllegalArgumentException("Button");return row(platform)[bit];}
     public static KeyMapping axis(Platform platform,int direction){if(direction<0||direction>=8)throw new IllegalArgumentException("Axis direction");return row(platform)[direction+16];}
+    public static boolean hasExtras(Platform platform){return platform==Platform.NDS||platform==Platform.N3DS||platform==Platform.WII;}
+    public static KeyMapping extra(Platform platform,Extra extra){var keys=AUXILIARY.get(platform);if(keys==null)throw new IllegalArgumentException("This platform has no auxiliary bindings");return keys[extra.ordinal()];}
+    public static int bindingCount(Platform platform){return 24+(hasExtras(platform)?Extra.values().length:0);}
     private static KeyMapping[] row(Platform platform){var row=MAPPINGS.get(platform);if(row==null)throw new IllegalStateException("Native console bindings are not registered");return row;}
 
     /** Run once after Minecraft has loaded its options. Existing native entries always win over legacy JSON. */
@@ -81,7 +90,7 @@ public final class NativeControls {
     }
     public static void key(int key,int scan,boolean pressed){InputConstants.Key input=InputConstants.getKey(key,scan);if(pressed)DOWN.add(input);else DOWN.remove(input);}
     public static void mouse(int button,boolean pressed){InputConstants.Key input=InputConstants.Type.MOUSE.getOrCreate(button);if(pressed)DOWN.add(input);else DOWN.remove(input);}
-    public static void clear(){DOWN.clear();}
+    public static void clear(){DOWN.clear();VIRTUAL.clear();}
     private static boolean pressed(KeyMapping mapping){
         if(mapping.isUnbound()||!DOWN.contains(mapping.getKey()))return false;
         return switch(mapping.getKeyModifier()){
@@ -99,33 +108,25 @@ public final class NativeControls {
         short[] axes={pad.leftX(),pad.leftY(),pad.rightX(),pad.rightY()};
         for(int i=0;i<4;i++){boolean negative=pressed(keys[16+i*2]),positive=pressed(keys[17+i*2]);if(negative||positive)axes[i]=(short)(negative==positive?0:negative?-32767:32767);}
         if((mask&0x30)==0x30)mask&=~0x30;if((mask&0xc0)==0xc0)mask&=~0xc0;
+        if(hasExtras(platform)){
+            var extra=AUXILIARY.get(platform);var virtual=VIRTUAL.computeIfAbsent(platform,ignored->new VirtualConsoleInput());
+            var sample=virtual.sample(pressed(extra[0]),pressed(extra[1]),pressed(extra[2]),pressed(extra[3]),pressed(extra[4]),pressed(extra[5]),pressed(extra[6]),System.nanoTime());
+            return new PortInput(mask,axes[0],axes[1],axes[2],axes[3],InputProfiles.get().profile(platform).controllerDevice(),PortInput.Pointer.IDLE,sample.motion(),sample.microphone());
+        }
         return new PortInput(mask,axes[0],axes[1],axes[2],axes[3]);
     }
-    public static void openSettings(Screen parent){clear();Minecraft mc=Minecraft.getInstance();mc.setScreen(new net.minecraft.client.gui.screens.options.controls.ControlsScreen(parent,mc.options));}
+    public static boolean isConsoleBinding(KeyMapping mapping){return mapping.getName().startsWith("key.muxi_console.")&&mapping.getCategory().startsWith("key.categories.muxi_console.");}
+    public static void openSettings(Screen parent){clear();KeyMapping.releaseAll();Minecraft.getInstance().setScreen(new net.muxigame.console.client.ui.ConsoleBindingsScreen(parent));}
 
-    /** The standard Controls list also owns controller selection/mapping; no separate mod binding screen. */
+    /** Keep the normal Controls page compact; all registered values still belong to options.txt. */
     @SubscribeEvent public static void options(ScreenEvent.Init.Post event){
         if(!(event.getScreen() instanceof net.minecraft.client.gui.screens.options.controls.ControlsScreen screen))return;
         OptionsList list=null;for(var child:screen.children())if(child instanceof OptionsList found){list=found;break;}if(list==null)return;
-        var profiles=InputProfiles.get();var profile=profiles.profile(selectedPlatform);
-        if(profile.enabled()&&profile.gamepadGuid().isEmpty()){profile.setGamepad("*",-1);saveController();}
-        var devices=InputProfiles.availableGamepads();List<String> choices=new ArrayList<>(List.of("","*"));
-        for(var device:devices)if(!choices.contains(device.guid()))choices.add(device.guid());
-        if(!profile.gamepadGuid().isEmpty()&&!choices.contains(profile.gamepadGuid()))choices.add(profile.gamepadGuid());
-        String choice=!profile.enabled()?"":profile.gamepadGuid().isEmpty()?"*":profile.gamepadGuid();
-        var platform=CycleButton.<Platform>builder(p->Component.translatable("platform.muxi_console."+p.id())).withValues(Platform.values()).withInitialValue(selectedPlatform)
-                .create(0,0,150,20,Component.translatable("options.muxi_console.platform"),(button,value)->{selectedPlatform=value;screen.init(Minecraft.getInstance(),screen.width,screen.height);});
-        var device=CycleButton.<String>builder(value->{if(value.isEmpty())return Component.translatable("options.off");if(value.equals("*"))return Component.translatable("options.muxi_console.automatic");for(var d:devices)if(d.guid().equals(value))return Component.literal(d.name());return Component.translatable("options.muxi_console.disconnected");}).withValues(choices).withInitialValue(choice)
-                .create(0,0,150,20,Component.translatable("options.muxi_console.gamepad"),(button,value)->{profiles.setEnabled(selectedPlatform,!value.isEmpty());profiles.profile(selectedPlatform).setGamepad(value,-1);saveController();});
-        platform.setTooltip(Tooltip.create(Component.translatable("options.muxi_console.reserved")));list.addSmall(platform,device);
-        List<Integer> buttons=new ArrayList<>();for(int i=-1;i<=16;i++)buttons.add(i);
-        for(int bit=0;bit<16;bit+=2){var widgets=new ArrayList<net.minecraft.client.gui.components.AbstractWidget>();
-            for(int offset=0;offset<2;offset++){final int logical=bit+offset;
-                widgets.add(CycleButton.<Integer>builder(value->value<0?Component.translatable("key.keyboard.unknown"):Component.literal(PAD_NAMES[value])).withValues(buttons).withInitialValue(profile.gamepadButton(logical))
-                        .create(0,0,150,20,Component.translatable("options.muxi_console.gamepad_button",Component.translatable(name(selectedPlatform,logical))),(button,value)->{profiles.bindGamepad(selectedPlatform,logical,value);saveController();screen.init(Minecraft.getInstance(),screen.width,screen.height);}));
-            }list.addSmall(widgets);
-        }
+        list.addSmall(List.of(Button.builder(Component.translatable("ui.muxi_console.bindings"),button->openSettings(screen)).width(310).build()));
     }
-    private static void saveController(){try{InputProfiles.get().save();}catch(IOException error){MuxiConsole.LOG.warn("Could not save console gamepad options",error);}}
+    @SubscribeEvent public static void vanillaBindings(ScreenEvent.Opening event){
+        if(event.getNewScreen()!=null&&event.getNewScreen().getClass()==net.minecraft.client.gui.screens.options.controls.KeyBindsScreen.class)
+            event.setNewScreen(new net.muxigame.console.client.ui.MinecraftBindingsScreen(event.getCurrentScreen(),Minecraft.getInstance().options));
+    }
     private NativeControls(){}
 }

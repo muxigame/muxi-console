@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "resources": [
+    {
+      "id": "dolphin-sys",
+      "entry": "system/dolphin-sys.zip",
+      "archive": "test-environment/cache/muxi-console/expansion/dolphin/dolphin-sys.zip",
+      "archiveBytes": 3125907,
+      "archiveSha256": "d65da905e47f66512586f9de12b81f0e83c7018cbf25bf5234bff13f3498865c",
+      "source": "https://github.com/libretro/dolphin/tree/32c61f9d0e933331bb7087ba57e96883241b4960/Data/Sys",
+      "sourceRevision": "32c61f9d0e933331bb7087ba57e96883241b4960",
+      "licenseScope": "Original upstream resource notices accompany the complete Dolphin corresponding source; these are not first-party MIT assets.",
+      "releaseReady": true
+    }
+  ]
+}

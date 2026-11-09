@@ -14,6 +14,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import org.joml.Matrix4f;
 import java.util.List;
+import net.muxigame.console.runtime.AvFrame;
 
 /** Original screen geometry contract; frontend picture is independent of hardware model implementation. */
 public final class DeviceRenderer implements BlockEntityRenderer<DeviceEntity> {
@@ -48,17 +49,34 @@ public final class DeviceRenderer implements BlockEntityRenderer<DeviceEntity> {
         HandheldRenderer.docked(item,device.getBlockPos().asLong(),picture(device.getBlockPos().asLong()),stack,buffers,light,overlay);stack.popPose();
     }
     public static void screen(PoseStack stack,MultiBufferSource buffers,ResourceLocation picture,HardwareCatalog.Plane p){
-        double aspect=(p.x1()-p.x0())/(double)(p.y1()-p.y0());
-        var texture=Minecraft.getInstance().getTextureManager().getTexture(picture);if(texture instanceof DynamicTexture dynamic&&dynamic.getPixels()!=null)aspect=dynamic.getPixels().getWidth()/(double)dynamic.getPixels().getHeight();
-        float[] fitted=VideoLayout.fit(p.x0(),p.y0(),p.x1(),p.y1(),aspect);
-        quad(stack,buffers,picture,p,0);
-        quad(stack,buffers,picture,new HardwareCatalog.Plane(fitted[0],fitted[1],fitted[2],fitted[3],p.z()-.002f),255);
+        quad(stack,buffers,picture,p,0,0,0,1,1);
+        var source=surface(picture,p);if(source==null&&!p.surface().equals("primary"))return;
+        var texture=Minecraft.getInstance().getTextureManager().getTexture(picture);
+        if(!(texture instanceof DynamicTexture dynamic)||dynamic.getPixels()==null)return;
+        int width=dynamic.getPixels().getWidth(),height=dynamic.getPixels().getHeight();
+        if(source!=null&&((long)source.x()+source.width()>width||(long)source.y()+source.height()>height))return;
+        float u0=source==null?0:source.x()/(float)width,v0=source==null?0:source.y()/(float)height;
+        float u1=source==null?1:(source.x()+source.width())/(float)width,v1=source==null?1:(source.y()+source.height())/(float)height;
+        float[] fitted=VideoLayout.fit(p.x0(),p.y0(),p.x1(),p.y1(),aspect(picture,p));
+        quad(stack,buffers,picture,new HardwareCatalog.Plane(fitted[0],fitted[1],fitted[2],fitted[3],p.z()-.002f),255,u0,v0,u1,v1);
     }
-    private static void quad(PoseStack stack,MultiBufferSource buffers,ResourceLocation picture,HardwareCatalog.Plane p,int color){
+    public static AvFrame.Surface surface(ResourceLocation picture,HardwareCatalog.Plane plane){
+        if(picture==null)return null;
+        var surfaces=picture.equals(ConsoleClient.INSTANCE.picture())?ConsoleClient.INSTANCE.surfaces():BrowserLinkClient.INSTANCE.surfacesFor(picture);
+        return surfaces.stream().filter(surface->surface.id().equals(plane.surface())).findFirst().orElse(null);
+    }
+    public static double aspect(ResourceLocation picture,HardwareCatalog.Plane plane){
+        var source=surface(picture,plane);if(source!=null)return source.nativeWidth()/(double)source.nativeHeight();
+        if(plane.nativeWidth()>0)return plane.nativeWidth()/(double)plane.nativeHeight();
+        var texture=picture==null?null:Minecraft.getInstance().getTextureManager().getTexture(picture);
+        if(texture instanceof DynamicTexture dynamic&&dynamic.getPixels()!=null)return dynamic.getPixels().getWidth()/(double)dynamic.getPixels().getHeight();
+        return (plane.x1()-plane.x0())/(double)(plane.y1()-plane.y0());
+    }
+    private static void quad(PoseStack stack,MultiBufferSource buffers,ResourceLocation picture,HardwareCatalog.Plane p,int color,float u0,float v0,float u1,float v1){
         Matrix4f matrix=stack.last().pose();var consumer=buffers.getBuffer(RenderType.text(picture));int full=LightTexture.FULL_BRIGHT;float z=(p.z()-.002f)/16f;
-        consumer.addVertex(matrix,p.x0()/16f,p.y0()/16f,z).setColor(color,color,color,255).setUv(1,1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(full).setNormal(stack.last(),0,0,-1);
-        consumer.addVertex(matrix,p.x0()/16f,p.y1()/16f,z).setColor(color,color,color,255).setUv(1,0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(full).setNormal(stack.last(),0,0,-1);
-        consumer.addVertex(matrix,p.x1()/16f,p.y1()/16f,z).setColor(color,color,color,255).setUv(0,0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(full).setNormal(stack.last(),0,0,-1);
-        consumer.addVertex(matrix,p.x1()/16f,p.y0()/16f,z).setColor(color,color,color,255).setUv(0,1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(full).setNormal(stack.last(),0,0,-1);
+        consumer.addVertex(matrix,p.x0()/16f,p.y0()/16f,z).setColor(color,color,color,255).setUv(u1,v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(full).setNormal(stack.last(),0,0,-1);
+        consumer.addVertex(matrix,p.x0()/16f,p.y1()/16f,z).setColor(color,color,color,255).setUv(u1,v0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(full).setNormal(stack.last(),0,0,-1);
+        consumer.addVertex(matrix,p.x1()/16f,p.y1()/16f,z).setColor(color,color,color,255).setUv(u0,v0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(full).setNormal(stack.last(),0,0,-1);
+        consumer.addVertex(matrix,p.x1()/16f,p.y0()/16f,z).setColor(color,color,color,255).setUv(u0,v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(full).setNormal(stack.last(),0,0,-1);
     }
 }

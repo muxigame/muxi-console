@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "id": "sameboy-link",
+  "purpose": "emulation-link",
+  "systems": [
+    "gb",
+    "gbc"
+  ],
+  "renderer": "software",
+  "binaryOrigin": "source-rebuild",
+  "source": "https://github.com/libretro/SameBoy",
+  "sourceRevision": "90e2899574b7b63c59dce8a7276783426d52a068",
+  "sourceRevisionVerified": true,
+  "license": "MIT",
+  "licenseUrl": "https://github.com/libretro/SameBoy/blob/90e2899574b7b63c59dce8a7276783426d52a068/LICENSE",
+  "binaryVersion": "1.0.5 90e2899 / Muxi link ABI1",
+  "baseSingleCoreCompatibility": {
+    "coreId": "sameboy",
+    "sourceRevision": "90e2899574b7b63c59dce8a7276783426d52a068",
+    "librarySha256": "491aaf9074ef2f1cf641d87b3b17f44d488e648d111cd48825072d95916d7d7b",
+    "role": "proven MXS1 export-format compatibility fingerprint; not the actual bridge binary hash",
+    "bidirectionalNativeDiagnostics": [
+      "gb",
+      "gbc",
+      "mixed"
+    ]
+  },
+  "platforms": {
+    "windows-x86_64": {
+      "archive": "test-environment/cache/muxi-console/rebuild-sameboy-link/build-02/muxi_sameboy_link.dll.zip",
+      "libraryName": "muxi_sameboy_link.dll",
+      "archiveBytes": 181645,
+      "archiveSha256": "96acc23bffe96aa153d7fca184ebf22e0bfb285e4aca92ec5529f60af771589e",
+      "libraryBytes": 509440,
+      "librarySha256": "89d7c9165ca053a42993c8d75c9101d5ce92db97bcef3376569e005943127ca9"
+    }
+  },
+  "sourceDelivery": {
+    "method": "complete exact upstream archive plus original adapter/build driver and licenses",
+    "archive": "test-environment/cache/muxi-console/rebuild-sameboy-link/build-02/corresponding-source.tar.gz",
+    "format": "tar.gz",
+    "archiveBytes": 7921663,
+    "archiveSha256": "9b940e9f452be7f811b332484d8999afccfa1efafe5460a853763134f01a5390",
+    "buildReport": "test-environment/cache/muxi-console/rebuild-sameboy-link/build-02/build-report.json",
+    "buildReportSha256": "72592a051ca37a5586fe473a8bafaad71a58c51fcc5d6779b8efb8eac05a3079"
+  },
+  "nativeDiagnostics": {
+    "checks": 426,
+    "workers": 12,
+    "normalExits": true,
+    "forcedTermination": false,
+    "serialChallengeExchange": true,
+    "independentVideoInputAndPCM": true,
+    "singleStateBidirectionalCompatibility": true,
+    "combinedStateFormat": "LNK1 (separate from single-machine MXS1)",
+    "commercialCompatibilityClaimed": false
+  },
+  "minecraftIntegrationTested": true,
+  "releaseReady": true,
+  "minecraftVerification": {
+    "records": [
+      {
+        "report": "test-environment/client-2/runs/console-upgrade-native-02/console-qa/link-result.json",
+        "reportSha256": "c99a21cc535e263ff38c680ced3d7a655782440a1d4b933fd5c8bf2667b398bc",
+        "scenarioComplete": false,
+        "checks": 32
+      },
+      {
+        "report": "test-environment/client-2/runs/console-upgrade-native-02/console-qa/link-continuation-result.json",
+        "reportSha256": "f227b42e3a760b354ec27ed2a63b6ebf60615c48aa6d91bfa7a878a95feb8ac6",
+        "scenarioComplete": true,
+        "checks": 57
+      }
+    ],
+    "combinedScopeComplete": true,
+    "originalFalseResultsRetained": true,
+    "commercialCompatibilityClaimed": false
+  }
+}

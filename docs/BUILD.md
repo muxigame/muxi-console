@@ -4,7 +4,7 @@
 
 ## 独立重建 Java 工作进程
 
-`tools/build_worker.py`只使用 Python 标准库、Java21 JDK 和固定版本的 Maven Central 依赖，不导入 Minecraft、NeoForge 或私有工作区构建工具。源码位于 `common/src/main/java/net/muxigame/console/runtime/`，当前12个文件，编译为34个class。
+`tools/build_worker.py`只使用 Python 标准库、Java21 JDK 和固定版本的 Maven Central 依赖，不导入 Minecraft、NeoForge 或私有工作区构建工具。源码位于 `common/src/main/java/net/muxigame/console/runtime/`，当前36个文件，包含普通、GB/GBA、NDS和3DS工作进程；实际class清单以本次构建记录为准。
 
 独立克隆后，用 Python3.11+ 执行：
 
@@ -49,6 +49,8 @@ python -B tools/build_worker.py --name worker-compare-01 --java-home /path/to/jd
 
 本轮用独立入口实际生成的 `build/public-worker-01/` 已与该基准核对：12源、34class、七个官方依赖和整个worker JAR原字节一致。比较只读取既有候选，不依赖其中的class或依赖进行编译。
 
+0.2.0候选16另由同一独立入口离线重建：36源、116class、217519字节，worker SHA256 `3c7c90baf32bb5498f1f83d809896af2d514ee0d6b5c0e92bc61d721ed023170`。七依赖、逐class和整个worker JAR均与实际Minecraft候选16原字节一致；记录位于本地`build/public-worker-16/build.json`。这不替代实际模拟器运行与关闭验收。
+
 ## 完整 Minecraft 模组
 
 完整模组目前沿用 `tools/build.py` 的 muxigame 工作区SDK入口；单独克隆本仓不会自动取得Minecraft映射开发环境。该入口只读取已安装SDK，包含MC集成、领域代码、资源、工作进程及固定第三方核心。没有另外维护一套Gradle工程。
@@ -61,9 +63,9 @@ python -B tools/fetch_cores.py --offline
 python -B tools/build.py --name mc-local-01 --tests
 ```
 
-正式发行还需运行 `tools/release_sources.py` 准备并核对15个实际打包核心、依赖及工作进程的对应源码，然后使用 `tools/build.py --name release-local-01 --tests --release`。该模式拒绝未完成源码/许可交付的核心，离线复核源码包与当前二进制pin，并把完整源码包、清单、构建说明和许可证一并放入产品JAR的 `META-INF/muxi/`。第三方源码不加入Minecraft类路径，也不会被模拟工作进程加载。
+正式发行还需运行 `tools/release_sources.py --prepare` 和 `--verify`，核对18个实际打包核心、4个联机附属库、Dolphin Sys、依赖及工作进程的对应源码，然后使用 `tools/build.py --name release-local-01 --tests --release`。诊断专用2048不进入发行包。该模式拒绝未完成源码/许可交付或尚未批准发行的核心，离线复核源码包与当前二进制pin，并把完整源码包、清单、构建说明和许可证一并放入产品JAR的 `META-INF/muxi/`。第三方源码不加入Minecraft类路径，也不会被模拟工作进程加载。
 
-BlastEm与PCE的源码构建入口为 `tools/rebuild_cores.py`，使用固定官方提交、校验过的LLVM-MinGW/GNU Make工具链和单CPU编译；具体输入、生成步骤、构建命令及对应源码与二进制哈希随源码包交付。其他核心保留官方发行的精确二进制及其自报提交所对应的完整源码和固定子模块，不声称重建出了相同二进制。
+BlastEm与PCE的源码构建入口为 `tools/rebuild_cores.py`；新增核心和联机桥的入口为 `tools/build_dolphin.py`、`tools/build_ds_link_adapter.py`、`tools/build_3ds_link_adapter.py`、`tools/build_link_adapter.py`、`tools/build_gba_link_adapter.py`。使用固定官方提交、校验过的LLVM-MinGW/GNU Make工具链和单CPU编译；具体输入、完整固定子模块、补丁、生成步骤及源码与二进制哈希随源码包交付。GPL派生NWM补丁及原文件保留GPL标记，不纳入第一方MIT授权。其他核心保留官方发行的精确二进制及其自报提交所对应的完整源码，不声称重建出了相同二进制。MinGW运行库、winpthreads和LLVM libunwind的原始许可一并交付。
 
 需要总仓的 `better-mc-remake/scripts/local_mc_runtime.py`、统一 `test-environment/resources/client/game/`、`test-environment/toolchains/java-21/` 和 `minecraft/release/server/` 所供MC1.21.1 / NeoForge21.1.250 SDK。核心档案必须先按 `third-party/cores.json` 的精确哈希准备；`--offline`不会替换缺失输入。该工作区入口继续受根 `AGENTS.md` 和统一测试环境约定约束。
 

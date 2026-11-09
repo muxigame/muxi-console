@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "id": "mgba-link",
+  "purpose": "emulation-link",
+  "systems": [
+    "gba"
+  ],
+  "renderer": "software",
+  "binaryOrigin": "source-rebuild",
+  "source": "https://github.com/libretro/mgba",
+  "sourceRevision": "7a12d6d4b9acb14c0ae62c9166b6a2f3d08007f6",
+  "sourceRevisionVerified": true,
+  "license": "MPL-2.0",
+  "licenseUrl": "https://github.com/libretro/mgba/blob/7a12d6d4b9acb14c0ae62c9166b6a2f3d08007f6/LICENSE",
+  "originalAdapterLicense": "MIT",
+  "binaryVersion": "mGBA 7a12d6d / original lockstep ABI1",
+  "baseSingleCoreCompatibility": {
+    "coreId": "mgba",
+    "sourceRevision": "7a12d6d4b9acb14c0ae62c9166b6a2f3d08007f6",
+    "librarySha256": "4c289017c3ceaf737d0c303cc46ba428a95678027b3a3a61c78b2d3ae0f1756c",
+    "role": "proven MXS1 export-format compatibility fingerprint; not the actual bridge binary hash",
+    "bidirectionalNativeDiagnostics": [
+      "gba-normal-physical-order",
+      "gba-reversed-physical-order"
+    ],
+    "systemMode": "GBA HLE/default options; custom BIOS compatibility not claimed"
+  },
+  "platforms": {
+    "windows-x86_64": {
+      "archive": "test-environment/cache/muxi-console/rebuild-mgba-link/build-08/muxi_mgba_link.dll.zip",
+      "libraryName": "muxi_mgba_link.dll",
+      "archiveBytes": 576971,
+      "archiveSha256": "cda66677870f07d937600326d6dac4c372ed16ca78bed5d39e9bec990b4027de",
+      "libraryBytes": 1773056,
+      "librarySha256": "051b43176e9fae8d83c1cb57cafb824d23de3fa3e9fc00d388bfeb82464273f4"
+    }
+  },
+  "sourceDelivery": {
+    "method": "complete exact upstream archive plus original adapter/build driver and licenses",
+    "archive": "test-environment/cache/muxi-console/rebuild-mgba-link/build-08/corresponding-source.tar.gz",
+    "format": "tar.gz",
+    "archiveBytes": 16072498,
+    "archiveSha256": "f3ff5feea2afd7fc2b63eded1696587d1982ac0609f9716253db1eceab8411dc",
+    "buildReport": "test-environment/cache/muxi-console/rebuild-mgba-link/build-08/build-report.json",
+    "buildReportSha256": "c2b692e95572f480b9e7b70c740f2c23c3dccdb39e455ad22cd2c182f8245143"
+  },
+  "nativeDiagnostics": {
+    "checks": 288,
+    "workers": 8,
+    "normalExits": true,
+    "forcedTermination": false,
+    "serialChallengeExchange": true,
+    "independentVideoInputAndPCM": true,
+    "inputSampleWindowFrames": 3,
+    "singleStateBidirectionalCompatibility": true,
+    "coldSingleCoreRestoreWithoutWarmup": true,
+    "combinedStateFormat": "LNK1 version2 mgba identity + native MGL1 coordinator; GB LNK1 version1 preserved",
+    "commercialCompatibilityClaimed": false
+  },
+  "minecraftIntegrationTested": true,
+  "releaseReady": true,
+  "minecraftVerification": {
+    "records": [
+      {
+        "report": "test-environment/client-2/runs/console-gba-link-native-01/console-qa/gba-link-result.json",
+        "reportSha256": "b0c7ee14da9e2ef339e7fa9746dc9287fd47592a7e553bf8255f722de1e119e9",
+        "scenarioComplete": true,
+        "checks": 76
+      }
+    ],
+    "combinedScopeComplete": true,
+    "originalFalseResultsRetained": false,
+    "commercialCompatibilityClaimed": false
+  }
+}

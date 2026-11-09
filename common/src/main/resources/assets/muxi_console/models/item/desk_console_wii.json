@@ -1,0 +1,22 @@
+{
+  "parent": "muxi_console:block/desk_console_wii",
+  "display": {
+    "gui": {
+      "rotation": [
+        25,
+        225,
+        0
+      ],
+      "translation": [
+        -0.0,
+        0.1436745,
+        0
+      ],
+      "scale": [
+        0.6097204,
+        0.6097204,
+        0.6097204
+      ]
+    }
+  }
+}

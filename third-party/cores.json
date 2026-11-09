@@ -1199,9 +1199,253 @@
         "method": "complete source embedded in the same JAR",
         "archiveSha256": "650b20826caf153e3ce89c5a7a805f595f5d007176df9372e36278dec95e85a0"
       }
+    },
+    "melondsds": {
+      "systems": [
+        "nds"
+      ],
+      "purpose": "emulation",
+      "renderer": "software",
+      "source": "https://github.com/JesseTG/melonds-ds",
+      "sourceRevision": "f394adbacb5722ee97c1b37c8064da9a25818310",
+      "sourceRevisionVerified": true,
+      "releaseReady": true,
+      "sourceRevisionNote": "Exact ordinary/wireless DLL, full 12 dependency trees and explicit GPL patches audited. Minecraft ordinary warm/cold and 81-check wireless/background-save/single-state flow passed; original failures retained.",
+      "license": "GPL-3.0-or-later",
+      "licenseUrl": "https://github.com/JesseTG/melonds-ds",
+      "documentation": "https://github.com/JesseTG/melonds-ds",
+      "binaryOrigin": "source-rebuild",
+      "binaryVersion": "1.4.0 + original MP bridge + Windows foreign VEH fix",
+      "sourceArtifact": "https://codeload.github.com/JesseTG/melonds-ds/tar.gz/f394adbacb5722ee97c1b37c8064da9a25818310",
+      "sourceArtifactSha256": "1b377c6d84355b2449e8f31893839fa0b138b51a98bf72edb8bc3ca9169186a6",
+      "platforms": {
+        "windows-x86_64": {
+          "archive": "test-environment/cache/muxi-console/rebuild-melondsds-link/build-02/public-01/muxi_melondsds_link.dll.zip",
+          "libraryName": "muxi_melondsds_link.dll",
+          "archiveBytes": 1993208,
+          "archiveSha256": "74a8e98cb3cb22d2c69cd89a80e79323a8aaaacbb10819ff536d4e6375cb9a03",
+          "libraryBytes": 7069184,
+          "librarySha256": "b0cafcb24e82be544bd8d88fe080fca2052fe00d670b28b40cc39666b332688c",
+          "url": null,
+          "upstreamLastModified": null
+        }
+      },
+      "previousOfficialBinary": {
+        "archive": "test-environment/cache/muxi-console/expansion/melondsds/official-core.zip",
+        "libraryName": "melondsds_libretro.dll",
+        "url": "https://github.com/JesseTG/melonds-ds/releases/download/v1.4.0/melondsds_libretro-win32-x86_64-Release.zip",
+        "archiveBytes": 2732973,
+        "archiveSha256": "f03af0318fee91a83880f438b369a1368fea6b5c1524a09dde849ca8fa68603f",
+        "libraryBytes": 9670091,
+        "librarySha256": "c7e6b58c667075a2a9868f2c3ba7a98e24200410a6da3051a7c555f1f0eef8ef"
+      },
+      "previousDevelopmentBinary": {
+        "archive": "test-environment/cache/muxi-console/expansion/melondsds/rebuild/melondsds-rebuilt.zip",
+        "libraryName": "melondsds_libretro.dll",
+        "url": "https://github.com/JesseTG/melonds-ds/tree/f394adbacb5722ee97c1b37c8064da9a25818310",
+        "archiveBytes": 1979380,
+        "archiveSha256": "611104eddeb2eedb2d02ced4c86744482a7705704606119de88ff4640cc5d004",
+        "libraryBytes": 7057920,
+        "librarySha256": "26ad9fb7927ba9f72510958a5cdb8f360fcc02bda59b057c2ea394cc97bb75fa"
+      },
+      "sourceDelivery": {
+        "method": "Complete 12 exact official dependency trees, explicit GPL frontend access and foreign Windows VEH patches, MIT MP adapter, portable build driver and all upstream notices",
+        "archive": "test-environment/cache/muxi-console/rebuild-melondsds-link/build-02/public-01/corresponding-source.tar.gz",
+        "format": "tar.gz",
+        "archiveBytes": 15885053,
+        "archiveSha256": "6acddd910c169c5c8d4fb24144178c977e889ad87694de806228c187262882ca",
+        "buildReport": "test-environment/cache/muxi-console/rebuild-melondsds-link/build-02/public-01/rebuild-public-report.json",
+        "buildReportSha256": "9f2534de6f5b98bc1f57a2e789a134437c9b804b735f0839b0012e43b4235c2a",
+        "patchesApplied": true,
+        "sharedAuxiliary": "melondsds-link",
+        "scope": "Same exact ordinary/link binary with Windows foreign-fault handler fix; complete patched source shared with auxiliary."
+      },
+      "minecraftIntegrationTested": true,
+      "minecraftVerification": {
+        "ordinary": {
+          "report": "test-environment/client-3/runs/console-expansion-native-05/console-qa/expansion-result.json",
+          "reportSha256": "6e2e7ef53cc5d333f6692c00439457a716d12bd814ddee49d8bc1222124aad7c",
+          "scenarioComplete": true,
+          "checks": 59
+        },
+        "scope": "Original diagnostic programs, actual mapped input and native files, warm/cold final saves; not arbitrary commercial-game compatibility",
+        "link": {
+          "report": "test-environment/client-2/runs/console-nds-link-native-04/console-qa/nds-link-result.json",
+          "reportSha256": "cb4237f8d7debc7ce692a784ea54befbd42d86bf4847ec930671e24b4cedc8fe",
+          "scenarioComplete": true,
+          "checks": 81
+        }
+      }
+    },
+    "azahar": {
+      "systems": [
+        "n3ds"
+      ],
+      "purpose": "emulation",
+      "renderer": "opengl",
+      "source": "https://github.com/azahar-emu/azahar",
+      "sourceRevision": "219d743a1e698101fe1ab8bef43e6563126c3c27",
+      "sourceRevisionVerified": true,
+      "releaseReady": true,
+      "sourceRevisionNote": "Exact ordinary/Room ABI2 DLL and complete patched vendor trees audited. Ordinary warm/cold and the two-part Minecraft wireless/save/cold/ordinary-prepare scope passed; ENet queue persistence and arbitrary commercial compatibility are not claimed.",
+      "license": "GPL-2.0-or-later; per-file vendor licenses",
+      "licenseUrl": "https://github.com/azahar-emu/azahar",
+      "documentation": "https://github.com/azahar-emu/azahar",
+      "binaryOrigin": "source-rebuild",
+      "binaryVersion": "Azahar 2126.2 + original private Room ABI1 + complete bounded radio/native-profile state ABI2",
+      "sourceArtifact": "https://github.com/azahar-emu/azahar/releases/download/2126.2/azahar-unified-source-2126.2.tar.xz",
+      "sourceArtifactSha256": "85c8b56fac703df04720125044b8ff887997911858a6cde545dfb1107ba4cd26",
+      "platforms": {
+        "windows-x86_64": {
+          "archive": "test-environment/cache/muxi-console/rebuild-azahar-link/build-02/public-01/muxi_azahar_link.dll.zip",
+          "libraryName": "muxi_azahar_link.dll",
+          "archiveBytes": 9974714,
+          "archiveSha256": "38ce45f65b5b0a75bb26dc813945339b6ae94d21e612336eb19e0e470753effe",
+          "libraryBytes": 40857088,
+          "librarySha256": "19b7331fef796c243577ac1e5d442c69d700ee1282f2c1bcb6227b33a3d50e69",
+          "url": null,
+          "upstreamLastModified": null,
+          "buildScript": "tools/build_3ds_link_adapter.py",
+          "buildScriptSha256": "a987ce7b7754418cbd0adc3790e40e23c7702d44bd9503b7a025e396b1ccccd3"
+        }
+      },
+      "previousOfficialBinary": {
+        "archive": "test-environment/cache/muxi-console/expansion/azahar/official-core.zip",
+        "libraryName": "azahar_libretro.dll",
+        "url": "https://github.com/azahar-emu/azahar/releases/download/2126.2/azahar-libretro-windows-x86_64-2126.2.zip",
+        "archiveBytes": 12097452,
+        "archiveSha256": "d863711cff775ed697ba0cc5a963f2145b9672c4ad9a891367821d7f3cc1f888",
+        "libraryBytes": 33769472,
+        "librarySha256": "aa353985a1d3fd2d34593b419b21b82a62c58a945f3b11601bfeafe32e0b1813"
+      },
+      "sourceDelivery": {
+        "method": "complete exact official unified source with all vendor trees, four explicit GPL patches and bounded GPL NWM serializer, exact portable single-job build driver, separate original MIT C ABI adapter",
+        "archive": "test-environment/cache/muxi-console/rebuild-azahar-link/build-02/public-01/corresponding-source.tar.gz",
+        "format": "tar.gz",
+        "archiveBytes": 65537592,
+        "archiveSha256": "7c72d790f436f524304267298e11e0f055b4e76c798ac1c194d4229e599aa0b9",
+        "buildReport": "test-environment/cache/muxi-console/rebuild-azahar-link/build-02/public-01/rebuild-public-report.json",
+        "buildReportSha256": "1e3bef59be681f46577949a2166697cff2b8165e2950921fab7e835b8b52dd05",
+        "patchesApplied": true,
+        "sharedAuxiliary": "azahar-link",
+        "scope": "Exact ordinary/Room DLL and profile-state ABI2; shared complete patched corresponding source."
+      },
+      "previousDevelopmentBinary": {
+        "archive": "test-environment/cache/muxi-console/rebuild-azahar-link/build-01/public-01/muxi_azahar_link.dll.zip",
+        "libraryName": "muxi_azahar_link.dll",
+        "archiveBytes": 9981523,
+        "archiveSha256": "8b708cf98998832ca4c6e8f4f7cb4de866c8da2a40ad24a84c2128914646aceb",
+        "libraryBytes": 40953856,
+        "librarySha256": "e83a278dfd08bce93a6c19823adb6cbb27ba62337f5ddc96f466d498193412f3",
+        "url": null,
+        "upstreamLastModified": null,
+        "buildScript": "tools/build_3ds_link_adapter.py",
+        "buildScriptSha256": "d417f2d2e84f375cb6dd7829da7071b030fbd92c91505a41d861cd895887dcdc"
+      },
+      "minecraftIntegrationTested": true,
+      "minecraftVerification": {
+        "ordinary": {
+          "report": "test-environment/client-3/runs/console-expansion-native-05/console-qa/expansion-result.json",
+          "reportSha256": "6e2e7ef53cc5d333f6692c00439457a716d12bd814ddee49d8bc1222124aad7c",
+          "scenarioComplete": true,
+          "checks": 59
+        },
+        "scope": "Original diagnostic programs, actual mapped input and native files, warm/cold final saves; not arbitrary commercial-game compatibility",
+        "linkRecords": [
+          {
+            "report": "test-environment/client-2/runs/console-3ds-link-native-03/console-qa/n3ds-link-result.json",
+            "reportSha256": "e92f7f6d336607f5e361ea5c11072e359bb741753baa1bdabf54c42521bf0100",
+            "scenarioComplete": false,
+            "checks": 38
+          },
+          {
+            "report": "test-environment/client-2/runs/console-3ds-link-native-03/console-qa/n3ds-link-continuation-result.json",
+            "reportSha256": "0cf1b988918137d48026a33431ae5525820d613f1ee3049a5ff385543a2e006c",
+            "scenarioComplete": true,
+            "checks": 41
+          }
+        ],
+        "combinedScopeComplete": true,
+        "originalQaSchemaFailureRetained": true
+      }
+    },
+    "dolphin": {
+      "systems": [
+        "wii"
+      ],
+      "purpose": "emulation",
+      "renderer": "opengl",
+      "source": "https://github.com/libretro/dolphin",
+      "sourceRevision": "32c61f9d0e933331bb7087ba57e96883241b4960",
+      "sourceRevisionVerified": true,
+      "releaseReady": true,
+      "sourceRevisionNote": "Exact 36-root preferred-source build, GPL patches and Sys resource notices audited. Full 128 MiB SD native checkpoints, relocation and Minecraft warm/cold final saves passed; original failed save and rejected OSD image retained.",
+      "license": "GPL-2.0-or-later; aggregate GPL-3.0-compatible; per-file SPDX",
+      "licenseUrl": "https://github.com/libretro/dolphin",
+      "documentation": "https://github.com/libretro/dolphin",
+      "binaryOrigin": "source-rebuild",
+      "binaryVersion": "32c61f9d0e933331bb7087ba57e96883241b4960 + SD checkpoint reader sharing/flush",
+      "sourceArtifact": "https://codeload.github.com/libretro/dolphin/tar.gz/32c61f9d0e933331bb7087ba57e96883241b4960",
+      "sourceArtifactSha256": "d5d5131a5da1dd2eae2950c894292a72546aa2cb87f645b89c30aabc8f679432",
+      "platforms": {
+        "windows-x86_64": {
+          "archive": "test-environment/cache/muxi-console/rebuild-dolphin/build-01/public-01/dolphin_libretro.dll.zip",
+          "libraryName": "dolphin_libretro.dll",
+          "url": null,
+          "archiveBytes": 8505083,
+          "archiveSha256": "356f904734e6e6444ad8cb6ed4b9efa044e134e2842eabcaa926d2a7f608f1d9",
+          "libraryBytes": 26692608,
+          "librarySha256": "9519e785433ecb0a4439fc411c3f942c9256e7e7d707f647a6df2992c565d453",
+          "buildScript": "tools/build_dolphin.py",
+          "buildScriptSha256": "342d97568a875da269bc76992dafdcf64c4bbfa96e5bd45e925db216665747e8"
+        }
+      },
+      "previousOfficialBinary": {
+        "archive": "test-environment/cache/muxi-console/expansion/dolphin/official-core.zip",
+        "libraryName": "dolphin_libretro.dll",
+        "url": "https://buildbot.libretro.com/nightly/windows/x86_64/latest/dolphin_libretro.dll.zip",
+        "archiveBytes": 7593357,
+        "archiveSha256": "aade661bf28c582b7f911d204057f2ff627edeb8ca49bcb91f3b94691ef728b3",
+        "libraryBytes": 18948028,
+        "librarySha256": "c278da2d053a0fc328f6b6342bf689eca7a894dba813caaf1ad3839921591083"
+      },
+      "sourceDelivery": {
+        "method": "Complete fixed upstream and recursive submodules, two GPL patches, actual portable single-job build driver and compiler configuration",
+        "archive": "test-environment/cache/muxi-console/rebuild-dolphin/build-01/public-01/dolphin-corresponding-public-source.tar.gz",
+        "format": "tar.gz",
+        "archiveBytes": 87290417,
+        "archiveSha256": "749bd5583fca4ac752acf29adf14761b7b078e1af17dcf3b0669874cec81f99c",
+        "buildReport": "test-environment/cache/muxi-console/rebuild-dolphin/build-01/public-01/rebuild-public-report.json",
+        "buildReportSha256": "40c80912dc92426998942f1daff7bddf7b111868841f44fb9314fcd11ee4890e",
+        "patchesApplied": true
+      },
+      "nativeRuntimeVerification": {
+        "report": "test-environment/cache/muxi-console/expansion/probes/wii-sd-checkpoint-02/result.json",
+        "reportSha256": "e19902e90062b7c46d860ea67552f84407592fe84154052625eb9010a1109772",
+        "checks": 17,
+        "workers": 2,
+        "actualWindowsHandlesSignaled": true,
+        "normalExits": true,
+        "forcedTermination": false,
+        "complete128MiBSdArchivedAndHashVerified": true,
+        "originalOldCoreDiagnosticStateRestored": true,
+        "finalColdCheckpointSaved": true,
+        "minecraftIntegrationTested": false,
+        "commercialCompatibilityClaimed": false
+      },
+      "minecraftIntegrationTested": true,
+      "minecraftVerification": {
+        "ordinary": {
+          "report": "test-environment/client-3/runs/console-expansion-native-05/console-qa/expansion-result.json",
+          "reportSha256": "6e2e7ef53cc5d333f6692c00439457a716d12bd814ddee49d8bc1222124aad7c",
+          "scenarioComplete": true,
+          "checks": 59
+        },
+        "scope": "Original diagnostic programs, actual mapped input and native files, warm/cold final saves; not arbitrary commercial-game compatibility"
+      }
     }
   },
   "pinnedAtUtc": "2026-11-07T17:08:42.254829+00:00",
-  "scope": "Windows x86_64 Muxi Console 0.1.0: MIT original implementation, third-party cores under original licenses with complete corresponding source; no third-party game ROM or original BIOS",
+  "scope": "Windows x86_64 PlayStation 0.2.0: MIT original implementation; third-party cores, derivative patches and runtime components retain their licenses with complete corresponding source; no third-party game ROM or original BIOS",
   "unsupportedSystems": {}
 }

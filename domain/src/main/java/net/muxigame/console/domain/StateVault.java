@@ -12,18 +12,20 @@ import java.util.*;
  */
 public final class StateVault implements AutoCloseable {
     public static final Limits DEFAULT_LIMITS = new Limits(1024L * 1024 * 1024, 32L * 1024 * 1024, 24576, 60000, 60000);
-    private static final int META_MAGIC = 0x53564d31, NAMESPACED_META_MAGIC = 0x53564d32, HEAD_MAGIC = 0x53564831;
+    private static final int META_MAGIC = 0x53564d31, NAMESPACED_META_MAGIC = 0x53564d32, PROFILE_META_MAGIC=0x53564d33, HEAD_MAGIC = 0x53564831;
     private static final long METADATA_CHARGE = 1024;
     public record Limits(long quotaBytes, long maxStateBytes, int chunkBytes, long uploadTimeoutMillis, long retentionMillis) {
         public Limits {
-            if (quotaBytes < 1 || maxStateBytes < 1 || maxStateBytes > 32L * 1024 * 1024 ||
+            if (quotaBytes < 1 || maxStateBytes < 1 || maxStateBytes > 512L * 1024 * 1024 ||
                     maxStateBytes > quotaBytes || chunkBytes < 1 || chunkBytes > 24576 ||
                     uploadTimeoutMillis < 1 || retentionMillis < 1)
                 throw new IllegalArgumentException("Invalid checkpoint storage limits");
         }
     }
     public record Status(UUID uploadId, long offset, long total) { }
-    public record Snapshot(UUID cardUUID, String fingerprint, long frame, String hash, long size, UUID generationID) { }
+    public record Snapshot(UUID cardUUID, String fingerprint, long frame, String hash, long size, UUID generationID,UUID profileGeneration) {
+        public Snapshot(UUID cardUUID,String fingerprint,long frame,String hash,long size,UUID generationID){this(cardUUID,fingerprint,frame,hash,size,generationID,null);}
+    }
     private record Key(UUID card, UUID generation) { }
     private record Head(UUID current, UUID previous) { }
     private static final class Generation {
@@ -32,11 +34,11 @@ public final class StateVault implements AutoCloseable {
         Generation(Snapshot snapshot, long created, long retired) { this.snapshot = snapshot; this.created = created; this.retired = retired; }
     }
     private static final class Upload {
-        final UUID actor, id, card; final String fingerprint, hash; final long frame, total; final Path file;
+        final UUID actor, id, card,profileGeneration; final String fingerprint, hash; final long frame, total; final Path file;
         long offset, lastProgress;
-        Upload(UUID actor, UUID id, UUID card, String fingerprint, long frame, long total, String hash, Path file, long now) {
+        Upload(UUID actor, UUID id, UUID card, String fingerprint, long frame, long total, String hash, Path file, long now,UUID profileGeneration) {
             this.actor = actor; this.id = id; this.card = card; this.fingerprint = fingerprint; this.frame = frame;
-            this.total = total; this.hash = hash; this.file = file; lastProgress = now;
+            this.total = total; this.hash = hash; this.file = file; lastProgress = now;this.profileGeneration=profileGeneration;
         }
         Status status() { return new Status(id, offset, total); }
     }
@@ -72,7 +74,12 @@ public final class StateVault implements AutoCloseable {
 
     public synchronized Status begin(UUID actor, UUID cardUUID, String fingerprint, long frameNumber,
                                      long expectedSize, String expectedSHA, long now) throws IOException {
+        return begin(actor,cardUUID,fingerprint,frameNumber,expectedSize,expectedSHA,now,null);
+    }
+    public synchronized Status begin(UUID actor, UUID cardUUID, String fingerprint, long frameNumber,
+                                     long expectedSize, String expectedSHA, long now,UUID profileGeneration) throws IOException {
         active(); identity(actor); identity(cardUUID); digest(fingerprint); digest(expectedSHA); time(now);
+        if(profileGeneration!=null&&namespace==null)throw new DomainException("save_identity","A native profile binding requires a machine namespace");
         if (frameNumber < 0 || expectedSize < 1 || expectedSize > limits.maxStateBytes()) reject("save_size", "Checkpoint bounds are invalid");
         expire(now);
         if (uploads.containsKey(actor)) reject("save_active", "This actor already has a checkpoint upload");
@@ -80,7 +87,7 @@ public final class StateVault implements AutoCloseable {
         if (charge > limits.quotaBytes() - storedCharge - reservedCharge) reject("save_quota", "Checkpoint storage quota is exhausted");
         UUID id = UUID.randomUUID(); Path file = incoming.resolve(id + ".part");
         try (FileChannel ignored = FileChannel.open(file, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE, LinkOption.NOFOLLOW_LINKS)) { }
-        Upload upload = new Upload(actor, id, cardUUID, fingerprint, frameNumber, expectedSize, expectedSHA, file, now);
+        Upload upload = new Upload(actor, id, cardUUID, fingerprint, frameNumber, expectedSize, expectedSHA, file, now,profileGeneration);
         uploads.put(actor, upload); reservedCharge += charge; return upload.status();
     }
 
@@ -95,7 +102,13 @@ public final class StateVault implements AutoCloseable {
         upload.offset += bytes.length; upload.lastProgress = now; return upload.status();
     }
 
+    @FunctionalInterface interface Publication { void publish() throws IOException; }
+    @FunctionalInterface interface CommitGuard { void publish(Publication publication) throws IOException; }
     public synchronized Snapshot commit(UUID actor, UUID id, long now) throws IOException {
+        return commitGuarded(actor,id,now,Publication::publish);
+    }
+    /** Domain barriers may guard only the small final head publication, after large verification/force I/O. */
+    synchronized Snapshot commitGuarded(UUID actor, UUID id, long now,CommitGuard guard) throws IOException {
         active(); time(now); Upload upload = upload(actor, id, now);
         if (upload.offset != upload.total) reject("save_incomplete", "Checkpoint upload is incomplete");
         if (Files.size(upload.file) != upload.total || !Hashing.sha256(upload.file).equals(upload.hash)) {
@@ -104,7 +117,7 @@ public final class StateVault implements AutoCloseable {
         try (FileChannel file = FileChannel.open(upload.file, StandardOpenOption.WRITE, LinkOption.NOFOLLOW_LINKS)) { file.force(true); }
         prune(now);
         Path folder = cardDirectory(upload.card); UUID generationID = UUID.randomUUID();
-        Snapshot snapshot = new Snapshot(upload.card, upload.fingerprint, upload.frame, upload.hash, upload.total, generationID);
+        Snapshot snapshot = new Snapshot(upload.card, upload.fingerprint, upload.frame, upload.hash, upload.total, generationID,upload.profileGeneration);
         Generation generation = new Generation(snapshot, now, -1); Key key = new Key(upload.card, generationID);
         Head prior = heads.get(upload.card); UUID previous = prior == null ? null : prior.current;
         Files.move(upload.file, payload(snapshot), StandardCopyOption.ATOMIC_MOVE);
@@ -120,8 +133,10 @@ public final class StateVault implements AutoCloseable {
                 if (retired == null) throw new IOException("Previous checkpoint is missing");
                 retired.retired = now; writeGeneration(retired);
             }
-            Head next = new Head(generationID, previous); writeHead(upload.card, next);
-            heads.put(upload.card, next); published = true; return snapshot;
+            Head next = new Head(generationID, previous);boolean[] committed={false};
+            guard.publish(()->{writeHead(upload.card,next);heads.put(upload.card,next);committed[0]=true;});
+            if(!committed[0])throw new IOException("Checkpoint publication guard did not publish");
+            published = true; return snapshot;
         } finally {
             if (!published) {
                 // Atomic head replacement is the sole commit point. Never publish a
@@ -272,18 +287,20 @@ public final class StateVault implements AutoCloseable {
     private void writeGeneration(Generation generation) throws IOException {
         Snapshot s = generation.snapshot;
         atomicMetadata(metadata(s), out -> {
-            out.writeInt(namespace==null?META_MAGIC:NAMESPACED_META_MAGIC);if(namespace!=null)out.writeUTF(namespace);uuid(out, s.cardUUID()); uuid(out, s.generationID()); out.writeUTF(s.fingerprint());
+            out.writeInt(s.profileGeneration()!=null?PROFILE_META_MAGIC:namespace==null?META_MAGIC:NAMESPACED_META_MAGIC);if(namespace!=null)out.writeUTF(namespace);uuid(out, s.cardUUID()); uuid(out, s.generationID()); out.writeUTF(s.fingerprint());
             out.writeLong(s.frame()); out.writeUTF(s.hash()); out.writeLong(s.size()); out.writeLong(generation.created); out.writeLong(generation.retired);
+            if(s.profileGeneration()!=null)uuid(out,s.profileGeneration());
         });
     }
     private Generation readGeneration(Path file) throws IOException {
         try (DataInputStream in = metadataInput(file)) {
-            int magic=in.readInt();if(namespace==null?magic!=META_MAGIC:magic!=NAMESPACED_META_MAGIC||!namespace.equals(in.readUTF()))throw new IOException("Invalid checkpoint metadata namespace");
+            int magic=in.readInt();if(namespace==null?magic!=META_MAGIC:(magic!=NAMESPACED_META_MAGIC&&magic!=PROFILE_META_MAGIC)||!namespace.equals(in.readUTF()))throw new IOException("Invalid checkpoint metadata namespace");
             UUID card = uuid(in), id = uuid(in); String fingerprint = in.readUTF(); long frame = in.readLong(); String hash = in.readUTF();
             long size = in.readLong(), created = in.readLong(), retired = in.readLong();
+            UUID profileGeneration=magic==PROFILE_META_MAGIC?uuid(in):null;
             if (!validDigest(fingerprint) || !validDigest(hash) || frame < 0 || size < 1 || size > limits.maxStateBytes() || created < 0 || retired < -1 || in.read() != -1)
                 throw new IOException("Invalid checkpoint metadata bounds");
-            return new Generation(new Snapshot(card, fingerprint, frame, hash, size, id), created, retired);
+            return new Generation(new Snapshot(card, fingerprint, frame, hash, size, id,profileGeneration), created, retired);
         }
     }
     private DataInputStream metadataInput(Path file) throws IOException {

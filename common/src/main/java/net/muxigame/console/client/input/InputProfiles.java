@@ -190,6 +190,7 @@ public final class InputProfiles {
                 if (guid.length() > 128) throw new IOException("Invalid gamepad identity");
                 int joystick = stored.has("joystick") ? stored.get("joystick").getAsInt() : -1;
                 profile.setGamepad(guid, joystick);
+                if(stored.has("controllerDevice"))profile.setControllerDevice(stored.get("controllerDevice").getAsInt());
             }
             loaded.put(platform, profile);
         }
@@ -208,6 +209,7 @@ public final class InputProfiles {
             JsonArray axes=new JsonArray(),buttons=new JsonArray();for(int i=0;i<8;i++)axes.add(profile.axisBinding(i));for(int i=0;i<16;i++)buttons.add(profile.gamepadButton(i));stored.add("axes",axes);stored.add("gamepadButtons",buttons);
             stored.addProperty("gamepadGuid", profile.gamepadGuid());
             stored.addProperty("joystick", profile.preferredJoystick());
+            stored.addProperty("controllerDevice",profile.controllerDevice());
             output.add(platform.id(), stored);
         }
         root.add("platforms", output);
@@ -235,6 +237,7 @@ public final class InputProfiles {
         private boolean gamepadEnabled;
         private String guid = "";
         private int joystick = -1;
+        private int controllerDevice=1;
         public Profile(){this(Platform.NES);}
         public Profile(Platform platform){
             pads[12]=15;pads[13]=16;
@@ -262,6 +265,8 @@ public final class InputProfiles {
         public void setEnabled(boolean enabled) { gamepadEnabled = enabled; }
         public String gamepadGuid() { return guid; }
         public int preferredJoystick() { return joystick; }
+        public int controllerDevice(){return controllerDevice;}
+        public void setControllerDevice(int value){if(!java.util.Set.of(1,513,769,1025,1793,2305).contains(value))throw new IllegalArgumentException("Unsupported controller device");controllerDevice=value;}
         public void setGamepad(String value, int id) {
             if (value == null || value.length() > 128 || id < -1 || id > GLFW.GLFW_JOYSTICK_LAST)
                 throw new IllegalArgumentException("Invalid gamepad selection");

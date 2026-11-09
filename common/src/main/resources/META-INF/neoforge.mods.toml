@@ -3,10 +3,10 @@ loaderVersion="[4,)"
 license="MIT; third-party components retain their own licenses"
 [[mods]]
 modId="muxi_console"
-version="0.1.0"
-displayName="木犀游戏机 · Muxi Console"
+version="0.2.0"
+displayName="PlayStation"
 authors="Muxigame"
-description="Independently implemented console emulation, original hardware, transferable cartridges and multiplayer."
+description="Original console hardware, transferable cartridges, per-machine saves and multiplayer screens."
 [[dependencies.muxi_console]]
 modId="neoforge"
 type="required"

@@ -32,7 +32,9 @@ public final class DomainTests {
             inspector();
             contentStore();
             uploads();
+            loadingDeadline();
             permissionsAndInput();
+            freshRoomEpochs();
             checkpoints();
             System.out.println("Domain tests: " + checks + " checks passed; synthetic fixtures only");
         } finally {
@@ -43,10 +45,11 @@ public final class DomainTests {
     }
 
     private static void platformsAndHashing() throws Exception {
-        eq(21, Platform.values().length, "all requested platforms are registered");
+        eq(24, Platform.values().length, "registered platforms include the three new backends under development");
         String[] original={"nes","snes","gb","gbc","gba","md","n64","sms","gg","sg1000","pce","a2600","a7800","lynx","ngp","ngpc","ws","wsc","vb"};
         for(int i=0;i<original.length;i++)eq(i+1,Platform.fromId(original[i]).customModelData(),"existing model ids remain stable");
         eq(20,Platform.FDS.customModelData(),"FDS appended without renumbering");eq(21,Platform.ARCADE.customModelData(),"Arcade appended without renumbering");
+        eq(23,Platform.NDS.customModelData(),"new platforms skip the existing two-player hardware selector");eq(24,Platform.N3DS.customModelData(),"3DS stable selector");eq(25,Platform.WII.customModelData(),"Wii stable selector");
         Set<String> ids = new HashSet<>();
         Set<Integer> models = new HashSet<>();
         for (Platform platform : Platform.values()) {
@@ -159,6 +162,20 @@ public final class DomainTests {
         checks++;
     }
 
+    private static void loadingDeadline() throws Exception {
+        LoadingWatch slow=new LoadingWatch(0);
+        slow.observe("downloading",1024,100000,120000);
+        check(!slow.expired(180000), "actual slow download survives the old sixty-second cutoff");
+        slow.observe("downloading",1024,100000,290000);
+        check(slow.expired(300001), "unchanged heartbeat does not keep a stalled download alive");
+        LoadingWatch startup=new LoadingWatch(0);
+        startup.observe("starting",0,0,1000);
+        check(!startup.expired(601000), "native core startup gets its own bounded preparation window");
+        check(startup.expired(601001), "a stuck core still expires");
+        reject("progress", () -> startup.observe("starting",2,1,602000));
+        reject("progress", () -> startup.observe("unknown",0,0,602000));
+    }
+
     private static void uploads() throws Exception {
         byte[] payload = nes(); String sha = Hashing.sha256(payload);
         ContentStore store = new ContentStore(scratch.resolve("upload-content"));
@@ -200,6 +217,14 @@ public final class DomainTests {
             eq(0, manager.activeCount(), "committed transaction retired");
             eq(0L, manager.reservedBytes(), "committed transaction releases reservation");
             check(store.has(sha), "committed content atomically visible");
+            var reuse = manager.begin(HOST, request, 41000);
+            eq((long)payload.length, reuse.offset(), "known content skips the entire upload body");
+            eq(0L, manager.reservedBytes(), "known content reserves no duplicate payload space");
+            try (var files = Files.list(staging)) { eq(0L, files.filter(p -> p.toString().endsWith(".part")).count(), "known content creates no duplicate staging file"); }
+            reject("upload", () -> manager.finish(PLAYER, reuse.id(), 41001));
+            eq(sha, manager.finish(HOST, reuse.id(), 41002).sha256(), "known content finishes without network chunks");
+            eq((long)payload.length, store.usedBytes(), "repeated burning retains one content object");
+            reject("content", () -> manager.begin(HOST, new UploadManager.Request("different.nes", Platform.NES, payload.length+1, sha, true), 41003));
             try (var files = Files.list(staging)) { eq(0L, files.filter(p -> p.toString().endsWith(".part")).count(), "committed staging payload removed"); }
             var expiring = manager.begin(HOST, request, 50000);
             eq(0, manager.expire(109999), "timeout not premature");
@@ -230,6 +255,10 @@ public final class DomainTests {
         }
     }
 
+    private static void freshRoomEpochs()throws Exception{
+        UUID machine=UUID.randomUUID();Cartridge media=card();ConsoleSession previous=new ConsoleSession(machine,media,HOST,1,1L<<32);long oldEpoch=previous.epoch();previous.leave(HOST);
+        ConsoleSession current=new ConsoleSession(machine,media,HOST,1,2L<<32);check(current.epoch()!=oldEpoch&&current.epoch()!=previous.epoch(),"same machine restart cannot reuse an old room or leave epoch");InputTimeline input=new InputTimeline(current,6);reject("epoch",()->input.submit(HOST,oldEpoch,0,0,0,1));input.submit(HOST,current.epoch(),0,0,0,1);eq(1,input.advance().mask(0),"current generation still accepts its own controller");reject("session",()->new ConsoleSession(machine,media,HOST,1,0));
+    }
     private static void permissionsAndInput() throws Exception {
         Cartridge card = card();
         ConsoleSession session = new ConsoleSession(UUID.randomUUID(), card, HOST, 4);

@@ -1423,7 +1423,7 @@
       "platform": "nes",
       "cmd": 1,
       "name": "NES",
-      "zh_name": "红白机",
+      "zh_name": "NES · 红白机",
       "form_factor": "desktop",
       "geometry": "muxi_console:block/desk_console_nes",
       "item": "muxi_console:item/desk_console_nes",
@@ -1499,7 +1499,7 @@
       "platform": "snes",
       "cmd": 2,
       "name": "SNES",
-      "zh_name": "超级任天堂",
+      "zh_name": "SNES · 超级任天堂",
       "form_factor": "desktop",
       "geometry": "muxi_console:block/desk_console_snes",
       "item": "muxi_console:item/desk_console_snes",
@@ -1575,7 +1575,7 @@
       "platform": "gb",
       "cmd": 3,
       "name": "GB",
-      "zh_name": "Game Boy",
+      "zh_name": "GB · Game Boy",
       "form_factor": "handheld",
       "geometry": "muxi_console:block/desk_console_gb",
       "item": "muxi_console:item/handheld_gb",
@@ -2183,7 +2183,7 @@
       "platform": "gbc",
       "cmd": 4,
       "name": "GBC",
-      "zh_name": "Game Boy Color",
+      "zh_name": "GBC · Game Boy Color",
       "form_factor": "handheld",
       "geometry": "muxi_console:block/desk_console_gbc",
       "item": "muxi_console:item/handheld_gbc",
@@ -2791,7 +2791,7 @@
       "platform": "gba",
       "cmd": 5,
       "name": "GBA",
-      "zh_name": "Game Boy Advance",
+      "zh_name": "GBA · Game Boy Advance",
       "form_factor": "handheld",
       "geometry": "muxi_console:block/desk_console_gba",
       "item": "muxi_console:item/handheld_gba",
@@ -3457,7 +3457,7 @@
       "platform": "md",
       "cmd": 6,
       "name": "MD",
-      "zh_name": "Mega Drive",
+      "zh_name": "MD · Mega Drive",
       "form_factor": "desktop",
       "geometry": "muxi_console:block/desk_console_md",
       "item": "muxi_console:item/desk_console_md",
@@ -3533,7 +3533,7 @@
       "platform": "n64",
       "cmd": 7,
       "name": "N64",
-      "zh_name": "Nintendo 64",
+      "zh_name": "N64 · Nintendo 64",
       "form_factor": "desktop",
       "geometry": "muxi_console:block/desk_console_n64",
       "item": "muxi_console:item/desk_console_n64",
@@ -3609,7 +3609,7 @@
       "platform": "sms",
       "cmd": 8,
       "name": "SMS",
-      "zh_name": "Master System",
+      "zh_name": "SMS · Master System",
       "form_factor": "desktop",
       "geometry": "muxi_console:block/desk_console_sms",
       "item": "muxi_console:item/desk_console_sms",
@@ -3685,7 +3685,7 @@
       "platform": "gg",
       "cmd": 9,
       "name": "GG",
-      "zh_name": "Game Gear",
+      "zh_name": "GG · Game Gear",
       "form_factor": "handheld",
       "geometry": "muxi_console:block/desk_console_gg",
       "item": "muxi_console:item/handheld_gg",
@@ -4205,8 +4205,8 @@
     {
       "platform": "sg1000",
       "cmd": 10,
-      "name": "SG1",
-      "zh_name": "SG-1000",
+      "name": "SG-1000",
+      "zh_name": "SG-1000 · SG-1000",
       "form_factor": "desktop",
       "geometry": "muxi_console:block/desk_console_sg1000",
       "item": "muxi_console:item/desk_console_sg1000",
@@ -4282,7 +4282,7 @@
       "platform": "pce",
       "cmd": 11,
       "name": "PCE",
-      "zh_name": "PC Engine",
+      "zh_name": "PCE · PC Engine",
       "form_factor": "desktop",
       "geometry": "muxi_console:block/desk_console_pce",
       "item": "muxi_console:item/desk_console_pce",
@@ -4357,8 +4357,8 @@
     {
       "platform": "a2600",
       "cmd": 12,
-      "name": "A26",
-      "zh_name": "Atari 2600",
+      "name": "A2600",
+      "zh_name": "A2600 · Atari 2600",
       "form_factor": "desktop",
       "geometry": "muxi_console:block/desk_console_a2600",
       "item": "muxi_console:item/desk_console_a2600",
@@ -4433,8 +4433,8 @@
     {
       "platform": "a7800",
       "cmd": 13,
-      "name": "A78",
-      "zh_name": "Atari 7800",
+      "name": "A7800",
+      "zh_name": "A7800 · Atari 7800",
       "form_factor": "desktop",
       "geometry": "muxi_console:block/desk_console_a7800",
       "item": "muxi_console:item/desk_console_a7800",
@@ -4509,8 +4509,8 @@
     {
       "platform": "lynx",
       "cmd": 14,
-      "name": "LNX",
-      "zh_name": "Atari Lynx",
+      "name": "LYNX",
+      "zh_name": "LYNX · Atari Lynx",
       "form_factor": "handheld",
       "geometry": "muxi_console:block/desk_console_lynx",
       "item": "muxi_console:item/handheld_lynx",
@@ -5321,7 +5321,7 @@
       "platform": "ngp",
       "cmd": 15,
       "name": "NGP",
-      "zh_name": "Neo Geo Pocket",
+      "zh_name": "NGP · Neo Geo Pocket",
       "form_factor": "handheld",
       "geometry": "muxi_console:block/desk_console_ngp",
       "item": "muxi_console:item/handheld_ngp",
@@ -5785,8 +5785,8 @@
     {
       "platform": "ngpc",
       "cmd": 16,
-      "name": "NPC",
-      "zh_name": "Neo Geo Pocket Color",
+      "name": "NGPC",
+      "zh_name": "NGPC · Neo Geo Pocket Color",
       "form_factor": "handheld",
       "geometry": "muxi_console:block/desk_console_ngpc",
       "item": "muxi_console:item/handheld_ngpc",
@@ -6251,7 +6251,7 @@
       "platform": "ws",
       "cmd": 17,
       "name": "WS",
-      "zh_name": "WonderSwan",
+      "zh_name": "WS · WonderSwan",
       "form_factor": "handheld",
       "geometry": "muxi_console:block/desk_console_ws",
       "item": "muxi_console:item/handheld_ws",
@@ -6776,7 +6776,7 @@
       "platform": "wsc",
       "cmd": 18,
       "name": "WSC",
-      "zh_name": "WonderSwan Color",
+      "zh_name": "WSC · WonderSwan Color",
       "form_factor": "handheld",
       "geometry": "muxi_console:block/desk_console_wsc",
       "item": "muxi_console:item/handheld_wsc",
@@ -7301,7 +7301,7 @@
       "platform": "vb",
       "cmd": 19,
       "name": "VB",
-      "zh_name": "Virtual Boy",
+      "zh_name": "VB · Virtual Boy",
       "form_factor": "viewer",
       "geometry": "muxi_console:block/desk_console_vb",
       "item": "muxi_console:item/handheld_vb",
@@ -7420,7 +7420,7 @@
       "platform": "fds",
       "cmd": 20,
       "name": "FDS",
-      "zh_name": "Famicom Disk System",
+      "zh_name": "FDS · Famicom Disk System",
       "form_factor": "desktop",
       "geometry": "muxi_console:block/desk_console_fds",
       "item": "muxi_console:item/desk_console_fds",
@@ -7495,8 +7495,8 @@
     {
       "platform": "arcade",
       "cmd": 21,
-      "name": "ARC",
-      "zh_name": "街机",
+      "name": "ARCADE",
+      "zh_name": "ARCADE · 街机",
       "form_factor": "arcade",
       "geometry": "muxi_console:block/desk_console_arcade",
       "item": "muxi_console:item/desk_console_arcade",
@@ -8225,6 +8225,1932 @@
         ]
       ],
       "cabinet_seats": 1
+    },
+    {
+      "platform": "nds",
+      "cmd": 23,
+      "name": "NDS",
+      "zh_name": "NDS · Nintendo DS",
+      "form_factor": "handheld",
+      "geometry": "muxi_console:block/desk_console_nds",
+      "item": "muxi_console:item/handheld_nds",
+      "media": "muxi_console:item/cartridge_nds",
+      "media_kind": "card",
+      "controller_ports": 1,
+      "silhouette": "open two-leaf charcoal clamshell with two 4:3 LCDs, rear card mouth and stepped hinge",
+      "bounds": {
+        "min": [
+          0.8,
+          0.55,
+          5.615
+        ],
+        "max": [
+          15.2,
+          15.45,
+          8.57
+        ]
+      },
+      "media_bounds": {
+        "min": [
+          5.25,
+          4.3,
+          7.36
+        ],
+        "max": [
+          10.75,
+          11.3,
+          8.55
+        ]
+      },
+      "media_slot": {
+        "width": 2.8,
+        "base": [
+          8,
+          6.2,
+          8.2
+        ],
+        "rotation": [
+          0,
+          180,
+          0
+        ],
+        "align": "bottom",
+        "depth_scale": 1,
+        "clip": {
+          "axis": "y",
+          "keep": "above",
+          "value": 8.05
+        }
+      },
+      "control_surfaces": [
+        {
+          "button": 4,
+          "from": [
+            13.275,
+            5.375,
+            5.65
+          ],
+          "to": [
+            13.825000000000001,
+            5.925,
+            5.65
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 5,
+          "from": [
+            13.275,
+            4.2749999999999995,
+            5.65
+          ],
+          "to": [
+            13.825000000000001,
+            4.824999999999999,
+            5.65
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 6,
+          "from": [
+            13.825000000000001,
+            4.824999999999999,
+            5.65
+          ],
+          "to": [
+            14.375,
+            5.375,
+            5.65
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 7,
+          "from": [
+            12.725000000000001,
+            4.824999999999999,
+            5.65
+          ],
+          "to": [
+            13.275,
+            5.375,
+            5.65
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 8,
+          "from": [
+            1.405,
+            4.6000000000000005,
+            5.68
+          ],
+          "to": [
+            1.7950000000000002,
+            5.2,
+            5.68
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 8,
+          "from": [
+            1.3,
+            4.705,
+            5.68
+          ],
+          "to": [
+            1.9000000000000001,
+            5.095000000000001,
+            5.68
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 0,
+          "from": [
+            2.355,
+            3.6500000000000004,
+            5.68
+          ],
+          "to": [
+            2.7449999999999997,
+            4.25,
+            5.68
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 0,
+          "from": [
+            2.25,
+            3.7550000000000003,
+            5.68
+          ],
+          "to": [
+            2.8499999999999996,
+            4.1450000000000005,
+            5.68
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 9,
+          "from": [
+            2.355,
+            5.55,
+            5.68
+          ],
+          "to": [
+            2.7449999999999997,
+            6.1499999999999995,
+            5.68
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 9,
+          "from": [
+            2.25,
+            5.654999999999999,
+            5.68
+          ],
+          "to": [
+            2.8499999999999996,
+            6.045,
+            5.68
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 1,
+          "from": [
+            3.305,
+            4.6000000000000005,
+            5.68
+          ],
+          "to": [
+            3.695,
+            5.2,
+            5.68
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 1,
+          "from": [
+            3.2,
+            4.705,
+            5.68
+          ],
+          "to": [
+            3.8,
+            5.095000000000001,
+            5.68
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 3,
+          "from": [
+            1.8735,
+            2.05,
+            5.82
+          ],
+          "to": [
+            3.1765,
+            2.26,
+            5.82
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 3,
+          "from": [
+            1.8,
+            2.1235,
+            5.82
+          ],
+          "to": [
+            1.8735,
+            2.1864999999999997,
+            5.82
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 3,
+          "from": [
+            3.1765,
+            2.1235,
+            5.82
+          ],
+          "to": [
+            3.25,
+            2.1864999999999997,
+            5.82
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 2,
+          "from": [
+            1.8735,
+            1.35,
+            5.82
+          ],
+          "to": [
+            3.1765,
+            1.56,
+            5.82
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 2,
+          "from": [
+            1.8,
+            1.4235,
+            5.82
+          ],
+          "to": [
+            1.8735,
+            1.4865000000000002,
+            5.82
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 2,
+          "from": [
+            3.1765,
+            1.4235,
+            5.82
+          ],
+          "to": [
+            3.25,
+            1.4865000000000002,
+            5.82
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 11,
+          "from": [
+            0.9,
+            8.37,
+            6.55
+          ],
+          "to": [
+            4.0,
+            8.37,
+            8.32
+          ],
+          "facing": "up",
+          "port": 0
+        },
+        {
+          "button": 10,
+          "from": [
+            12.0,
+            8.37,
+            6.55
+          ],
+          "to": [
+            15.1,
+            8.37,
+            8.32
+          ],
+          "facing": "up",
+          "port": 0
+        }
+      ],
+      "button_regions": [
+        {
+          "button": 4,
+          "port": 0,
+          "from": [
+            12.725000000000001,
+            4.824999999999999,
+            5.65
+          ],
+          "to": [
+            14.375,
+            5.375,
+            6.8500000000000005
+          ]
+        },
+        {
+          "button": 4,
+          "port": 0,
+          "from": [
+            13.275,
+            4.2749999999999995,
+            5.65
+          ],
+          "to": [
+            13.825000000000001,
+            5.925,
+            6.8500000000000005
+          ]
+        },
+        {
+          "button": 4,
+          "port": 0,
+          "from": [
+            13.34,
+            4.89,
+            5.615
+          ],
+          "to": [
+            13.760000000000002,
+            5.31,
+            5.67
+          ]
+        },
+        {
+          "button": 5,
+          "port": 0,
+          "from": [
+            12.725000000000001,
+            4.824999999999999,
+            5.65
+          ],
+          "to": [
+            14.375,
+            5.375,
+            6.8500000000000005
+          ]
+        },
+        {
+          "button": 5,
+          "port": 0,
+          "from": [
+            13.275,
+            4.2749999999999995,
+            5.65
+          ],
+          "to": [
+            13.825000000000001,
+            5.925,
+            6.8500000000000005
+          ]
+        },
+        {
+          "button": 5,
+          "port": 0,
+          "from": [
+            13.34,
+            4.89,
+            5.615
+          ],
+          "to": [
+            13.760000000000002,
+            5.31,
+            5.67
+          ]
+        },
+        {
+          "button": 6,
+          "port": 0,
+          "from": [
+            12.725000000000001,
+            4.824999999999999,
+            5.65
+          ],
+          "to": [
+            14.375,
+            5.375,
+            6.8500000000000005
+          ]
+        },
+        {
+          "button": 6,
+          "port": 0,
+          "from": [
+            13.275,
+            4.2749999999999995,
+            5.65
+          ],
+          "to": [
+            13.825000000000001,
+            5.925,
+            6.8500000000000005
+          ]
+        },
+        {
+          "button": 6,
+          "port": 0,
+          "from": [
+            13.34,
+            4.89,
+            5.615
+          ],
+          "to": [
+            13.760000000000002,
+            5.31,
+            5.67
+          ]
+        },
+        {
+          "button": 7,
+          "port": 0,
+          "from": [
+            12.725000000000001,
+            4.824999999999999,
+            5.65
+          ],
+          "to": [
+            14.375,
+            5.375,
+            6.8500000000000005
+          ]
+        },
+        {
+          "button": 7,
+          "port": 0,
+          "from": [
+            13.275,
+            4.2749999999999995,
+            5.65
+          ],
+          "to": [
+            13.825000000000001,
+            5.925,
+            6.8500000000000005
+          ]
+        },
+        {
+          "button": 7,
+          "port": 0,
+          "from": [
+            13.34,
+            4.89,
+            5.615
+          ],
+          "to": [
+            13.760000000000002,
+            5.31,
+            5.67
+          ]
+        },
+        {
+          "button": 8,
+          "port": 0,
+          "from": [
+            1.405,
+            4.6000000000000005,
+            5.68
+          ],
+          "to": [
+            1.7950000000000002,
+            5.2,
+            6.359999999999999
+          ]
+        },
+        {
+          "button": 8,
+          "port": 0,
+          "from": [
+            1.3,
+            4.705,
+            5.68
+          ],
+          "to": [
+            1.9000000000000001,
+            5.095000000000001,
+            6.359999999999999
+          ]
+        },
+        {
+          "button": 0,
+          "port": 0,
+          "from": [
+            2.355,
+            3.6500000000000004,
+            5.68
+          ],
+          "to": [
+            2.7449999999999997,
+            4.25,
+            6.359999999999999
+          ]
+        },
+        {
+          "button": 0,
+          "port": 0,
+          "from": [
+            2.25,
+            3.7550000000000003,
+            5.68
+          ],
+          "to": [
+            2.8499999999999996,
+            4.1450000000000005,
+            6.359999999999999
+          ]
+        },
+        {
+          "button": 9,
+          "port": 0,
+          "from": [
+            2.355,
+            5.55,
+            5.68
+          ],
+          "to": [
+            2.7449999999999997,
+            6.1499999999999995,
+            6.359999999999999
+          ]
+        },
+        {
+          "button": 9,
+          "port": 0,
+          "from": [
+            2.25,
+            5.654999999999999,
+            5.68
+          ],
+          "to": [
+            2.8499999999999996,
+            6.045,
+            6.359999999999999
+          ]
+        },
+        {
+          "button": 1,
+          "port": 0,
+          "from": [
+            3.305,
+            4.6000000000000005,
+            5.68
+          ],
+          "to": [
+            3.695,
+            5.2,
+            6.359999999999999
+          ]
+        },
+        {
+          "button": 1,
+          "port": 0,
+          "from": [
+            3.2,
+            4.705,
+            5.68
+          ],
+          "to": [
+            3.8,
+            5.095000000000001,
+            6.359999999999999
+          ]
+        },
+        {
+          "button": 3,
+          "port": 0,
+          "from": [
+            1.8735,
+            2.05,
+            5.82
+          ],
+          "to": [
+            3.1765,
+            2.26,
+            6.2700000000000005
+          ]
+        },
+        {
+          "button": 3,
+          "port": 0,
+          "from": [
+            1.8,
+            2.1235,
+            5.82
+          ],
+          "to": [
+            1.8735,
+            2.1864999999999997,
+            6.2700000000000005
+          ]
+        },
+        {
+          "button": 3,
+          "port": 0,
+          "from": [
+            3.1765,
+            2.1235,
+            5.82
+          ],
+          "to": [
+            3.25,
+            2.1864999999999997,
+            6.2700000000000005
+          ]
+        },
+        {
+          "button": 2,
+          "port": 0,
+          "from": [
+            1.8735,
+            1.35,
+            5.82
+          ],
+          "to": [
+            3.1765,
+            1.56,
+            6.2700000000000005
+          ]
+        },
+        {
+          "button": 2,
+          "port": 0,
+          "from": [
+            1.8,
+            1.4235,
+            5.82
+          ],
+          "to": [
+            1.8735,
+            1.4865000000000002,
+            6.2700000000000005
+          ]
+        },
+        {
+          "button": 2,
+          "port": 0,
+          "from": [
+            3.1765,
+            1.4235,
+            5.82
+          ],
+          "to": [
+            3.25,
+            1.4865000000000002,
+            6.2700000000000005
+          ]
+        },
+        {
+          "button": 11,
+          "port": 0,
+          "from": [
+            0.9,
+            8.0,
+            6.55
+          ],
+          "to": [
+            4.0,
+            8.37,
+            8.32
+          ]
+        },
+        {
+          "button": 10,
+          "port": 0,
+          "from": [
+            12.0,
+            8.0,
+            6.55
+          ],
+          "to": [
+            15.1,
+            8.37,
+            8.32
+          ]
+        }
+      ],
+      "screen_plane": null,
+      "review": {
+        "row": 4,
+        "column": 2,
+        "station": [
+          8,
+          64,
+          28
+        ],
+        "camera_offset": [
+          2.8,
+          2.0,
+          -3.9
+        ],
+        "camera_pitch": 20,
+        "image": "23-nds.png"
+      },
+      "screen_planes": [
+        {
+          "from": [
+            4.4,
+            9.1,
+            6.04
+          ],
+          "to": [
+            11.6,
+            14.5,
+            6.04
+          ],
+          "facing": "north",
+          "surface": "top",
+          "native_size": [
+            256,
+            192
+          ],
+          "touchable": false
+        },
+        {
+          "from": [
+            4.4,
+            2.1,
+            5.94
+          ],
+          "to": [
+            11.6,
+            7.5,
+            5.94
+          ],
+          "facing": "north",
+          "surface": "bottom",
+          "native_size": [
+            256,
+            192
+          ],
+          "touchable": true
+        }
+      ]
+    },
+    {
+      "platform": "n3ds",
+      "cmd": 24,
+      "name": "3DS",
+      "zh_name": "3DS · Nintendo 3DS",
+      "form_factor": "handheld",
+      "geometry": "muxi_console:block/desk_console_n3ds",
+      "item": "muxi_console:item/handheld_n3ds",
+      "media": "muxi_console:item/cartridge_n3ds",
+      "media_kind": "card",
+      "controller_ports": 1,
+      "silhouette": "wide teal clamshell with a 5:3 upper LCD, 4:3 lower touchscreen and separate circle pad",
+      "bounds": {
+        "min": [
+          0.55,
+          0.55,
+          5.59
+        ],
+        "max": [
+          15.45,
+          15.45,
+          8.57
+        ]
+      },
+      "media_bounds": {
+        "min": [
+          5.05,
+          4.3,
+          7.36
+        ],
+        "max": [
+          11.549999999999999,
+          11.3,
+          8.55
+        ]
+      },
+      "media_slot": {
+        "width": 3.0,
+        "base": [
+          8,
+          6.2,
+          8.2
+        ],
+        "rotation": [
+          0,
+          180,
+          0
+        ],
+        "align": "bottom",
+        "depth_scale": 1,
+        "clip": {
+          "axis": "y",
+          "keep": "above",
+          "value": 8.05
+        }
+      },
+      "control_surfaces": [
+        {
+          "button": 4,
+          "from": [
+            13.275,
+            3.8249999999999997,
+            5.65
+          ],
+          "to": [
+            13.825000000000001,
+            4.375,
+            5.65
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 5,
+          "from": [
+            13.275,
+            2.7249999999999996,
+            5.65
+          ],
+          "to": [
+            13.825000000000001,
+            3.275,
+            5.65
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 6,
+          "from": [
+            13.825000000000001,
+            3.275,
+            5.65
+          ],
+          "to": [
+            14.375,
+            3.8249999999999997,
+            5.65
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 7,
+          "from": [
+            12.725000000000001,
+            3.275,
+            5.65
+          ],
+          "to": [
+            13.275,
+            3.8249999999999997,
+            5.65
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 8,
+          "from": [
+            1.405,
+            4.6000000000000005,
+            5.68
+          ],
+          "to": [
+            1.7950000000000002,
+            5.2,
+            5.68
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 8,
+          "from": [
+            1.3,
+            4.705,
+            5.68
+          ],
+          "to": [
+            1.9000000000000001,
+            5.095000000000001,
+            5.68
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 0,
+          "from": [
+            2.355,
+            3.6500000000000004,
+            5.68
+          ],
+          "to": [
+            2.7449999999999997,
+            4.25,
+            5.68
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 0,
+          "from": [
+            2.25,
+            3.7550000000000003,
+            5.68
+          ],
+          "to": [
+            2.8499999999999996,
+            4.1450000000000005,
+            5.68
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 9,
+          "from": [
+            2.355,
+            5.55,
+            5.68
+          ],
+          "to": [
+            2.7449999999999997,
+            6.1499999999999995,
+            5.68
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 9,
+          "from": [
+            2.25,
+            5.654999999999999,
+            5.68
+          ],
+          "to": [
+            2.8499999999999996,
+            6.045,
+            5.68
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 1,
+          "from": [
+            3.305,
+            4.6000000000000005,
+            5.68
+          ],
+          "to": [
+            3.695,
+            5.2,
+            5.68
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 1,
+          "from": [
+            3.2,
+            4.705,
+            5.68
+          ],
+          "to": [
+            3.8,
+            5.095000000000001,
+            5.68
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 3,
+          "from": [
+            1.8735,
+            2.05,
+            5.82
+          ],
+          "to": [
+            3.1765,
+            2.26,
+            5.82
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 3,
+          "from": [
+            1.8,
+            2.1235,
+            5.82
+          ],
+          "to": [
+            1.8735,
+            2.1864999999999997,
+            5.82
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 3,
+          "from": [
+            3.1765,
+            2.1235,
+            5.82
+          ],
+          "to": [
+            3.25,
+            2.1864999999999997,
+            5.82
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 2,
+          "from": [
+            1.8735,
+            1.35,
+            5.82
+          ],
+          "to": [
+            3.1765,
+            1.56,
+            5.82
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 2,
+          "from": [
+            1.8,
+            1.4235,
+            5.82
+          ],
+          "to": [
+            1.8735,
+            1.4865000000000002,
+            5.82
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 2,
+          "from": [
+            3.1765,
+            1.4235,
+            5.82
+          ],
+          "to": [
+            3.25,
+            1.4865000000000002,
+            5.82
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 4,
+          "from": [
+            13.366666666666667,
+            6.683333333333334,
+            5.59
+          ],
+          "to": [
+            13.733333333333334,
+            7.05,
+            5.59
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 5,
+          "from": [
+            13.366666666666667,
+            5.95,
+            5.59
+          ],
+          "to": [
+            13.733333333333334,
+            6.316666666666666,
+            5.59
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 6,
+          "from": [
+            13.733333333333334,
+            6.316666666666666,
+            5.59
+          ],
+          "to": [
+            14.100000000000001,
+            6.683333333333334,
+            5.59
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 7,
+          "from": [
+            13.0,
+            6.316666666666666,
+            5.59
+          ],
+          "to": [
+            13.366666666666667,
+            6.683333333333334,
+            5.59
+          ],
+          "facing": "north",
+          "port": 0
+        },
+        {
+          "button": 11,
+          "from": [
+            0.9,
+            8.37,
+            6.55
+          ],
+          "to": [
+            4.0,
+            8.37,
+            8.32
+          ],
+          "facing": "up",
+          "port": 0
+        },
+        {
+          "button": 10,
+          "from": [
+            12.0,
+            8.37,
+            6.55
+          ],
+          "to": [
+            15.1,
+            8.37,
+            8.32
+          ],
+          "facing": "up",
+          "port": 0
+        },
+        {
+          "button": 13,
+          "from": [
+            3.8,
+            8.48,
+            7.55
+          ],
+          "to": [
+            5.25,
+            8.48,
+            8.45
+          ],
+          "facing": "up",
+          "port": 0
+        },
+        {
+          "button": 12,
+          "from": [
+            10.75,
+            8.48,
+            7.55
+          ],
+          "to": [
+            12.2,
+            8.48,
+            8.45
+          ],
+          "facing": "up",
+          "port": 0
+        }
+      ],
+      "button_regions": [
+        {
+          "button": 4,
+          "port": 0,
+          "from": [
+            12.725000000000001,
+            3.275,
+            5.65
+          ],
+          "to": [
+            14.375,
+            3.8249999999999997,
+            6.8500000000000005
+          ]
+        },
+        {
+          "button": 4,
+          "port": 0,
+          "from": [
+            13.275,
+            2.7249999999999996,
+            5.65
+          ],
+          "to": [
+            13.825000000000001,
+            4.375,
+            6.8500000000000005
+          ]
+        },
+        {
+          "button": 4,
+          "port": 0,
+          "from": [
+            13.34,
+            3.34,
+            5.615
+          ],
+          "to": [
+            13.760000000000002,
+            3.76,
+            5.67
+          ]
+        },
+        {
+          "button": 5,
+          "port": 0,
+          "from": [
+            12.725000000000001,
+            3.275,
+            5.65
+          ],
+          "to": [
+            14.375,
+            3.8249999999999997,
+            6.8500000000000005
+          ]
+        },
+        {
+          "button": 5,
+          "port": 0,
+          "from": [
+            13.275,
+            2.7249999999999996,
+            5.65
+          ],
+          "to": [
+            13.825000000000001,
+            4.375,
+            6.8500000000000005
+          ]
+        },
+        {
+          "button": 5,
+          "port": 0,
+          "from": [
+            13.34,
+            3.34,
+            5.615
+          ],
+          "to": [
+            13.760000000000002,
+            3.76,
+            5.67
+          ]
+        },
+        {
+          "button": 6,
+          "port": 0,
+          "from": [
+            12.725000000000001,
+            3.275,
+            5.65
+          ],
+          "to": [
+            14.375,
+            3.8249999999999997,
+            6.8500000000000005
+          ]
+        },
+        {
+          "button": 6,
+          "port": 0,
+          "from": [
+            13.275,
+            2.7249999999999996,
+            5.65
+          ],
+          "to": [
+            13.825000000000001,
+            4.375,
+            6.8500000000000005
+          ]
+        },
+        {
+          "button": 6,
+          "port": 0,
+          "from": [
+            13.34,
+            3.34,
+            5.615
+          ],
+          "to": [
+            13.760000000000002,
+            3.76,
+            5.67
+          ]
+        },
+        {
+          "button": 7,
+          "port": 0,
+          "from": [
+            12.725000000000001,
+            3.275,
+            5.65
+          ],
+          "to": [
+            14.375,
+            3.8249999999999997,
+            6.8500000000000005
+          ]
+        },
+        {
+          "button": 7,
+          "port": 0,
+          "from": [
+            13.275,
+            2.7249999999999996,
+            5.65
+          ],
+          "to": [
+            13.825000000000001,
+            4.375,
+            6.8500000000000005
+          ]
+        },
+        {
+          "button": 7,
+          "port": 0,
+          "from": [
+            13.34,
+            3.34,
+            5.615
+          ],
+          "to": [
+            13.760000000000002,
+            3.76,
+            5.67
+          ]
+        },
+        {
+          "button": 8,
+          "port": 0,
+          "from": [
+            1.405,
+            4.6000000000000005,
+            5.68
+          ],
+          "to": [
+            1.7950000000000002,
+            5.2,
+            6.359999999999999
+          ]
+        },
+        {
+          "button": 8,
+          "port": 0,
+          "from": [
+            1.3,
+            4.705,
+            5.68
+          ],
+          "to": [
+            1.9000000000000001,
+            5.095000000000001,
+            6.359999999999999
+          ]
+        },
+        {
+          "button": 0,
+          "port": 0,
+          "from": [
+            2.355,
+            3.6500000000000004,
+            5.68
+          ],
+          "to": [
+            2.7449999999999997,
+            4.25,
+            6.359999999999999
+          ]
+        },
+        {
+          "button": 0,
+          "port": 0,
+          "from": [
+            2.25,
+            3.7550000000000003,
+            5.68
+          ],
+          "to": [
+            2.8499999999999996,
+            4.1450000000000005,
+            6.359999999999999
+          ]
+        },
+        {
+          "button": 9,
+          "port": 0,
+          "from": [
+            2.355,
+            5.55,
+            5.68
+          ],
+          "to": [
+            2.7449999999999997,
+            6.1499999999999995,
+            6.359999999999999
+          ]
+        },
+        {
+          "button": 9,
+          "port": 0,
+          "from": [
+            2.25,
+            5.654999999999999,
+            5.68
+          ],
+          "to": [
+            2.8499999999999996,
+            6.045,
+            6.359999999999999
+          ]
+        },
+        {
+          "button": 1,
+          "port": 0,
+          "from": [
+            3.305,
+            4.6000000000000005,
+            5.68
+          ],
+          "to": [
+            3.695,
+            5.2,
+            6.359999999999999
+          ]
+        },
+        {
+          "button": 1,
+          "port": 0,
+          "from": [
+            3.2,
+            4.705,
+            5.68
+          ],
+          "to": [
+            3.8,
+            5.095000000000001,
+            6.359999999999999
+          ]
+        },
+        {
+          "button": 3,
+          "port": 0,
+          "from": [
+            1.8735,
+            2.05,
+            5.82
+          ],
+          "to": [
+            3.1765,
+            2.26,
+            6.2700000000000005
+          ]
+        },
+        {
+          "button": 3,
+          "port": 0,
+          "from": [
+            1.8,
+            2.1235,
+            5.82
+          ],
+          "to": [
+            1.8735,
+            2.1864999999999997,
+            6.2700000000000005
+          ]
+        },
+        {
+          "button": 3,
+          "port": 0,
+          "from": [
+            3.1765,
+            2.1235,
+            5.82
+          ],
+          "to": [
+            3.25,
+            2.1864999999999997,
+            6.2700000000000005
+          ]
+        },
+        {
+          "button": 2,
+          "port": 0,
+          "from": [
+            1.8735,
+            1.35,
+            5.82
+          ],
+          "to": [
+            3.1765,
+            1.56,
+            6.2700000000000005
+          ]
+        },
+        {
+          "button": 2,
+          "port": 0,
+          "from": [
+            1.8,
+            1.4235,
+            5.82
+          ],
+          "to": [
+            1.8735,
+            1.4865000000000002,
+            6.2700000000000005
+          ]
+        },
+        {
+          "button": 2,
+          "port": 0,
+          "from": [
+            3.1765,
+            1.4235,
+            5.82
+          ],
+          "to": [
+            3.25,
+            1.4865000000000002,
+            6.2700000000000005
+          ]
+        },
+        {
+          "button": 4,
+          "port": 0,
+          "from": [
+            13.1925,
+            5.95,
+            5.59
+          ],
+          "to": [
+            13.9075,
+            7.05,
+            6.2299999999999995
+          ]
+        },
+        {
+          "button": 4,
+          "port": 0,
+          "from": [
+            13.0,
+            6.1425,
+            5.59
+          ],
+          "to": [
+            14.100000000000001,
+            6.8575,
+            6.2299999999999995
+          ]
+        },
+        {
+          "button": 5,
+          "port": 0,
+          "from": [
+            13.1925,
+            5.95,
+            5.59
+          ],
+          "to": [
+            13.9075,
+            7.05,
+            6.2299999999999995
+          ]
+        },
+        {
+          "button": 5,
+          "port": 0,
+          "from": [
+            13.0,
+            6.1425,
+            5.59
+          ],
+          "to": [
+            14.100000000000001,
+            6.8575,
+            6.2299999999999995
+          ]
+        },
+        {
+          "button": 6,
+          "port": 0,
+          "from": [
+            13.1925,
+            5.95,
+            5.59
+          ],
+          "to": [
+            13.9075,
+            7.05,
+            6.2299999999999995
+          ]
+        },
+        {
+          "button": 6,
+          "port": 0,
+          "from": [
+            13.0,
+            6.1425,
+            5.59
+          ],
+          "to": [
+            14.100000000000001,
+            6.8575,
+            6.2299999999999995
+          ]
+        },
+        {
+          "button": 7,
+          "port": 0,
+          "from": [
+            13.1925,
+            5.95,
+            5.59
+          ],
+          "to": [
+            13.9075,
+            7.05,
+            6.2299999999999995
+          ]
+        },
+        {
+          "button": 7,
+          "port": 0,
+          "from": [
+            13.0,
+            6.1425,
+            5.59
+          ],
+          "to": [
+            14.100000000000001,
+            6.8575,
+            6.2299999999999995
+          ]
+        },
+        {
+          "button": 11,
+          "port": 0,
+          "from": [
+            0.9,
+            8.0,
+            6.55
+          ],
+          "to": [
+            4.0,
+            8.37,
+            8.32
+          ]
+        },
+        {
+          "button": 10,
+          "port": 0,
+          "from": [
+            12.0,
+            8.0,
+            6.55
+          ],
+          "to": [
+            15.1,
+            8.37,
+            8.32
+          ]
+        },
+        {
+          "button": 13,
+          "port": 0,
+          "from": [
+            3.8,
+            8.12,
+            7.55
+          ],
+          "to": [
+            5.25,
+            8.48,
+            8.45
+          ]
+        },
+        {
+          "button": 12,
+          "port": 0,
+          "from": [
+            10.75,
+            8.12,
+            7.55
+          ],
+          "to": [
+            12.2,
+            8.48,
+            8.45
+          ]
+        }
+      ],
+      "screen_plane": null,
+      "review": {
+        "row": 4,
+        "column": 3,
+        "station": [
+          12,
+          64,
+          28
+        ],
+        "camera_offset": [
+          2.8,
+          2.0,
+          -3.9
+        ],
+        "camera_pitch": 20,
+        "image": "24-n3ds.png"
+      },
+      "screen_planes": [
+        {
+          "from": [
+            3.25,
+            9.0,
+            6.04
+          ],
+          "to": [
+            12.75,
+            14.7,
+            6.04
+          ],
+          "facing": "north",
+          "surface": "top",
+          "native_size": [
+            400,
+            240
+          ],
+          "touchable": false
+        },
+        {
+          "from": [
+            4.5,
+            1.8,
+            5.94
+          ],
+          "to": [
+            11.5,
+            7.05,
+            5.94
+          ],
+          "facing": "north",
+          "surface": "bottom",
+          "native_size": [
+            320,
+            240
+          ],
+          "touchable": true
+        }
+      ]
+    },
+    {
+      "platform": "wii",
+      "cmd": 25,
+      "name": "WII",
+      "zh_name": "WII · Wii",
+      "form_factor": "desktop",
+      "geometry": "muxi_console:block/desk_console_wii",
+      "item": "muxi_console:item/desk_console_wii",
+      "media": "muxi_console:item/cartridge_wii",
+      "media_kind": "disc",
+      "controller_ports": 4,
+      "silhouette": "slender vertical ivory disc console on a broad low foot, lit slot and rear sockets",
+      "bounds": {
+        "min": [
+          1,
+          0,
+          2.8
+        ],
+        "max": [
+          15,
+          15.48,
+          13.2
+        ]
+      },
+      "media_bounds": {
+        "min": [
+          3.4,
+          3.4,
+          7.76
+        ],
+        "max": [
+          12.6,
+          12.6,
+          8.18
+        ]
+      },
+      "media_slot": {
+        "width": 6.3,
+        "base": [
+          9.0,
+          5.1,
+          7.2
+        ],
+        "rotation": [
+          0,
+          90,
+          0
+        ],
+        "align": "bottom",
+        "depth_scale": 1,
+        "clip": {
+          "axis": "z",
+          "keep": "below",
+          "value": 4.55
+        }
+      },
+      "control_surfaces": [],
+      "button_regions": [],
+      "screen_plane": null,
+      "review": {
+        "row": 4,
+        "column": 4,
+        "station": [
+          16,
+          64,
+          28
+        ],
+        "camera_offset": [
+          2.8,
+          2.0,
+          -3.9
+        ],
+        "camera_pitch": 20,
+        "image": "25-wii.png"
+      }
     }
   ],
   "additional_styles": [
@@ -8232,6 +10158,8 @@
       "platform": "arcade",
       "cmd": 22,
       "style": "double",
+      "name": "ARCADE · 2P",
+      "zh_name": "ARCADE · 双人街机",
       "geometry": "muxi_console:block/arcade_cabinet_2p",
       "item": "muxi_console:item/desk_console_arcade_2p",
       "bounds": {

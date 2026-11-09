@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "id": "melondsds-link",
+  "purpose": "emulation-link",
+  "systems": [
+    "nds"
+  ],
+  "renderer": "software",
+  "binaryOrigin": "source-rebuild",
+  "source": "https://github.com/JesseTG/melonds-ds",
+  "sourceRevision": "f394adbacb5722ee97c1b37c8064da9a25818310",
+  "sourceRevisionVerified": true,
+  "license": "GPL-3.0-or-later",
+  "licenseUrl": "https://github.com/JesseTG/melonds-ds/blob/f394adbacb5722ee97c1b37c8064da9a25818310/LICENSE",
+  "accessPatchLicense": "GPL-3.0-or-later as changes to the upstream frontend",
+  "originalAdapterLicense": "MIT",
+  "binaryVersion": "melonDS DS f394adba + original DMP1 ABI1 + foreign Windows AV pass-through",
+  "baseSingleCoreCompatibility": {
+    "coreId": "melondsds",
+    "sourceRevision": "f394adbacb5722ee97c1b37c8064da9a25818310",
+    "librarySha256": "b0cafcb24e82be544bd8d88fe080fca2052fe00d670b28b40cc39666b332688c",
+    "role": "Actual shared safe ordinary/link frontend binary hash; bidirectional ordinary no-NETPACKET and link MXS1 restore proven separately from MC composite identity",
+    "bidirectionalNativeDiagnostics": [
+      "same-safe-dll-ordinary-without-netpacket-to-link-and-back"
+    ],
+    "actualDiagnosticInputCounters": [
+      1,
+      2,
+      3
+    ],
+    "systemMode": "Generated firmware and original bare-metal ARM diagnostics; custom manufacturer BIOS compatibility not claimed"
+  },
+  "platforms": {
+    "windows-x86_64": {
+      "archive": "test-environment/cache/muxi-console/rebuild-melondsds-link/build-02/public-01/muxi_melondsds_link.dll.zip",
+      "libraryName": "muxi_melondsds_link.dll",
+      "archiveBytes": 1993208,
+      "archiveSha256": "74a8e98cb3cb22d2c69cd89a80e79323a8aaaacbb10819ff536d4e6375cb9a03",
+      "libraryBytes": 7069184,
+      "librarySha256": "b0cafcb24e82be544bd8d88fe080fca2052fe00d670b28b40cc39666b332688c"
+    }
+  },
+  "sourceDelivery": {
+    "method": "Complete 12 exact official dependency trees, explicit GPL frontend access and foreign Windows VEH patches, MIT MP adapter, portable build driver and all upstream notices",
+    "archive": "test-environment/cache/muxi-console/rebuild-melondsds-link/build-02/public-01/corresponding-source.tar.gz",
+    "format": "tar.gz",
+    "archiveBytes": 15885053,
+    "archiveSha256": "6acddd910c169c5c8d4fb24144178c977e889ad87694de806228c187262882ca",
+    "buildReport": "test-environment/cache/muxi-console/rebuild-melondsds-link/build-02/public-01/rebuild-public-report.json",
+    "buildReportSha256": "9f2534de6f5b98bc1f57a2e789a134437c9b804b735f0839b0012e43b4235c2a",
+    "patchesApplied": true
+  },
+  "nativeDiagnostics": {
+    "checks": 78,
+    "workers": 16,
+    "normalExits": true,
+    "forcedTermination": false,
+    "distinctWifiHardwarePayloadExchange": true,
+    "independentVideoInputAndPCM": false,
+    "independentDualScreenVideoAndInput": true,
+    "singleStateBidirectionalCompatibility": true,
+    "combinedStateFormat": "DNL1 file containing each DSE1 Console MXS1 + DMP1 native frontend queues + DQT1 transport; separate from GB/GBA LNK1",
+    "coldRestoreWithPendingNativeMpPacket": true,
+    "nativeMpHostIdAndQueuesExactBeforeFirstFrame": true,
+    "coldRestoreWithPendingTransportPacket": true,
+    "commercialCompatibilityClaimed": false,
+    "proofDirectories": [
+      "build/link-ds-safe-complete-05",
+      "build/link-ds-safe-single-new-01"
+    ]
+  },
+  "minecraftIntegrationTested": true,
+  "releaseReady": true,
+  "legacySingleCoreCompatibility": [
+    {
+      "coreId": "melondsds",
+      "sourceRevision": "f394adbacb5722ee97c1b37c8064da9a25818310",
+      "librarySha256": "26ad9fb7927ba9f72510958a5cdb8f360fcc02bda59b057c2ea394cc97bb75fa",
+      "role": "proven MXS1 export-format compatibility fingerprint; not the actual link frontend binary hash",
+      "bidirectionalNativeDiagnostics": [
+        "two-real-DS-processes-to-original-single-and-back"
+      ],
+      "actualDiagnosticInputCounters": [
+        1,
+        2,
+        3
+      ],
+      "systemMode": "Generated firmware and original bare-metal ARM diagnostics; custom manufacturer BIOS compatibility not claimed",
+      "proof": "build/link-ds-safe-complete-05/single-compat/result.json; exact old ordinary26ad to safe new frontend and back"
+    }
+  ],
+  "enduranceDiagnostics": {
+    "proofDirectory": "build/link-ds-endurance-foreign-01",
+    "actualFrames": 10000,
+    "workers": 2,
+    "naturalExits": true,
+    "javaC2Enabled": true,
+    "nativeArmJitEnabled": true,
+    "captureFrame": 3601,
+    "captureNanos": 196784700,
+    "immutableBackgroundReadMillis": 12000,
+    "cpuFramesDuringBackgroundRead": 721,
+    "noFatalJvmLogs": true,
+    "doesNotReplaceMinecraftEndToEndAcceptance": true
+  },
+  "foreignFaultPatch": {
+    "license": "GPL-3.0-or-later as modifications to melonDS",
+    "sourceFile": "melonds/src/ARMJIT_Memory.cpp",
+    "scope": "Non-emulator access violations immediately continue the original Windows handler search, without reentering the Java-backed logger. Existing native fast-memory fault handling stays enabled."
+  },
+  "minecraftVerification": {
+    "records": [
+      {
+        "report": "test-environment/client-2/runs/console-nds-link-native-04/console-qa/nds-link-result.json",
+        "reportSha256": "cb4237f8d7debc7ce692a784ea54befbd42d86bf4847ec930671e24b4cedc8fe",
+        "scenarioComplete": true,
+        "checks": 81
+      }
+    ],
+    "combinedScopeComplete": true,
+    "originalFalseResultsRetained": false,
+    "commercialCompatibilityClaimed": false
+  }
+}

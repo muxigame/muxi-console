@@ -17,9 +17,14 @@ public final class ConsoleSession {
     private boolean closed;
 
     public ConsoleSession(UUID consoleId, Cartridge cartridge, UUID host, int ports) {
+        this(consoleId,cartridge,host,ports,1);
+    }
+    /** The server allocates a disjoint epoch range for each newly created room, including the same machine. */
+    public ConsoleSession(UUID consoleId, Cartridge cartridge, UUID host, int ports,long initialEpoch) {
         this.consoleId = Objects.requireNonNull(consoleId);
         this.cartridge = Objects.requireNonNull(cartridge);
         this.host = Objects.requireNonNull(host);
+        if(initialEpoch<1||initialEpoch>Long.MAX_VALUE-0xffff_ffffL)throw new DomainException("session","Invalid initial session epoch");this.epoch=initialEpoch;
         if (ports < 1 || ports > 4) throw new DomainException("port", "A session supports one to four ports");
         this.ports = ports;
         controllers.put(0, host);

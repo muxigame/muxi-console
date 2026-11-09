@@ -126,6 +126,24 @@
         "custom_model_data": 21
       },
       "model": "muxi_console:item/handheld_arcade"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 23
+      },
+      "model": "muxi_console:item/handheld_nds"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 24
+      },
+      "model": "muxi_console:item/handheld_n3ds"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 25
+      },
+      "model": "muxi_console:item/handheld_wii"
     }
   ],
   "display": {

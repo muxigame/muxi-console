@@ -1,0 +1,30 @@
+--- a/Source/Core/Core/IOS/SDIO/SDIOSlot0.cpp
++++ b/Source/Core/Core/IOS/SDIO/SDIOSlot0.cpp
+@@ -53,6 +53,10 @@
+ 
+ void SDIOSlot0Device::DoState(PointerWrap& p)
+ {
++  // Checkpoint readers copy the paused machine's complete SD image.
++  if (p.IsWriteMode() && m_card.IsOpen())
++    m_card.Flush();
++
+   Device::DoState(p);
+   if (p.IsReadMode())
+   {
+@@ -87,14 +91,14 @@
+ void SDIOSlot0Device::OpenInternal()
+ {
+   const std::string filename = File::GetUserPath(F_WIISDCARDIMAGE_IDX);
+-  m_card.Open(filename, "r+b");
++  m_card.Open(filename, "r+b", File::SharedAccess::Read);
+   if (!m_card)
+   {
+     WARN_LOG_FMT(IOS_SD, "Failed to open SD Card image, trying to create a new 128 MB image...");
+     if (Common::SDCardCreate(128, filename))
+     {
+       INFO_LOG_FMT(IOS_SD, "Successfully created {}", filename);
+-      m_card.Open(filename, "r+b");
++      m_card.Open(filename, "r+b", File::SharedAccess::Read);
+     }
+     if (!m_card)
+     {
