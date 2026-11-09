@@ -2,6 +2,14 @@
 
 本目录从空白编写，只读取本仓新产品 API 和统一 runner 文档。两个 QA JAR 分侧安装，Java 包为 `net.muxigame.consoleqa`，不会包含任何产品 class，也不发布。
 
+## 四向旋转与Minecraft聊天/F3专项
+
+2026-11-09最终`rotation-world-02`主包`d036c2cc…6b27be`在统一`console-rotation-02`通过87条记录，6原图实审；包含真实T、/的press→KeyboardHandler.charTyped→release，分别确认初始空和单斜杠，再发送消息给第二客户端。一个NDS worker及三MC自然0/native清空，908MB payload与唯一准备已回收。61组4882项通过，运行库1.0.1与Wii候选原字节相同。首候选84条保留，最终精确范围见[旋转与全屏](../docs/FULLSCREEN-ROTATION.md)。
+
+最终主包冻结后，使用 `qa/build.py --name <新名称> --product <最终主包> --runtime <已验证运行库1.0.1> --pixel-review --model-plan build/new-hardware-01/model-review-plan.json --expansion-diagnostics build/expansion-diagnostics-12/diagnostics.json`。根统一runner提供真实双客户端run后，由唯一通道所有者运行 `python -B qa/rotation_review.py --run <规范绝对run> --build <新QA报告>`；该驱动不启动或停止Minecraft。
+
+专项正常声明刻录本仓原创NDS诊断卡、背包插入23号NDS机型，双屏以0/90/180/270度分别检查整机与纯屏比例、独立闭式坐标触摸及同worker持续运行。每次触摸须使实际NDS底屏原始像素变黄、松开恢复蓝，再测下一角度。原生旋转按钮和KeyboardHandler回调触发实际F3、ChatScreen输入/发送、第二客户端收信、Esc返回原GameScreen，并读实际配置确认按游戏内容记忆角度。每轮保留6张关键原图供逐张实审；工具编译不代表已在Minecraft通过。真实世界渲染计数来自AFTER_LEVEL事件；旧黑底仅覆盖世界，不能据此宣称省略世界渲染或泛化性能提升。结果以本轮 `rotation-result.json` 为准，不扩展为商业游戏、物理输入或整包性能验收。
+
 ## Wii WBFS与原版界面候选
 
 `build/wii-ui-02`及运行库1.0.1已在统一`console-wii-ui-01`完成原创WBFS启动/输入/保存/冷恢复21项、三页键位2项，9原图逐张实审，两个worker及三MC自然0，运行和唯一准备已回收。用户实际WBFS的独立worker对照与范围见[候选记录](../docs/WII-UI-FIX.md)，不是完整游戏或整包性能验收。

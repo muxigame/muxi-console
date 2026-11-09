@@ -60,7 +60,8 @@ public final class ClientQaMod {
     private final DockActions dockActions=new DockActions();
     private final HeldActions heldActions=new HeldActions();
     private final PolishActions polishActions=new PolishActions();
-    public ClientQaMod() { NeoForge.EVENT_BUS.addListener(this::tick);NeoForge.EVENT_BUS.addListener(this::systemMessage); }
+    public ClientQaMod() { NeoForge.EVENT_BUS.addListener(this::tick);NeoForge.EVENT_BUS.addListener(this::systemMessage);NeoForge.EVENT_BUS.addListener(this::rotationChatMessage); }
+    private void rotationChatMessage(ClientChatReceivedEvent event){RotationActions.message(event.getMessage().getString());}
     private void systemMessage(ClientChatReceivedEvent.System event){if(event.isOverlay())CartridgeActions.message(event.getMessage().getString());}
     private void tick(ClientTickEvent.Post event) {
         clientTicks++;
@@ -99,6 +100,7 @@ public final class ClientQaMod {
     private JsonObject dispatch(JsonObject command) {
         Minecraft client = Minecraft.getInstance();
         String action = command.get("action").getAsString();
+        if(action.startsWith("rotation_")){try{RotationActions.command(client,command);return observe(client);}catch(Exception e){throw new IllegalStateException(e);}}
         if(action.startsWith("latency_")){LatencyBridge.command(client,command,owner);return observe(client);}
         if(action.startsWith("recipe_")){RecipeBridge.command(client,command);return observe(client);}
         if(action.startsWith("transfer_")){TransferActions.command(command);return observe(client);}
@@ -260,6 +262,7 @@ public final class ClientQaMod {
 
     private JsonObject observe(Minecraft client) {
         JsonObject result = new JsonObject(); result.addProperty("connected", client.player != null && client.getConnection() != null);
+        result.add("rotation",RotationActions.observe(client));
         result.addProperty("screen", client.screen == null ? "" : client.screen.getClass().getName());
         result.addProperty("snapshotAdapterReady", true); result.addProperty("lastCode", lastCode); result.addProperty("probe", probe); result.addProperty("screenshot", screenshot);
         result.add("browser",NativeReview.browser(client,browserPosition,browserSide,false));result.add("browserNative",browserNative);

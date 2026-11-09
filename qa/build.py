@@ -355,6 +355,7 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
             args.append(str(sources / "MediaMetrics.java"))
             args.append(str(sources / "TransferActions.java"))
             args.append(str(sources / "ExpansionActions.java"))
+            args.append(str(sources / "RotationActions.java"))
             args.append(str(sources / "LatencyBridge.java"))
             args.append(str(sources / "RecipeBridge.java"))
             if recipe_review:

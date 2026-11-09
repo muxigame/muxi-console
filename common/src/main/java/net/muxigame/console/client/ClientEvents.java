@@ -14,9 +14,16 @@ public final class ClientEvents {
     @SubscribeEvent(priority=net.neoforged.bus.api.EventPriority.LOWEST)
     public static void capturedTick(ClientTickEvent.Pre event){
         net.muxigame.console.client.input.NativeControls.initialize();
+        if(!ConsoleGameHud.active())ConsoleGameHud.resetKeys();
         if(!(net.minecraft.client.Minecraft.getInstance().screen instanceof net.muxigame.console.client.ui.GameScreen))net.muxigame.console.client.input.NativeControls.clear();
         if(net.minecraft.client.Minecraft.getInstance().screen instanceof net.muxigame.console.client.ui.GameScreen)
             net.minecraft.client.KeyMapping.releaseAll();
+    }
+    @SubscribeEvent public static void vanillaLayer(net.neoforged.neoforge.client.event.RenderGuiLayerEvent.Pre event){
+        if(ConsoleGameHud.hideVanillaLayer(event.getName()))event.setCanceled(true);
+    }
+    @SubscribeEvent public static void worldRendered(net.neoforged.neoforge.client.event.RenderLevelStageEvent event){
+        if(event.getStage()==net.neoforged.neoforge.client.event.RenderLevelStageEvent.Stage.AFTER_LEVEL)ConsoleGameHud.worldRendered();
     }
     @SubscribeEvent(priority=net.neoforged.bus.api.EventPriority.LOWEST)
     public static void capturedMovement(net.neoforged.neoforge.client.event.MovementInputUpdateEvent event){
