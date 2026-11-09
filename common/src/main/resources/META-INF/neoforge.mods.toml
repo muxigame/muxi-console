@@ -3,7 +3,7 @@ loaderVersion="[4,)"
 license="MIT; third-party components retain their own licenses"
 [[mods]]
 modId="muxi_console"
-version="0.2.2"
+version="0.2.3-dev.1"
 displayName="PlayStation"
 authors="Muxigame"
 description="Original console hardware, transferable cartridges, per-machine saves and multiplayer screens."

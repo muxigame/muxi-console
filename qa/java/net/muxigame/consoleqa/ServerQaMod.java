@@ -36,6 +36,7 @@ public final class ServerQaMod {
     private final MachineScene machineReview=new MachineScene(owner);
     private final CaseScene caseReview=new CaseScene(owner);
     private final UpgradeScene upgradeReview=new UpgradeScene(owner);
+    private final DockContainerScene dockContainerReview=new DockContainerScene(owner);
     private final ExpansionScene expansionReview=new ExpansionScene(owner);
     private final Set<UUID> prepared = new HashSet<>();
     private boolean built;
@@ -53,6 +54,7 @@ public final class ServerQaMod {
     private void sampleRooms(MinecraftServer server){try{JsonArray current=rooms(server);String key=current.toString();if(!key.equals(lastRooms)){lastRooms=key;JsonObject sample=new JsonObject();sample.addProperty("serverTick",server.getTickCount());sample.add("rooms",current);roomHistory.add(sample);while(roomHistory.size()>128)roomHistory.removeFirst();}}catch(java.io.IOException error){throw new IllegalStateException(error);}}
 
     private JsonObject dispatch(MinecraftServer server, JsonObject command) {
+        if(command.get("action").getAsString().startsWith("dockslot_"))return dockContainerReview.command(server,command);
         if(command.get("action").getAsString().startsWith("expansion_"))return expansionReview.command(server,command);
         if(command.get("action").getAsString().startsWith("linkqa_"))return LinkScene.command(server,command,owner);
         if(command.get("action").getAsString().startsWith("linkds_"))return LinkDsScene.command(server,command,owner);

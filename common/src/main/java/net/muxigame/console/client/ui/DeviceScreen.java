@@ -15,12 +15,11 @@ public final class DeviceScreen extends ConsoleScreen {
         super(Component.translatable("ui.muxi_console.title"));
         this.context = Objects.requireNonNull(context).deepCopy(); this.actions = Objects.requireNonNull(actions);
     }
-    private boolean dock(){return context.has("kind")&&context.get("kind").getAsString().equalsIgnoreCase("dock");}
     @Override protected void init() {
         layout(426, 252);
         int gap = 8, w = (panelWidth - 36) / 2;
         button(left + 14, top + 58, w, "启动 / 停止", ignored -> act("power", 0));
-        button(left + 22 + w, top + 58, w, dock()?"取出掌机":"取出卡带", ignored -> act("eject", 0));
+        button(left + 22 + w, top + 58, w, "取出卡带", ignored -> act("eject", 0));
         button(left + 14, top + 86, w, "连接附近屏幕", ignored -> act("link", 0));
         button(left + 22 + w, top + 86, w, "按键与手柄", ignored -> net.muxigame.console.client.input.NativeControls.openSettings(this));
         if(context.has("card")){leave=button(left+14,top+172,panelWidth-28,"保存并离开游戏",ignored->{if(currentSession())actions.leave();});leave.active=currentSession();}
@@ -41,7 +40,7 @@ public final class DeviceScreen extends ConsoleScreen {
     }
     @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         if(leave!=null)leave.active=currentSession();
-        panel(graphics, dock()?"装入掌机，通过底座连接大屏，再选择控制席":"插入卡带，连接屏幕，再选择你的控制席");
+        panel(graphics, "插入卡带，连接屏幕，再选择你的控制席");
         line(graphics, "选择控制席", left + 14, top + 124, panelWidth - 28, CREAM);
         if(!context.has("card")&&context.has("model")&&context.get("model").getAsInt()==0)line(graphics,"游戏机核心：取回后在工作台与染料合成机型",left+14,top+180,panelWidth-28,AMBER);
         line(graphics, Objects.requireNonNullElse(actions.status(), ""), left + 14, top + panelHeight - 55, panelWidth - 28, AMBER);

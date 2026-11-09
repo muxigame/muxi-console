@@ -18,6 +18,7 @@ import net.muxigame.console.client.ConsoleClient;
 import net.muxigame.console.client.input.NativeControls;
 import net.muxigame.console.client.ui.GameScreen;
 import net.muxigame.console.mc.WriterMenu;
+import net.muxigame.console.mc.DockMenu;
 import org.lwjgl.glfw.GLFW;
 
 /** Actual menu packets and normal screen callbacks only. No product inventory, card or save setters. */
@@ -46,7 +47,7 @@ final class UpgradeActions {
             default->throw new IllegalArgumentException("Unknown upgrade frontend action");
         }
     }
-    private static void menu(Minecraft mc){if(!(mc.screen instanceof AbstractContainerScreen<?>)||!(mc.player.containerMenu instanceof WriterMenu)&&mc.player.containerMenu!=mc.player.inventoryMenu)throw new IllegalStateException("Only the actual writer or vanilla player inventory is supported");}
+    private static void menu(Minecraft mc){if(!(mc.screen instanceof AbstractContainerScreen<?>)||!(mc.player.containerMenu instanceof WriterMenu)&&!(mc.player.containerMenu instanceof DockMenu)&&mc.player.containerMenu!=mc.player.inventoryMenu)throw new IllegalStateException("Only the actual writer, dock or vanilla player inventory is supported");}
     private static void buttons(GuiEventListener listener,String text,List<Button> found){if(listener instanceof Button button&&button.getMessage().getString().equals(text))found.add(button);if(listener instanceof ContainerEventHandler container)for(var child:container.children())buttons(child,text,found);}
     private static JsonObject stack(Minecraft mc,ItemStack item){JsonObject out=CartridgeActions.stack(mc,item);if(!item.isEmpty()){ItemStack copy=item.copy();copy.remove(DataComponents.CUSTOM_MODEL_DATA);out.addProperty("withoutModel",copy.saveOptional(mc.level.registryAccess()).toString());}return out;}
     static JsonObject observe(Minecraft mc){
@@ -55,6 +56,8 @@ final class UpgradeActions {
         JsonArray slots=new JsonArray();for(int i=0;i<menu.slots.size();i++){var slot=menu.getSlot(i);JsonObject row=stack(mc,slot.getItem());row.addProperty("index",i);row.addProperty("x",slot.x);row.addProperty("y",slot.y);slots.add(row);}out.add("slots",slots);
         JsonArray inventory=new JsonArray();for(int i=0;i<mc.player.getInventory().getContainerSize();i++){JsonObject row=stack(mc,mc.player.getInventory().getItem(i));row.addProperty("slot",i);inventory.add(row);}out.add("inventory",inventory);
         if(menu instanceof WriterMenu writer)out.add("writer",writer.context());
+        if(menu instanceof DockMenu dock){JsonObject context=dock.context();context.addProperty("locked",dock.locked());out.add("dock",context);}
+        JsonArray widgets=new JsonArray();if(mc.screen!=null)for(var child:mc.screen.children())if(child instanceof Button button){JsonObject row=new JsonObject();row.addProperty("text",button.getMessage().getString());row.addProperty("active",button.active);widgets.add(row);}out.add("widgets",widgets);
         if(mc.screen instanceof AbstractContainerScreen<?> screen){
             var hovered=screen.getSlotUnderMouse();out.addProperty("hoveredSlot",hovered==null?-1:menu.slots.indexOf(hovered));
             if(hovered!=null)out.add("hoveredStack",stack(mc,hovered.getItem()));

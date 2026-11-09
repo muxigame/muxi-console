@@ -248,7 +248,13 @@ public final class ConsoleClient implements ClientActions {
         try{AvFrame frame=s.latestPicture.getAndSet(null);if(active==s&&frame!=null){CRC32 crc=new CRC32();crc.update(frame.rgba());displayedFrames=frame.number()+1;frameCrc=Long.toHexString(crc.getValue());updatePicture(frame);s.pictureUploads++;status="玩家 "+(s.port+1)+" · "+s.platform.id().toUpperCase(Locale.ROOT);}}
         finally{s.picturePending.set(false);if(active==s&&s.latestPicture.get()!=null)emulator.execute(()->{if(active==s&&s.latestPicture.get()!=null&&s.picturePending.compareAndSet(false,true))mc().execute(()->drawLatest(s));});}
     }
-    private void showGame(Session s){if(mc().screen==null||mc().screen instanceof GameScreen||mc().screen instanceof DeviceScreen)mc().setScreen(new GameScreen(this,s.port));}
+    private void showGame(Session s){
+        if(mc().screen==null||mc().screen instanceof GameScreen||mc().screen instanceof DeviceScreen||mc().screen instanceof DockScreen){
+            // The game view is not a container. Retire its menu before returning to ordinary inventory input.
+            if(mc().screen instanceof DockScreen&&mc().player!=null&&mc().player.containerMenu instanceof DockMenu)mc().player.closeContainer();
+            mc().setScreen(new GameScreen(this,s.port));
+        }
+    }
     private record Held(net.minecraft.world.InteractionHand hand,Cartridge card,UUID machine){}
     private static boolean sameHeld(Held held,Session session){return held!=null&&session.card.equals(held.card.instanceId())&&session.machine.equals(held.machine);}
     private Held heldCartridge(){
@@ -330,6 +336,8 @@ public final class ConsoleClient implements ClientActions {
     /** Optional frontend integration; null returns to this mod's physical keyboard/gamepad sampler. */
     public void setInputSource(java.util.function.Supplier<PortInput> source){inputSource=source;clearInputVisual();}
     public void device(JsonObject context,String action,int port){JsonObject j=context.deepCopy();j.addProperty("action",action);j.addProperty("port",port);Wire.command("device_action",j);}
+    /** Opening inventory access saves a held machine once; an existing dock game keeps its seat. */
+    public void prepareDockMenu(){if(handheldSession()||LinkPlayClient.INSTANCE.blocksStandalone()||LinkPlayClient.INSTANCE.invitation()!=null)leave();}
     public void leave(){if(LinkPlayClient.INSTANCE.blocksStandalone()||LinkPlayClient.INSTANCE.invitation()!=null){LinkPlayClient.INSTANCE.leave();return;}leaveStandaloneForLink();}
     public void leaveStandaloneForLink(){net.muxigame.console.client.input.NativeControls.clear();clearInputVisual();Session s=active;if(s!=null&&s.room.startsWith("handheld/"))suppressedHandheld=s.machine;if(s!=null&&mc().getConnection()!=null&&s.ready){if(!s.leaving){s.leaving=true;inputSource=null;status="正在保存并离开…";Wire.command("leave_request",s.context.deepCopy());}return;}if(s!=null&&mc().getConnection()!=null)Wire.command("leave",object());stop();}
     public void stop(){net.muxigame.console.client.input.NativeControls.clear();Session s=active;active=null;inputSource=null;clearInputVisual();displayedFrames=0;frameCrc="";SharedPlayClient.INSTANCE.stop();BrowserLinkClient.INSTANCE.stop();downloads.values().forEach(f->f.cancel(false));downloads.clear();if(s!=null){if(s.cloudReader!=null)s.cloudReader.close();s.progress.cancel();terminalMachine=s.machine;terminalProgress=progress(s.progress.snapshot());terminalProgressUntil=System.nanoTime()+TimeUnit.SECONDS.toNanos(5);if(s.checkpoint!=null)s.checkpoint.completeExceptionally(new IOException("会话已停止"));SaveUpload saving=s.saveUpload;abortCheckpoint(s);s.saveUpload=null;s.checkpoint=null;s.saveTransaction="";if(saving!=null)discardSave(saving);emulator.execute(()->close(s));}}

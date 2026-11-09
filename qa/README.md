@@ -2,6 +2,14 @@
 
 本目录从空白编写，只读取本仓新产品 API 和统一 runner 文档。两个 QA JAR 分侧安装，Java 包为 `net.muxigame.consoleqa`，不会包含任何产品 class，也不发布。
 
+## 底座原生掌机槽专项
+
+最终 `build/dock-container-03` 已在统一 `client-2/runs/console-dock-container-02` 完成26/26项，4原图逐张实审；普通背包转场、原机GBA存档与整卡往返通过。2worker及三MC均自然0，运行payload和唯一准备已回收。精确SHA及未验范围见[候选记录](../docs/DOCK-CONTAINER.md)，尚未发布。
+
+新候选使用 `qa/build.py --name <新名称> --product <新主包> --runtime <已验证运行包> --pixel-review --model-plan <当前25机型计划>`，再由统一 runner 分配真实双客户端；`qa/dock_container_review.py --run <实际绝对run路径> --build <新QA报告> --execute` 仅驱动这个已运行实例，不启动或停止Minecraft。
+
+该入口复用正常授权刻录原创GBA、实际染料合成和原生背包装卡。新增fixture只提供空底座、普通石头和镐，不创建卡带、机器身份或存档。检查拿起即玩后打开底座正常保存、选中掌机不在菜单内自动重启、普通物品拒绝、Shift/数字键/右键整机转移、双玩家共享槽与竞争取物、关闭重开保留原机器和整卡、底座恢复手持进度、运行/保存锁以及完成后取回。只读序列化往返和世界状态磁盘SHA分开记录；序列化往返不冒称关服重启验收。四张原生截图仍需人工审核，全部旧结果保持原样。执行结果以新run生成的 `dock-container-result.json` 为准；入口存在和编译通过均不代表实机通过。
+
 ## 0.2.2候选：真实JEI配方发现与独立运行包
 
 固定 `build/recipe-split-01`：主模组1254470B／`e3a8f1308624b64f6e0dd62d92b511aa5c3bfa9213673de6de60bfe19090c569`，客户端运行包158785083B／`a237f798f8f03b158e9d1a61c9dd724217e5ec51b47c8ba3bcd139454b3d75e6`。QA03报告 `build/qa/recipe-native-03/qa-build.json` SHA `c900fd3572934c2fd3fc52c4bddfe7a67087d50c848d7bb2bf356036d02078af`；源码附件不进测试profile。此处是最小模组集验收，不代表新版已发布或完整整合包已测。

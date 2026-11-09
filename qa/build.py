@@ -304,6 +304,7 @@ def build(name: str, product: Path, rom: Path, gb_rom: Path, pixel_review: bool 
             args.append(str(sources / "MachineScene.java"))
             args.append(str(sources / "CaseScene.java"))
             args.append(str(sources / "UpgradeScene.java"))
+            args.append(str(sources / "DockContainerScene.java"))
             args.append(str(sources / "LinkScene.java"))
             args.append(str(sources / "LinkDsScene.java"))
             args.append(str(sources / "Link3dsScene.java"))

@@ -29,6 +29,7 @@ public final class HandheldInventory {
     }
     /** The mouse holds a card; the hovered slot holds the handheld. */
     public static boolean onHandheld(ItemStack handheld,ItemStack carried,Slot slot,ClickAction action,Player player,SlotAccess cursor){
+        if(player.containerMenu instanceof DockMenu&&slot.index==0)return false;
         if(action!=ClickAction.SECONDARY)return false;
         if(!slot.isActive()||slot.isFake()||!slot.allowModification(player)||slot.getItem()!=handheld)return true;
         if(player.level().isClientSide)return true;
@@ -47,6 +48,7 @@ public final class HandheldInventory {
     }
     /** The mouse holds the handheld; the hovered inventory slot is the explicit source or destination. */
     public static boolean onOther(ItemStack handheld,Slot slot,ClickAction action,Player player){
+        if(player.containerMenu instanceof DockMenu&&slot.index==0)return false;
         if(action!=ClickAction.SECONDARY)return false;
         if(!slot.isActive()||slot.isFake()||!slot.allowModification(player))return true;
         if(player.level().isClientSide)return true;

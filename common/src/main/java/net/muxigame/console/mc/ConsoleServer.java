@@ -86,16 +86,21 @@ public final class ConsoleServer {
     private static boolean inHand(ServerPlayer player,Room room){return List.of(player.getMainHandItem(),player.getOffhandItem()).stream().anyMatch(item->sameHandheld(item,room));}
     private static boolean inInventory(ServerPlayer player,Room room){for(int slot=0;slot<player.getInventory().getContainerSize();slot++)if(sameHandheld(player.getInventory().getItem(slot),room))return true;return sameHandheld(player.containerMenu.getCarried(),room);}
     private static void requireMachineIdle(WorldState world,UUID machine){if(LinkPlayServer.isMachineLocked(world,machine)||world.rooms.values().stream().anyMatch(room->room.saveKey.machineUUID().equals(machine)))throw new DomainException("save","这台机器仍在游玩、连线或保存，请先保存并离开");}
-    private static void requireInactive(WorldState world,DeviceEntity device){if(world.rooms.containsKey(key(device)))throw new DomainException("save","请先保存并离开游戏，再取出掌机");}
-    private static void dock(ServerPlayer player,DeviceEntity device,ItemStack held)throws IOException{
-        WorldState world=state(player.server);requireInactive(world,device);
-        if(!device.dockedHandheld.isEmpty())throw new DomainException("dock","底座已有掌机，请先取出");
-        var body=HardwareCatalog.body(HardwareCatalog.model(held));if(body==null||!body.handheld())throw new DomainException("hardware","请先将游戏机核心合成为掌机，再安装到底座");
-        Optional<Cartridge> card=CardData.read(held);if(card.isPresent()&&activeCard(world,card.get().instanceId()))throw new DomainException("save","请先收起掌机等待保存完成，再放到底座");
-        UUID machine=MachineData.ensure(held);requireMachineIdle(world,machine);device.dockedHandheld=held.split(1);device.powered=false;device.changed();player.inventoryMenu.broadcastChanges();player.displayClientMessage(Component.literal("掌机已安装；使用底座连接大屏幕"),true);
+    private static boolean handheldIdle(WorldState world,ItemStack item){
+        if(world==null)return true;
+        Optional<UUID> machine=MachineData.read(item);
+        if(machine.isPresent()&&(LinkPlayServer.isMachineLocked(world,machine.get())||world.rooms.values().stream().anyMatch(room->room.saveKey.machineUUID().equals(machine.get()))))return false;
+        return CardData.read(item).map(card->!activeCard(world,card.instanceId())&&!LinkPlayServer.isCardLocked(world,card.instanceId())).orElse(true);
     }
-    private static void ejectDock(ServerPlayer player,WorldState world,DeviceEntity device){
-        requireInactive(world,device);if(!device.dockedHandheld.isEmpty()){ItemStack take=device.dockedHandheld;device.dockedHandheld=ItemStack.EMPTY;if(!player.getInventory().add(take))player.drop(take,false);player.inventoryMenu.broadcastChanges();}device.powered=false;device.changed();
+    /** Read-only slot predicates never allocate a machine identity or throw a player-facing error. */
+    static boolean dockSlotLocked(DeviceEntity device){
+        if(device.getLevel()==null||device.getLevel().isClientSide)return false;
+        WorldState world=WORLDS.get(device.getLevel().getServer());
+        return world!=null&&(world.rooms.containsKey(key(device))||!handheldIdle(world,device.dockedHandheld));
+    }
+    static boolean dockSlotAccepts(Player player,DeviceEntity device,ItemStack item){
+        if(!DockMenu.accepts(item)||dockSlotLocked(device))return false;
+        return !(player instanceof ServerPlayer server)||handheldIdle(WORLDS.get(server.server),item);
     }
     private static void error(ServerPlayer p,String code,String message){JsonObject j=object();j.addProperty("code",code);j.addProperty("message",message==null?code:message);Wire.send(p,"error",j);}
     public static void interact(ServerPlayer p,BlockPos position,InteractionHand hand){
@@ -113,9 +118,10 @@ public final class ConsoleServer {
                 if(nearest==null)throw new DomainException("screen","附近没有可连接的主机");d.linkedConsole=nearest.getBlockPos();d.changed();p.displayClientMessage(Component.literal("屏幕已连接附近主机"),true);return;
             }
             if(d.kind()==DeviceBlock.Kind.DOCK){
-                if(held.is(ConsoleContent.HANDHELD.get())){dock(p,d,held);return;}
-                if(p.isShiftKeyDown()&&held.isEmpty()){ejectDock(p,state(p.server),d);return;}
-                if(held.is(ConsoleContent.CARTRIDGE.get()))throw new DomainException("dock","请先将卡带装入掌机，再把整台掌机安装到底座");
+                state(p.server);
+                if(held.is(ConsoleContent.CONTROLLER.get())){if(d.controllerCapacity()>=HardwareCatalog.ports(d.hardwareModel()))throw new DomainException("ports","此机型控制器接口已满");d.ports++;held.shrink(1);d.changed();}
+                DeviceEntity dock=d;
+                p.openMenu(new net.minecraft.world.SimpleMenuProvider((id,inventory,actor)->new DockMenu(id,inventory,dock),Component.literal("掌机底座")),data->{data.writeBlockPos(dock.getBlockPos());data.writeUUID(dock.identity);});return;
             }
             if(held.is(ConsoleContent.CARTRIDGE.get())){
                 if(!d.card.isEmpty())throw new DomainException("slot","请先取出当前卡带");
@@ -237,10 +243,11 @@ public final class ConsoleServer {
     }
     private static void action(ServerPlayer p,WorldState s,JsonObject b){
         DeviceEntity d=device(p,b);if(d.kind()!=DeviceBlock.Kind.DESK&&d.kind()!=DeviceBlock.Kind.DOCK)throw new DomainException("device","此设备不是主机或掌机底座");
+        if(d.kind()==DeviceBlock.Kind.DOCK&&(!(p.containerMenu instanceof DockMenu menu)||!menu.matches(d)||!b.has("containerId")||b.get("containerId").getAsInt()!=menu.containerId||!b.has("identity")||!b.get("identity").getAsString().equals(d.identity.toString())))throw new DomainException("dock","请先打开当前掌机底座");
         switch(b.get("action").getAsString()){
             case "body" -> throw new DomainException("hardware","请取回机器，在工作台用染料合成机型");
-            case "power" -> {if(d.hardwareModel()==0)throw new DomainException("hardware","游戏机核心需要先合成为具体机型");d.powered=!d.powered;if(!d.powered)stopDevice(d,"主机已关闭");d.changed();}
-            case "eject" -> {if(d.kind()==DeviceBlock.Kind.DOCK){ejectDock(p,s,d);break;}if(!d.card.isEmpty()){CardData.read(d.card).ifPresent(c->requireCardIdle(p,c.instanceId()));int target=p.getInventory().getFreeSlot();if(target<0)throw new DomainException("slot","物品栏已满，卡带仍保留在主机中");p.getInventory().setItem(target,d.card);p.getInventory().setChanged();d.card=ItemStack.EMPTY;p.inventoryMenu.broadcastChanges();}stopDevice(d,"卡带已取出");d.powered=false;d.changed();}
+            case "power" -> {if(d.kind()==DeviceBlock.Kind.DOCK&&dockSlotLocked(d))throw new DomainException("save","请先保存并离开游戏，再关闭底座");if(d.hardwareModel()==0)throw new DomainException("hardware","游戏机核心需要先合成为具体机型");d.powered=!d.powered;if(!d.powered)stopDevice(d,"主机已关闭");d.changed();}
+            case "eject" -> {if(d.kind()==DeviceBlock.Kind.DOCK)throw new DomainException("dock","请在底座的掌机槽中取回整台掌机");if(!d.card.isEmpty()){CardData.read(d.card).ifPresent(c->requireCardIdle(p,c.instanceId()));int target=p.getInventory().getFreeSlot();if(target<0)throw new DomainException("slot","物品栏已满，卡带仍保留在主机中");p.getInventory().setItem(target,d.card);p.getInventory().setChanged();d.card=ItemStack.EMPTY;p.inventoryMenu.broadcastChanges();}stopDevice(d,"卡带已取出");d.powered=false;d.changed();}
             case "link" -> {Set<BlockPos> linked=new HashSet<>();for(BlockPos pos:BlockPos.betweenClosed(d.getBlockPos().offset(-8,-3,-8),d.getBlockPos().offset(8,3,8))){if(p.serverLevel().getBlockEntity(pos) instanceof DeviceEntity screen && screen.kind()==DeviceBlock.Kind.SCREEN){screen=primary(screen);if(linked.add(screen.getBlockPos())){screen.linkedConsole=d.getBlockPos();screen.changed();}}}p.displayClientMessage(Component.literal("已连接 "+linked.size()+" 个附近屏幕"),true);}
             case "join" -> {
                 if(LinkPlayServer.isActorLocked(s,p.getUUID()))throw new DomainException("link_busy","请先结束当前游戏机连线");
