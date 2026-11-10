@@ -134,7 +134,7 @@ def run(driver: Driver):
         evidence["installed"]=installed
         host("slot",{"slot":8});host("dock_use_block",dict(x=12,y=90,z=6,face="SOUTH"))
         driver.wait_for("host",lambda v:v["screen"].endswith("DeviceScreen"),"actual dock device panel")
-        host("button",{"text":"启动 / 停止"});host("button",{"text":"连接附近屏幕"});host("button",{"text":"P1 加入"})
+        host("button",{"text":"开机"});host("button",{"text":"连接屏幕"});host("button",{"text":"P1"})
         docked=driver.wait_for("host",lambda v:v["ready"] and v["workerRunning"] and not v["room"].startswith("handheld/") and v["restoredStateHash"]==last_save["hash"],"dock continues the same card save through its real P1 seat")
         evidence["dockedRuntime"]=state(docked)
         host("dock_release");host("dock_view",{"hideGui":True})

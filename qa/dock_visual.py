@@ -51,7 +51,7 @@ def run(d: Driver,pause_after_first=False,name=""):
         check(installed["nbtRoundTrip"] and len(installed["instances"])==1,"single intact original handheld after installation")
         host("slot",{"slot":8});host("dock_use_block",dict(x=12,y=90,z=6,face="SOUTH"))
         d.wait_for("host",lambda v:v["screen"].endswith("DeviceScreen"),"real dock panel")
-        host("button",{"text":"启动 / 停止"});host("button",{"text":"连接附近屏幕"});host("button",{"text":"P1 加入"})
+        host("button",{"text":"开机"});host("button",{"text":"连接屏幕"});host("button",{"text":"P1"})
         running=d.wait_for("host",lambda v:v["ready"] and v["workerRunning"] and not v["room"].startswith("handheld/") and v["restoredStateHash"]==vault["hash"],"same dock P1 restores the original saved state")
         result["dockedRoom"]=running["room"];result["workerPids"]=running["workers"];result["restoredStateHash"]=running["restoredStateHash"]
         host("dock_release");host("dock_view",{"hideGui":True})

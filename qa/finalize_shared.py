@@ -34,7 +34,7 @@ def finish(driver):
         driver.command("guest","slot",{"slot":8});driver.command("guest","use_block",{"x":14,"z":20})
         driver.wait_for("guest",lambda v:v["screen"].endswith("DeviceScreen"),"actual powered cabinet control panel")
         before=driver.command("guest","observe")
-        driver.command("guest","button",{"text":"启动 / 停止"})
+        driver.command("guest","button",{"text":"关机"})
         final=driver.wait_for("guest",lambda v:not v["room"] and not v["workers"],"ordinary cabinet power-off closes the one native host",timeout=180)
         driver.wait_for("host",lambda v:not v["room"] and not v["workers"],"cabinet power-off closes the remote control seat",timeout=180)
         if final["normalWorkerExits"]<=before["normalWorkerExits"] or final["forcedWorkerExits"] or final["failedWorkerExits"]:

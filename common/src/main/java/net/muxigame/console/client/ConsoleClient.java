@@ -41,6 +41,8 @@ public final class ConsoleClient implements ClientActions {
     private volatile String restoredStateHash="",savedStateHash="";private volatile long restoredStates,savedStates;
     private volatile Session active;private volatile String status="就绪",lastError="";private volatile long displayedFrames,downloadsGranted,downloadsDenied;private volatile String frameCrc="";
     private DynamicTexture texture;private ResourceLocation picture;private int pictureWidth,pictureHeight;
+    /** World screens show the player's chosen rotation/dual-screen arrangement; null when that equals the plain picture. */
+    private DynamicTexture wallTexture;private ResourceLocation wallPicture;private boolean wallActive;
     private volatile List<AvFrame.Surface> pictureSurfaces=List.of();private int pictureRotation;
     private volatile PortInput.Pointer pointerInput=PortInput.Pointer.IDLE;private volatile PortInput.Motion motionInput=PortInput.Motion.IDLE;private volatile PortInput.Microphone microphoneInput=PortInput.Microphone.SILENT;private volatile int controllerDevice=1;
     private RuntimeFiles runtimeFiles;
@@ -94,9 +96,9 @@ public final class ConsoleClient implements ClientActions {
         JsonObject b=message.body();
         switch(message.operation()){
             case "writer_open" -> {leave();status=mc().screen instanceof WriterScreen?"请选择游戏文件":"请重新打开刻录机";}
-            case "device_open" -> mc().setScreen(new DeviceScreen(b,this));
+            case "device_open" -> {} // Desktop consoles now open their vanilla slot menu.
             case "handheld_config" -> mc().setScreen(new HandheldModelScreen(b));
-            case "device_state" -> {if(mc().screen instanceof DeviceScreen)mc().setScreen(new DeviceScreen(b,this));}
+            case "device_state" -> {} // Menu data slots keep the open panel current.
             case "error" -> {
                 if(b.has("request")){UUID request=UUID.fromString(b.get("request").getAsString());CompletableFuture<Wire.Message> pending=downloads.get(request);if(pending==null)return;if(b.has("operation")&&b.get("operation").getAsString().equals("rom_read"))return;downloads.remove(request);pending.completeExceptionally(new DomainException(b.has("code")?b.get("code").getAsString():"request",b.get("message").getAsString()));return;}
                 if(b.has("room")&&b.has("epoch")){Session target=active;if(target==null||!target.room.equals(b.get("room").getAsString())||target.epoch!=b.get("epoch").getAsLong())return;}
@@ -455,7 +457,20 @@ public final class ConsoleClient implements ClientActions {
         double aspect=frame.displayAspect();if((frame.rotation()&1)!=0)aspect=1/aspect;oriented=VideoLayout.display(oriented,aspect);int w=oriented.width(),h=oriented.height();
         if(texture==null||pictureWidth!=w||pictureHeight!=h){if(texture!=null)mc().getTextureManager().release(picture);NativeImage image=new NativeImage(w,h,false);texture=new DynamicTexture(image);picture=mc().getTextureManager().register("muxi-console-game",texture);pictureWidth=w;pictureHeight=h;}
         NativeImage image=texture.getPixels();byte[] rgba=oriented.rgba();for(int y=0;y<h;y++)for(int x=0;x<w;x++){int i=(y*w+x)*4;int pixel=(rgba[i+3]&255)<<24|(rgba[i+2]&255)<<16|(rgba[i+1]&255)<<8|(rgba[i]&255);image.setPixelRGBA(x,y,pixel);}texture.upload();pictureRotation=frame.rotation();pictureSurfaces=surfaceLayout(frame,w,h);Session current=active;if(current!=null){current.hasPicture=true;current.progress.begin(LoadProgress.Stage.COMPLETE,0);}
-        if(publish)BrowserLinkClient.INSTANCE.frame(displayedFrames,w,h,oriented.rgba());Session publisher=publish?active:null;if(publisher!=null&&sharedPublishing(publisher))SharedPlayClient.INSTANCE.frame(displayedFrames,w,h,oriented.rgba());
+        VideoOrientation.Image shown=presented(oriented,pictureSurfaces);wall(shown,shown!=oriented);
+        if(publish)BrowserLinkClient.INSTANCE.frame(displayedFrames,shown.width(),shown.height(),shown.rgba(),shown==oriented?pictureSurfaces:List.of());Session publisher=publish?active:null;if(publisher!=null&&sharedPublishing(publisher))SharedPlayClient.INSTANCE.frame(displayedFrames,w,h,oriented.rgba());
+    }
+    private VideoOrientation.Image presented(VideoOrientation.Image image,List<AvFrame.Surface> surfaces){
+        String key=GameDisplayPreferences.key(this);int turns=GameDisplayPreferences.rotation(key);boolean side=GameDisplayPreferences.sideBySide(key);
+        ScreenPresentation.Region top=region(surfaces,"top"),bottom=region(surfaces,"bottom");
+        if(!ScreenPresentation.changes(turns,side,top,bottom))return image;
+        try{return ScreenPresentation.compose(image,top,bottom,side,turns);}catch(RuntimeException invalid){return image;}
+    }
+    private static ScreenPresentation.Region region(List<AvFrame.Surface> surfaces,String id){for(var s:surfaces)if(s.id().equals(id))return new ScreenPresentation.Region(s.x(),s.y(),s.width(),s.height());return null;}
+    private void wall(VideoOrientation.Image shown,boolean changed){
+        wallActive=changed;if(!changed)return;int w=shown.width(),h=shown.height();
+        if(wallTexture==null||wallTexture.getPixels()==null||wallTexture.getPixels().getWidth()!=w||wallTexture.getPixels().getHeight()!=h){if(wallTexture!=null)mc().getTextureManager().release(wallPicture);wallTexture=new DynamicTexture(new NativeImage(w,h,false));wallPicture=mc().getTextureManager().register("muxi-console-wall",wallTexture);}
+        NativeImage image=wallTexture.getPixels();byte[] rgba=shown.rgba();for(int y=0;y<h;y++)for(int x=0;x<w;x++){int i=(y*w+x)*4;image.setPixelRGBA(x,y,(rgba[i+3]&255)<<24|(rgba[i+2]&255)<<16|(rgba[i+1]&255)<<8|(rgba[i]&255));}wallTexture.upload();
     }
     private static List<AvFrame.Surface> surfaceLayout(AvFrame frame,int width,int height){List<AvFrame.Surface> result=new ArrayList<>();int rw=(frame.rotation()&1)==0?frame.width():frame.height(),rh=(frame.rotation()&1)==0?frame.height():frame.width();for(var p:frame.surfaces()){int x=p.x(),y=p.y(),w=p.width(),h=p.height();if(frame.rotation()==1){x=p.y();y=frame.width()-p.x()-p.width();w=p.height();h=p.width();}else if(frame.rotation()==2){x=frame.width()-p.x()-p.width();y=frame.height()-p.y()-p.height();}else if(frame.rotation()==3){x=frame.height()-p.y()-p.height();y=p.x();w=p.height();h=p.width();}int x0=(int)((long)x*width/rw),y0=(int)((long)y*height/rh),x1=(int)((long)(x+w)*width/rw),y1=(int)((long)(y+h)*height/rh);if(x1>x0&&y1>y0)result.add(new AvFrame.Surface(p.id(),x0,y0,x1-x0,y1-y0,(frame.rotation()&1)==0?p.nativeWidth():p.nativeHeight(),(frame.rotation()&1)==0?p.nativeHeight():p.nativeWidth(),p.touchable()));}return List.copyOf(result);}
     /** Link preparation waits for the server's ordinary session_end after a committed single-machine save. */
@@ -499,6 +514,8 @@ public final class ConsoleClient implements ClientActions {
     public void sharedPicture(String room,long epoch,long frame,int width,int height,byte[] rgba,List<AvFrame.Surface> surfaces){Session s=sharedGuest(room,epoch);if(s==null||!s.ready||frame<=displayedFrames)return;displayedFrames=frame;CRC32 crc=new CRC32();crc.update(rgba);frameCrc=Long.toHexString(crc.getValue());updatePicture(new AvFrame(frame,width,height,0,rgba,new short[0],48000,false,0,surfaces));status="玩家 "+(s.port+1)+" · "+s.platform.id().toUpperCase(Locale.ROOT)+" · 主机画面";}
     public void sharedAudio(String room,long epoch,long frame,short[] pcm){Session s=sharedGuest(room,epoch);if(s!=null&&s.ready)s.audio.offer(pcm,48000);}
     public ResourceLocation picture(){if(LinkPlayClient.INSTANCE.active())return LinkPlayClient.INSTANCE.hasPicture()?picture:null;return active!=null&&active.ready&&active.hasPicture?picture:null;}
+    /** Picture for linked world screens: the same rotation and screen arrangement as the game window. */
+    public ResourceLocation wallPicture(){ResourceLocation p=picture();return p!=null&&wallActive&&wallPicture!=null?wallPicture:p;}
     public long screenConsole(){Session s=active;return s==null?Long.MIN_VALUE:s.position;}
     public void renderPicture(GuiGraphics graphics,int x,int y,int width,int height){
         graphics.fill(x,y,x+width,y+height,0xff101719);ResourceLocation p=picture();if(p==null)return;

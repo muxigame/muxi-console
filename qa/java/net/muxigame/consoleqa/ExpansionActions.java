@@ -62,10 +62,33 @@ final class ExpansionActions {
         if(!Files.exists(file,LinkOption.NOFOLLOW_LINKS))try(var in=ExpansionActions.class.getResourceAsStream("/diagnostics/"+name)){if(in==null)throw new IOException("Original diagnostic resource missing");try(var out=Files.newOutputStream(file,StandardOpenOption.CREATE_NEW)){byte[] block=new byte[32768];int total=0;for(int n;(n=in.read(block))!=-1;){total+=n;if(total>4*1024*1024)throw new IOException("Original diagnostic exceeds fixture budget");out.write(block,0,n);}}}
         if(!Files.isRegularFile(file,LinkOption.NOFOLLOW_LINKS)||!Hashing.sha256(file).equals(expected))throw new IOException("Original diagnostic SHA differs");return file;
     }
+    private static DynamicTexture texture(Minecraft mc,net.minecraft.resources.ResourceLocation id){return id!=null&&mc.getTextureManager().getTexture(id)instanceof DynamicTexture d&&d.getPixels()!=null?d:null;}
+    /** Linked world screen texture versus the game picture, and the relayed copy another player receives for the Wii desk. */
+    static JsonObject wall(Minecraft mc){
+        JsonObject w=new JsonObject();var picture=ConsoleClient.INSTANCE.picture();var wall=ConsoleClient.INSTANCE.wallPicture();
+        w.addProperty("distinct",picture!=null&&wall!=null&&!picture.equals(wall));
+        DynamicTexture p=texture(mc,picture),t=texture(mc,wall);
+        if(p!=null){w.addProperty("pictureWidth",p.getPixels().getWidth());w.addProperty("pictureHeight",p.getPixels().getHeight());}
+        if(t!=null){w.addProperty("wallWidth",t.getPixels().getWidth());w.addProperty("wallHeight",t.getPixels().getHeight());}
+        if(p!=null&&t!=null){
+            var a=p.getPixels();var b=t.getPixels();int aw=a.getWidth(),ah=a.getHeight();Set<Integer> colours=new HashSet<>();JsonArray matched=new JsonArray();
+            for(int y=0;y<8;y++)for(int x=0;x<8;x++)colours.add(a.getPixelRGBA((2*x+1)*aw/16,(2*y+1)*ah/16));
+            for(int q=0;q<4;q++){boolean swap=(q&1)!=0;if(b.getWidth()!=(swap?ah:aw)||b.getHeight()!=(swap?aw:ah))continue;boolean all=true;
+                for(int y=0;y<8&&all;y++)for(int x=0;x<8&&all;x++){int sx=(2*x+1)*aw/16,sy=(2*y+1)*ah/16;var pt=ViewRotation.forward(sx+.5,sy+.5,aw,ah,q);all=a.getPixelRGBA(sx,sy)==b.getPixelRGBA((int)Math.floor(pt.x()),(int)Math.floor(pt.y()));}
+                if(all)matched.add(q);}
+            w.addProperty("sampledColours",colours.size());w.add("matchedTurns",matched);
+        }
+        var relayed=net.muxigame.console.compat.BrowserLinkClient.INSTANCE.pictureFor(new BlockPos(5,90,6).asLong());DynamicTexture r=texture(mc,relayed);
+        if(r!=null){w.addProperty("relayWidth",r.getPixels().getWidth());w.addProperty("relayHeight",r.getPixels().getHeight());}
+        w.addProperty("relayFrames",net.muxigame.console.compat.BrowserLinkClient.INSTANCE.snapshot().receivedFrames());
+        return w;
+    }
     static JsonObject observe(Minecraft mc){
         JsonObject out=new JsonObject();out.add("lastSession",lastSession.deepCopy());out.addProperty("profileReadBytes",profileReadBytes);out.addProperty("profileChunks",profileChunks);out.add("surfaces",new Gson().toJsonTree(ConsoleClient.INSTANCE.surfaces()));
         var feedback=ConsoleClient.INSTANCE.inputFeedback();out.add("input",new Gson().toJsonTree(feedback.input()));
         ConsoleClient.INSTANCE.frameFlowMetrics().ifPresent(flow->out.add("frameFlow",new Gson().toJsonTree(flow)));
+        ConsoleClient.INSTANCE.realtimeMetrics().ifPresent(m->{JsonObject a=new JsonObject();a.addProperty("offeredFrames",m.audio().offeredFrames());a.addProperty("coreFrame",m.coreFrame());out.add("audio",a);});
+        out.add("wall",wall(mc));
         var picture=ConsoleClient.INSTANCE.picture();if(picture!=null&&mc.getTextureManager().getTexture(picture)instanceof DynamicTexture dynamic&&dynamic.getPixels()!=null){var image=dynamic.getPixels();JsonObject samples=new JsonObject();for(var surface:ConsoleClient.INSTANCE.surfaces()){int pixel=image.getPixelRGBA(surface.x()+surface.width()/2,surface.y()+surface.height()/2);JsonArray rgb=new JsonArray();rgb.add(pixel&255);rgb.add(pixel>>>8&255);rgb.add(pixel>>>16&255);samples.add(surface.id(),rgb);}out.add("centreRGB",samples);}
         if(lastSession.has("machine")&&lastSession.has("platform"))try{
             String platform=lastSession.get("platform").getAsString();UUID machine=UUID.fromString(lastSession.get("machine").getAsString());String relative=switch(platform){case "n3ds"->"Azahar/sdmc/muxi-console-original-save.dat";case "wii"->"User/Wii/shared2/muxi-console-original-save.dat";default->"";};

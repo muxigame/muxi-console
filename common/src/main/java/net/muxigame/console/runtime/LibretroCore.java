@@ -26,8 +26,7 @@ final class LibretroCore implements AutoCloseable {
     private final int[] controllerDevices = {1,1,1,1};
     private final Object micLock = new Object();
     private final Map<Long,MicStream> microphones = new HashMap<>();
-    private final Object audioLock=new Object();private volatile boolean acceptingAudio;
-    private int pixelFormat, width, height, rotation;
+    private final Object audioLock=new Object();private volatile boolean acceptingAudio;    private int pixelFormat, width, height, rotation;
     private double fps = 60, sampleRate = 44100, displayAspect;
     private long number;
     private byte[] pixels = new byte[0];
@@ -57,8 +56,7 @@ final class LibretroCore implements AutoCloseable {
     };
     private final AudioBatch audioBatch = (data, frames) -> {
         try {
-            long count = frames.longValue();
-            if (count < 0 || count > 192000 || data == null) throw new IllegalArgumentException("Invalid audio frame count");
+            long count = frames.longValue();            if (count < 0 || count > 192000 || data == null) throw new IllegalArgumentException("Invalid audio frame count");
             for (int i = 0; i < count; i++) appendAudio(data.getShort(i * 4L), data.getShort(i * 4L + 2));
             return new SizeT(count);
         } catch (Throwable ex) { callbackFailure = "Core audio callback: " + ex.getMessage(); return new SizeT(0); }
@@ -172,11 +170,13 @@ final class LibretroCore implements AutoCloseable {
 
     CoreInfo info() { return new CoreInfo(readString(systemInfo.library_name), readString(systemInfo.library_version), width, height, fps, sampleRate, displayAspect); }
     AvFrame step(InputFrame input) throws IOException {
-        checkThread(); this.input = input; synchronized(audioLock){sampleCount = 0;} callbackFailure = null;
+        // Native-layout cores (Dolphin's CPU thread in particular) push audio between steps too;
+        // those samples belong to the next returned frame instead of being cleared here.
+        checkThread(); this.input = input; if(!nativeLayout())synchronized(audioLock){sampleCount = 0;} callbackFailure = null;
         for(int port=0;port<4;port++)if(controllerDevices[port]!=input.port(port).device()){controllerDevices[port]=input.port(port).device();api.retro_set_controller_port_device(port,controllerDevices[port]);}
         synchronized(micLock){for(MicStream stream:microphones.values())stream.append(input.port(0).microphone());}
         acceptingAudio=true;try{if (!shutdown) runCore(); checkCallback();}finally{acceptingAudio=false;}
-        synchronized(audioLock){return new AvFrame(number++, width, height, rotation, pixels.clone(), Arrays.copyOf(samples, sampleCount), sampleRate, shutdown, displayAspect,surfaces());}
+        synchronized(audioLock){short[] audio=Arrays.copyOf(samples, sampleCount);if(nativeLayout())sampleCount=0;return new AvFrame(number++, width, height, rotation, pixels.clone(), audio, sampleRate, shutdown, displayAspect,surfaces());}
     }
     private List<AvFrame.Surface> surfaces(){
         if(platform.equals("nds")&&width==256&&height==384)return List.of(new AvFrame.Surface("top",0,0,256,192,256,192,false),new AvFrame.Surface("bottom",0,192,256,192,256,192,true));
@@ -491,7 +491,10 @@ final class LibretroCore implements AutoCloseable {
     private void appendAudio(short left, short right) throws IOException {
         if(!nativeLayout())checkThread();
         synchronized(audioLock){
-            if(nativeLayout()&&!acceptingAudio)return;
+            // Asynchronous producers are accepted while the core is live; a bounded backlog drops
+            // the newest samples instead of failing the session when steps fall behind.
+            if(nativeLayout()&&(!loaded||shutdown))return;
+            if(nativeLayout()&&sampleCount>=192000*2)return;
             if (sampleCount >= 192000 * 2) throw new IOException("Core produced excessive audio in one frame");
             if (sampleCount + 2 > samples.length) samples = Arrays.copyOf(samples, Math.min(192000 * 2, samples.length * 2));
             samples[sampleCount++] = left; samples[sampleCount++] = right;

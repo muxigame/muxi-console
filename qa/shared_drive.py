@@ -123,12 +123,12 @@ def run(driver, platform, resume=False):
         host("slot", {"slot": 8});host("use_block", block)
         driver.wait_for("host", lambda v: v["screen"].endswith("DeviceScreen"), "shared physical console panel")
         if not resume:
-            host("button", {"text": "启动 / 停止"})
-        host("button", {"text": "连接附近屏幕"});host("button", {"text": "P1 加入"})
+            host("button", {"text": "开机"})
+        host("button", {"text": "连接屏幕"});host("button", {"text": "P1"})
         initial=driver.wait_for("host", lambda v: seat(v, True) and v["workerRunning"] and v["frames"] >= 30, "one actual shared core host",timeout=120)
         guest("slot", {"slot": 8});guest("use_block", block)
         driver.wait_for("guest", lambda v: v["screen"].endswith("DeviceScreen"), "second real controller panel")
-        guest("button", {"text": "P2 加入"})
+        guest("button", {"text": "P2"})
         next_epoch=driver.wait_for("host",lambda v:v["room"]==initial["room"] and v["epoch"]>initial["epoch"],"real checkpoint commits and controller epoch advances",timeout=120)["epoch"]
         driver.wait_for("host", lambda v: v["epoch"]==next_epoch and seat(v, True) and v["workerRunning"] and v["frames"] >= 30, "host restores and resumes the new controller epoch",timeout=120)
         remote = driver.wait_for("guest", lambda v: v["epoch"]==next_epoch and seat(v, False) and v["shared"].get("receivedVideo", 0) >= 4 and (platform=="n64" or v["shared"].get("receivedAudio", 0) >= 4), "P2 receives actual source pixels and available PCM",timeout=90)
@@ -207,13 +207,13 @@ def run(driver, platform, resume=False):
         saved_hash = closed["savedStateHash"]
         guest("slot", {"slot": 8});guest("use_block", block)
         driver.wait_for("guest", lambda v: v["screen"].endswith("DeviceScreen"), "remote player opens physical source after host leave")
-        guest("button", {"text": "P1 加入"})
+        guest("button", {"text": "P1"})
         successor = driver.wait_for("guest", lambda v: seat(v, True) and v["workerRunning"] and v["frames"] >= 30 and v["restoredStates"] > 0, "previous remote seat becomes the one new native host",timeout=120)
         if successor["restoredStateHash"] != saved_hash or successor["downloadsGranted"] <= observer_before["downloadsGranted"]:
             raise ValueError("New host did not restore the actual final checkpoint and newly authorized media")
         old = host("observe");host("slot", {"slot": 8});host("use_block", block)
         driver.wait_for("host", lambda v: v["screen"].endswith("DeviceScreen"), "old host returns through normal panel")
-        host("button", {"text": "P2 加入"})
+        host("button", {"text": "P2"})
         swapped = driver.wait_for("host", lambda v: seat(v, False) and v["shared"].get("receivedVideo", 0) > 0 and not v["workers"], "old host is now only the remote P2 seat",timeout=150)
         if swapped["downloadsGranted"] != old["downloadsGranted"] or swapped["workerRunning"]:
             raise ValueError("Old host unexpectedly executed another shared worker")
@@ -269,13 +269,13 @@ def handover(driver):
             driver.command("server","shared_position",{"role":role,"platform":"n64"})
         guest("slot",{"slot":8});guest("use_block",block)
         driver.wait_for("guest",lambda v:v["screen"].endswith("DeviceScreen"),"actual successor opens N64 source")
-        guest("button",{"text":"P1 加入"})
+        guest("button",{"text":"P1"})
         successor=driver.wait_for("guest",lambda v:seat(v,True) and v["workerRunning"] and v["frames"]>=30 and v["restoredStates"]>0,"previous remote seat restores as new N64 host",timeout=180)
         if successor["restoredStateHash"]!=saved or successor["downloadsGranted"]<=b["downloadsGranted"]:
             raise ValueError("Successor failed actual final checkpoint/media authorization")
         old=host("observe");host("slot",{"slot":8});host("use_block",block)
         driver.wait_for("host",lambda v:v["screen"].endswith("DeviceScreen"),"old host opens actual N64 source")
-        host("button",{"text":"P2 加入"})
+        host("button",{"text":"P2"})
         next_epoch=driver.wait_for("guest",lambda v:v["epoch"]>successor["epoch"] and v["room"]==successor["room"],"successor checkpoint advances role epoch",timeout=180)["epoch"]
         driver.wait_for("guest",lambda v:v["epoch"]==next_epoch and seat(v,True) and v["workerRunning"] and v["frames"]>=30,"successor resumes after old host P2 joins",timeout=180)
         remote=driver.wait_for("host",lambda v:seat(v,False) and v["frames"]>0 and v["shared"].get("receivedVideo",0)>0 and not v["workers"],"old host is now only pixel receiver and P2 controller",timeout=120)

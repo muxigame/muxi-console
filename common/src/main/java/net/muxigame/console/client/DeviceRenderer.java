@@ -26,7 +26,7 @@ public final class DeviceRenderer implements BlockEntityRenderer<DeviceEntity> {
         if(device.kind()==DeviceBlock.Kind.SCREEN){if(!device.screenPrimary()||device.linkedConsole==null)return;console=device.linkedConsole.asLong();planes=List.of(ScreenLayout.plane(device));}
         else if(device.kind()==DeviceBlock.Kind.DESK){console=device.getBlockPos().asLong();planes=HardwareCatalog.screens(device.getBlockState().getValue(DeviceBlock.MODEL));}
         else return;
-        ResourceLocation picture=picture(console);var media=device.kind()==DeviceBlock.Kind.DESK?device.card:
+        ResourceLocation picture=device.kind()==DeviceBlock.Kind.SCREEN?wallPicture(console):picture(console);var media=device.kind()==DeviceBlock.Kind.DESK?device.card:
             device.getLevel()!=null&&device.getLevel().getBlockEntity(net.minecraft.core.BlockPos.of(console)) instanceof DeviceEntity source?source.media():net.minecraft.world.item.ItemStack.EMPTY;
         var progress=LcdLoadingRenderer.deviceProgress(console,media);
         Direction facing=device.getBlockState().getValue(DeviceBlock.FACING);stack.pushPose();
@@ -37,6 +37,8 @@ public final class DeviceRenderer implements BlockEntityRenderer<DeviceEntity> {
             if(device.kind()==DeviceBlock.Kind.DESK)HandheldFeedback.draw(stack,buffers,HardwareCatalog.regions(device.getBlockState().getValue(DeviceBlock.MODEL)),ConsoleClient.INSTANCE.deviceInputVisual(console),ConsoleClient.INSTANCE.visualPort());
         }finally{stack.popPose();}
     }
+    /** Large screens follow the game window's rotation and dual-screen layout; relayed frames arrive already arranged. */
+    private static ResourceLocation wallPicture(long console){ResourceLocation picture=console==ConsoleClient.INSTANCE.screenConsole()?ConsoleClient.INSTANCE.wallPicture():null;return picture==null?BrowserLinkClient.INSTANCE.pictureFor(console):picture;}
     private static ResourceLocation picture(long console){ResourceLocation picture=console==ConsoleClient.INSTANCE.screenConsole()?ConsoleClient.INSTANCE.picture():null;return picture==null?BrowserLinkClient.INSTANCE.pictureFor(console):picture;}
     private static void dock(DeviceEntity device,float partial,PoseStack stack,MultiBufferSource buffers,int light,int overlay){
         var item=device.dockedHandheld;if(item.isEmpty()||!item.is(ConsoleContent.HANDHELD.get()))return;

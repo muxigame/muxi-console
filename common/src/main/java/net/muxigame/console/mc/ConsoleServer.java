@@ -93,13 +93,25 @@ public final class ConsoleServer {
         return CardData.read(item).map(card->!activeCard(world,card.instanceId())&&!LinkPlayServer.isCardLocked(world,card.instanceId())).orElse(true);
     }
     /** Read-only slot predicates never allocate a machine identity or throw a player-facing error. */
-    static boolean dockSlotLocked(DeviceEntity device){
+    static boolean machineSlotLocked(DeviceEntity device){
         if(device.getLevel()==null||device.getLevel().isClientSide)return false;
         WorldState world=WORLDS.get(device.getLevel().getServer());
-        return world!=null&&(world.rooms.containsKey(key(device))||!handheldIdle(world,device.dockedHandheld));
+        return world!=null&&(world.rooms.containsKey(key(device))||!handheldIdle(world,device.media()));
     }
-    static boolean dockSlotAccepts(Player player,DeviceEntity device,ItemStack item){
-        if(!DockMenu.accepts(item)||dockSlotLocked(device))return false;
+    static boolean dockSlotLocked(DeviceEntity device){return machineSlotLocked(device);}
+    static boolean machineSlotAccepts(Player player,DeviceEntity device,ItemStack item){
+        if(machineSlotLocked(device))return false;
+        if(device.kind()==DeviceBlock.Kind.DESK){
+            int model=device.hardwareModel();
+            if(model==0||!DockMenu.acceptsMedia(item,model))return false;
+            if(!(player instanceof ServerPlayer server))return true;
+            WorldState world=WORLDS.get(server.server);
+            if(!handheldIdle(world,item))return false;
+            if(world==null)return true;
+            var card=CardData.read(item);if(card.isEmpty())return false;
+            try{return world.content.has(card.get().sha256());}catch(IOException unreadable){return false;}
+        }
+        if(!DockMenu.accepts(item))return false;
         return !(player instanceof ServerPlayer server)||handheldIdle(WORLDS.get(server.server),item);
     }
     private static void error(ServerPlayer p,String code,String message){JsonObject j=object();j.addProperty("code",code);j.addProperty("message",message==null?code:message);Wire.send(p,"error",j);}
@@ -131,8 +143,9 @@ public final class ConsoleServer {
                 if(!state(p.server).content.has(c.sha256()))throw new DomainException("rom","服务器没有此卡带内容");
                 stopDevice(d,"卡带已变更");d.card=held.split(1);d.changed();return;
             }
-            if(held.is(ConsoleContent.CONTROLLER.get())){if(d.controllerCapacity()>=HardwareCatalog.ports(d.hardwareModel()))throw new DomainException("ports","此机型控制器接口已满");d.ports++;held.shrink(1);d.changed();return;}
-            JsonObject j=view(d);Wire.send(p,"device_open",j);
+            if(held.is(ConsoleContent.CONTROLLER.get())){if(d.controllerCapacity()>=HardwareCatalog.ports(d.hardwareModel()))throw new DomainException("ports","此机型控制器接口已满");d.ports++;held.shrink(1);d.changed();p.displayClientMessage(Component.literal("已接入控制器，现可用 "+d.controllerCapacity()+" 个控制席"),true);return;}
+            state(p.server);DeviceEntity desk=d;
+            p.openMenu(new net.minecraft.world.SimpleMenuProvider((id,inventory,actor)->new DockMenu(id,inventory,desk),Component.literal("游戏主机")),data->{data.writeBlockPos(desk.getBlockPos());data.writeUUID(desk.identity);});
         }catch(Exception e){MuxiConsole.LOG.warn("Console device interaction failed actor={} position={}",p.getUUID(),position,e);error(p,e instanceof DomainException de?de.code():"device",UserErrors.describe(e));}
     }
     public static JsonObject view(DeviceEntity d){JsonObject j=object();j.addProperty("position",d.getBlockPos().asLong());j.addProperty("kind",d.kind().name().toLowerCase(Locale.ROOT));j.addProperty("docked",!d.dockedHandheld.isEmpty());j.addProperty("powered",d.powered);j.addProperty("ports",d.controllerCapacity());j.addProperty("model",d.hardwareModel());j.addProperty("identity",d.identity.toString());CardData.read(d.media()).ifPresent(c->j.add("card",cardJson(c)));return j;}
@@ -243,7 +256,7 @@ public final class ConsoleServer {
     }
     private static void action(ServerPlayer p,WorldState s,JsonObject b){
         DeviceEntity d=device(p,b);if(d.kind()!=DeviceBlock.Kind.DESK&&d.kind()!=DeviceBlock.Kind.DOCK)throw new DomainException("device","此设备不是主机或掌机底座");
-        if(d.kind()==DeviceBlock.Kind.DOCK&&(!(p.containerMenu instanceof DockMenu menu)||!menu.matches(d)||!b.has("containerId")||b.get("containerId").getAsInt()!=menu.containerId||!b.has("identity")||!b.get("identity").getAsString().equals(d.identity.toString())))throw new DomainException("dock","请先打开当前掌机底座");
+        if(!(p.containerMenu instanceof DockMenu menu)||!menu.matches(d)||!b.has("containerId")||b.get("containerId").getAsInt()!=menu.containerId||!b.has("identity")||!b.get("identity").getAsString().equals(d.identity.toString()))throw new DomainException("dock",d.kind()==DeviceBlock.Kind.DOCK?"请先打开当前掌机底座":"请先打开当前游戏主机");
         switch(b.get("action").getAsString()){
             case "body" -> throw new DomainException("hardware","请取回机器，在工作台用染料合成机型");
             case "power" -> {if(d.kind()==DeviceBlock.Kind.DOCK&&dockSlotLocked(d))throw new DomainException("save","请先保存并离开游戏，再关闭底座");if(d.hardwareModel()==0)throw new DomainException("hardware","游戏机核心需要先合成为具体机型");d.powered=!d.powered;if(!d.powered)stopDevice(d,"主机已关闭");d.changed();}

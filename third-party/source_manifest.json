@@ -3,8 +3,8 @@
   "scope": "Exact upstream snapshots, recursive fixed gitlinks, unmodified notices, all reviewed Java/native workers, independent link adapters and immutable system resources; release-ready flags remain independently reviewed",
   "delivery": {
     "method": "complete source attachment alongside runtime binary",
-    "attachment": "muxi-console-runtime-1.0.1-sources.zip",
-    "releaseUrl": "https://github.com/muxigame/muxi-console/releases/tag/v0.2.3",
+    "attachment": "muxi-console-runtime-1.0.2-sources.zip",
+    "releaseUrl": "https://github.com/muxigame/muxi-console/releases/tag/v0.2.4",
     "notAnOnRequestOffer": true
   },
   "firstParty": {
@@ -92,8 +92,8 @@
       },
       {
         "path": "common/src/main/java/net/muxigame/console/runtime/LibretroCore.java",
-        "bytes": 46834,
-        "sha256": "a7e709d4f607218037466e5b182a580ef116bdbcce7e6059c8db0d09dd900d6e"
+        "bytes": 47344,
+        "sha256": "4653f650a14e6af2f1ed48648e4535274893d18a56221e60bb382e22e7113d87"
       },
       {
         "path": "common/src/main/java/net/muxigame/console/runtime/Link3dsIdentity.java",
@@ -242,13 +242,13 @@
       },
       {
         "path": "docs/BUILD.md",
-        "bytes": 10001,
-        "sha256": "c2ae65bdb2d8bc289bc15416b56264b8361bb2300c2367249d3c1fdc7ff88da9"
+        "bytes": 9897,
+        "sha256": "b39affd4bb5d50079db9500998ee0bd2461d7dc87fb00bf963b26a3671715e66"
       },
       {
         "path": "tools/package_runtime.py",
         "bytes": 8592,
-        "sha256": "9172f1d17f1b168780c80fc2a53155c9b85cd57d349f1c1a2a7c2b260d248e39"
+        "sha256": "55c8ae5ccf158ee1c015c821b8799e5c3990529aea550ab4951e970357468bf7"
       },
       {
         "path": "tools/rebuild_cores.py",

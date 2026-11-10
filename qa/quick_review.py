@@ -55,8 +55,8 @@ def start(driver,role,x,z=8,port=0):
     panel(driver,role,x,z)
     state=driver.command("server","observe")
     if not block_device(state,x,z)["powered"]:
-        driver.command(role,"button",{"text":"启动 / 停止"})
-    driver.command(role,"button",{"text":"P%d 加入"%(port+1)})
+        driver.command(role,"button",{"text":"开机"})
+    driver.command(role,"button",{"text":"P%d"%(port+1)})
 
 
 def idle(value):

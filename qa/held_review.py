@@ -184,7 +184,7 @@ def run(d:Driver,pause=False):
         installed=d.wait_for("server",lambda v:v["dock"]["dockedHandheld"].get("instance")==gba["instance"],"same complete GBA installs normally")["dock"]
         check(installed["nbtRoundTrip"] and installed["dockedHandheld"]["model"]==5,"refined GBA body preserves full item metadata",installed["dockedHandheld"])
         host("slot",{"slot":8});host("dock_use_block",dict(x=12,y=90,z=6,face="SOUTH"));d.wait_for("host",lambda v:v["screen"].endswith("DeviceScreen"),"normal dock panel")
-        host("button",{"text":"启动 / 停止"});host("button",{"text":"P1 加入"});running=d.wait_for("host",lambda v:v["ready"] and v["workerRunning"] and v["restoredStateHash"]==out["gbaSave"]["hash"],"same saved GBA resumes in the dock")
+        host("button",{"text":"开机"});host("button",{"text":"P1"});running=d.wait_for("host",lambda v:v["ready"] and v["workerRunning"] and v["restoredStateHash"]==out["gbaSave"]["hash"],"same saved GBA resumes in the dock")
         host("dock_release");host("dock_view",{"hideGui":True});camera(14.5,9.7,148,23)
         deadline=time.monotonic()+45
         while time.monotonic()<deadline:

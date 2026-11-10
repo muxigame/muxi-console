@@ -12,13 +12,13 @@ import net.muxigame.console.client.ConsoleClient;
 import net.muxigame.console.domain.ViewRotation;
 
 /** Local presentation choices belong to the game content, independent of the physical card or save. */
-final class GameDisplayPreferences {
+public final class GameDisplayPreferences {
     private static final int LIMIT=1024;
     private static final LinkedHashMap<String,Integer> rotations=new LinkedHashMap<>();
     private static final LinkedHashSet<String> sideBySideGames=new LinkedHashSet<>();
     private static boolean loaded;
     private static Path path(){return Minecraft.getInstance().gameDirectory.toPath().resolve("config/muxi-console-display.json");}
-    static String key(ConsoleClient client){
+    public static String key(ConsoleClient client){
         var platform=client.inputFeedback().platform();
         return platform==null?null:client.saveOwner().map(owner->platform.id()+"/"+owner.contentSHA()).orElse(null);
     }
@@ -37,8 +37,8 @@ final class GameDisplayPreferences {
                 if(valid(entry.getKey())&&sideBySideGames.size()<LIMIT&&entry.getValue().isJsonPrimitive()&&"side_by_side".equals(entry.getValue().getAsString()))sideBySideGames.add(entry.getKey());
         }catch(IOException|RuntimeException failure){rotations.clear();sideBySideGames.clear();MuxiConsole.LOG.warn("Console display settings could not be read; using original presentation");}
     }
-    static int rotation(String key){if(!valid(key))return 0;load();return rotations.getOrDefault(key,0);}
-    static boolean sideBySide(String key){if(!valid(key))return false;load();return sideBySideGames.contains(key);}
+    public static int rotation(String key){if(!valid(key))return 0;load();return rotations.getOrDefault(key,0);}
+    public static boolean sideBySide(String key){if(!valid(key))return false;load();return sideBySideGames.contains(key);}
     static void remember(String key,int quarterTurns){
         if(!valid(key))return;load();rotations.remove(key);rotations.put(key,ViewRotation.normalize(quarterTurns));
         while(rotations.size()>LIMIT)rotations.remove(rotations.keySet().iterator().next());

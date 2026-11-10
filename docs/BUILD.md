@@ -53,7 +53,7 @@ python -B tools/build_worker.py --name worker-compare-01 --java-home /path/to/jd
 
 ## 完整 Minecraft 模组
 
-当前开发候选的运行库已升1.0.1，包含Wii帧缓冲修复，主包要求至少1.0.1；正式线上仍为1.0.0。开发构建的运行库没有新的源码交付证明，不得发布。准备正式0.2.3时须重新执行下面的源码准备/核验及`--release`，新附件为`muxi-console-runtime-1.0.1-sources.zip`；不改写既有0.2.2发行附件。
+当前运行库为1.0.2（Wii声音修复：Dolphin在单帧调用之外推送的PCM并入下一帧），主包0.2.4要求至少1.0.2；源码附件为`muxi-console-runtime-1.0.2-sources.zip`，放在`v0.2.4`发行页。之前0.2.2/0.2.3发行附件不改写。
 
 完整模组目前沿用 `tools/build.py` 的 muxigame 工作区SDK入口；单独克隆本仓不会自动取得Minecraft映射开发环境。该入口只读取已安装SDK，包含MC集成、领域代码、资源、工作进程及固定第三方核心。没有另外维护一套Gradle工程。
 

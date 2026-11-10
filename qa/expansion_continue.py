@@ -33,8 +33,8 @@ def run(d):
         f.close();f.do('slot',dict(slot=8));f.do('use_block',dict(x=5,y=90,z=6));f.wait(lambda v:v['screen'].endswith('DeviceScreen'),'ordinary Wii management menu')
         w=world()
         if not same(w):raise ValueError('Wii hardware/card identity changed')
-        if not w['wiiDevice']['powered']:f.do('button',dict(text='启动 / 停止'));f.settle(4)
-        f.do('button',dict(text='P1 加入'))
+        if not w['wiiDevice']['powered']:f.do('button',dict(text='开机'));f.settle(4)
+        f.do('button',dict(text='P1'))
     def ready(state=None):return f.wait(lambda v:v['ready']and v['workerRunning']and v['frames']>=30 and v['expansion']['lastSession'].get('platform')=='wii'and(state is None or v['restoredStateHash']==state),'actual Wii runtime and expected restore',60)
     def focus():
         f.wait(lambda v:v['screen'].endswith('GameScreen'),'normal fullscreen opened for the controller seat');f.do('expansion_source');return f.wait(lambda v:v['polish'].get('presentation',{}).get('screens'),'actual Wii primary surface')

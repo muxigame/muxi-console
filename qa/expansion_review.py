@@ -65,8 +65,8 @@ def run(d,platforms=('nds','n3ds','wii')):
         f.do('slot',dict(slot=8));f.do('use_block',dict(x=5,y=90,z=6));f.wait(lambda v:v['screen'].endswith('DeviceScreen'),'actual Wii management menu')
         if capture_panel:f.picture('expansion-wii-management')
         if join:
-            if not world()['wiiDevice']['powered']:f.do('button',dict(text='启动 / 停止'));f.settle(3)
-            f.do('button',dict(text='P1 加入'))
+            if not world()['wiiDevice']['powered']:f.do('button',dict(text='开机'));f.settle(3)
+            f.do('button',dict(text='P1'))
     try:
         d.prepare();out['fixture']=d.command('server','expansion_prepare');f.do('dock_view',dict(hideGui=False));f.settle(12)
         if 'wii'in platforms:
@@ -79,9 +79,9 @@ def run(d,platforms=('nds','n3ds','wii')):
                 f.inv();f.do('upgrade_click',dict(slot=inventory_slot(11),button=8,type='SWAP'));f.close();f.do('slot',dict(slot=8));d.command('server','position',dict(player=d.marker['clientNames']['host'],x=5.5,z=9.5));f.settle(4);f.do('expansion_place')
                 f.wait(lambda v:at(v,8)['empty'],'normal desktop placement consumes the one real hardware item');check(out,world()['wiiDevice']['model']==25,'actually placed Wii model retains its hardware identity')
                 f.do('select_card',dict(instance=card['instance']));f.do('use_block',dict(x=5,y=90,z=6));f.close()
-                controller=at(f.see(),1);check(out,controller.get('item')=='muxi_console:controller'and controller['count']>=1 and world()['wiiDevice']['ports']==0,'placed Wii has no port until an existing physical controller is connected')
+                controller=at(f.see(),1);check(out,controller.get('item')=='muxi_console:controller'and controller['count']>=1 and world()['wiiDevice']['ports']==1,'placed Wii offers its one built-in seat before a physical controller is connected')
                 f.do('slot',dict(slot=1));f.do('use_block',dict(x=5,y=90,z=6));f.wait(lambda v:at(v,1).get('count',0)==controller['count']-1,'normal controller use consumes one physical controller')
-                check(out,world()['wiiDevice']['ports']==1,'normal controller connection exposes the real Wii P1 port')
+                check(out,world()['wiiDevice']['ports']==2,'normal controller connection adds a second real Wii port')
                 wii_panel(True,True);started=ready(platform)
             v=focus(platform);surface_ids={p['id']for p in v['expansion']['surfaces']};check(out,surface_ids==({'primary'}if platform=='wii'else{'top','bottom'}),'actual '+platform+' AV surface layout',v['expansion']['surfaces'])
             pointer(platform)

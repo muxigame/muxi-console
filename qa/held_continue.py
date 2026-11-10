@@ -66,7 +66,7 @@ def run(d:Driver,source_hash:str,checkpoint_hash:str):
         installed=d.wait_for("server",lambda v:v["dock"]["dockedHandheld"].get("instance")==card,"same complete GBA normally installs in the existing dock")["dock"]
         check(installed["nbtRoundTrip"]and installed["dockedHandheld"]["model"]==5 and installed["dockedHandheld"]["qaPreserve"]=="pixel-review-gba-shell"and sum(c["instance"]==card for c in installed["instances"])==1,"original GBA shell/card/tag remain unique and round-trip in dock",installed["dockedHandheld"])
         host("slot",{"slot":8});host("dock_use_block",dict(x=12,y=90,z=6,face="SOUTH"));d.wait_for("host",lambda v:v["screen"].endswith("DeviceScreen"),"normal dock device panel")
-        host("button",{"text":"启动 / 停止"});host("button",{"text":"P1 加入"});running=d.wait_for("host",lambda v:v["ready"]and v["workerRunning"]and not v["room"].startswith("handheld/")and v["restoredStateHash"]==saved["hash"],"docked same GBA restores the new normal save")
+        host("button",{"text":"开机"});host("button",{"text":"P1"});running=d.wait_for("host",lambda v:v["ready"]and v["workerRunning"]and not v["room"].startswith("handheld/")and v["restoredStateHash"]==saved["hash"],"docked same GBA restores the new normal save")
         host("dock_release");host("dock_view",{"hideGui":True});camera(14.5,9.7,148,23)
         deadline=time.monotonic()+45
         while time.monotonic()<deadline:

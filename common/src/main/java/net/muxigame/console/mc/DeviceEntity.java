@@ -28,7 +28,8 @@ public final class DeviceEntity extends BlockEntity {
     }
     public void adoptMachine(ItemStack item){if(kind()!=DeviceBlock.Kind.DESK)throw new IllegalStateException("Only desktop placement adopts an item machine");machineIdentity=MachineData.ensure(item);setChanged();}
     public int hardwareModel(){return kind()==DeviceBlock.Kind.DOCK?HardwareCatalog.model(dockedHandheld):getBlockState().getValue(DeviceBlock.MODEL);}
-    public int controllerCapacity(){return Math.min(kind()==DeviceBlock.Kind.DOCK?ports+1:ports,HardwareCatalog.ports(hardwareModel()));}
+    /** Docks and desktop consoles have one built-in seat; each attached controller adds one more. */
+    public int controllerCapacity(){return Math.min(kind()==DeviceBlock.Kind.DOCK||kind()==DeviceBlock.Kind.DESK?ports+1:ports,HardwareCatalog.ports(hardwareModel()));}
     public BlockPos screenAnchor(){return screenOrigin==null?worldPosition:screenOrigin;}
     public boolean largeScreen(){return kind()==DeviceBlock.Kind.SCREEN&&screenOrigin!=null&&getBlockState().hasProperty(ScreenBlock.PART)&&getBlockState().getValue(ScreenBlock.PART)>0;}
     public boolean screenPrimary(){return !largeScreen()||worldPosition.equals(screenOrigin);}

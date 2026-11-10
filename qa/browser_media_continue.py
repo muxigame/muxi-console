@@ -41,7 +41,7 @@ def run(d):
         position=lambda role,x,z:d.command('server','position',dict(player=d.marker['clientNames'][role],x=x,z=z))
         position('host',10.5,11.5);host.do('slot',dict(slot=8));host.do('use_block',dict(x=10))
         host.wait(lambda v:v['screen'].endswith('DeviceScreen'),'same original occupied console panel')
-        host.do('button',dict(text='P1 加入'))
+        host.do('button',dict(text='P1'))
         active=host.wait(lambda v:v['ready']and v['workerRunning']and v['frames']>=60,'normal source recovery from its committed real checkpoint',120)
         check(out,active['restoredStateHash']==saved and received(active,'rom_chunk')==received(h,'rom_chunk'),'original machine checkpoint restores from its verified ROM cache without a new burn/download')
         position('host',13,11.5);position('guest',13.5,13.5);host.do('browser_select',target)

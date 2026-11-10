@@ -194,7 +194,7 @@ def play(d,pause=False,resume=False):
         gba=out["cards"]["gba"];camera(14.5,9.7,148,23);host("dock_use_block",dict(x=12,y=90,z=6,face="SOUTH"));installed=d.wait_for("server",lambda v:v["dock"]["dockedHandheld"].get("instance")==gba["instance"],"same complete refined GBA installs normally")["dock"]
         check(out,installed["nbtRoundTrip"]and installed["dockedHandheld"]["model"]==5 and installed["dockedHandheld"]["qaPreserve"]=="original-gba-shell","complete GBA shell/card metadata survives dock installation")
         host("slot",{"slot":8});host("polish_empty_slot8");host("dock_use_block",dict(x=12,y=90,z=6,face="SOUTH"));d.wait_for("host",lambda v:v["screen"].endswith("DeviceScreen"),"normal dock panel")
-        host("button",{"text":"连接附近屏幕"});host("button",{"text":"启动 / 停止"});host("button",{"text":"P1 加入"});dock=d.wait_for("host",lambda v:v["ready"]and v["workerRunning"]and v["restoredStateHash"]==out["gbaSave"]["hash"],"same GBA restores through dock and actual computer monitor")
+        host("button",{"text":"连接屏幕"});host("button",{"text":"开机"});host("button",{"text":"P1"});dock=d.wait_for("host",lambda v:v["ready"]and v["workerRunning"]and v["restoredStateHash"]==out["gbaSave"]["hash"],"same GBA restores through dock and actual computer monitor")
         key(256);d.wait_for("host",lambda v:not v["screen"]and mask(v)==0,"Esc releases dock fullscreen but keeps the session")
         host("dock_view",{"hideGui":True});camera(15,13.7,186,8)
         deadline=time.monotonic()+45

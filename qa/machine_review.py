@@ -91,8 +91,8 @@ def run(d, resume=None):
         return f.wait(lambda v: v["screen"].endswith("DeviceScreen"), "actual hardware management panel")
     def join(f, card, x, z, expected, face="SOUTH"):
         panel(f, x, z, face)
-        if not device(f"{x}, 90, {z}")["powered"]: f.do("button", {"text": "启动 / 停止"})
-        f.do("button", {"text": "P1 加入"})
+        if not device(f"{x}, 90, {z}")["powered"]: f.do("button", {"text": "开机"})
+        f.do("button", {"text": "P1"})
         return live(f, card, expected)
     def panel_save(f, owner, label):
         before = f.see(); check(out, before["ready"] and before["workerRunning"], label + " is live before safe panel save")
@@ -184,7 +184,7 @@ def run(d, resume=None):
         host.close(); host.do("dock_view", {"hideGui": True}); host.pic("machine-desktop-before-break", desktop)
         host.do("dock_view", {"hideGui": False}); panel(host, 16, 18)
         desk_save = out["desktopFirstSave"] = panel_save(host, owner_d, "desktop before break")
-        host.do("button", {"text": "取出卡带"}); host.wait(lambda v: any(same_card(i, nes) for i in items(v)), "NES full card retrieval after save"); host.close()
+        host.do("upgrade_click", {"slot": 0, "button": 0, "type": "QUICK_MOVE"}); host.wait(lambda v: any(same_card(i, nes) for i in items(v)), "NES full card retrieval after save"); host.close()
         choose(host, "minecraft:diamond_pickaxe"); host.do("dock_break", dict(x=16, y=90, z=18))
         broken = wait_world(lambda v: any(i.get("machine") == desk_id and i["item"] == "muxi_console:desk_console" for i in v["drops"]), "survival break emits actual identity-carrying desktop item")
         drop = next(i for i in broken["drops"] if i.get("machine") == desk_id)
@@ -200,7 +200,7 @@ def run(d, resume=None):
         host.close(); host.do("dock_view", {"hideGui": True}); host.pic("machine-desktop-after-replace", replaced)
         host.do("dock_view", {"hideGui": False}); panel(host, 16, 18)
         out["desktopFinalSave"] = panel_save(host, owner_d, "replaced original desktop")
-        host.do("button", {"text": "取出卡带"}); host.wait(lambda v: any(same_card(i, nes) for i in items(v)), "final exact NES retrieval"); host.close()
+        host.do("upgrade_click", {"slot": 0, "button": 0, "type": "QUICK_MOVE"}); host.wait(lambda v: any(same_card(i, nes) for i in items(v)), "final exact NES retrieval"); host.close()
 
         final = out["finalWorld"] = world()
         keys = {(s["machine"], s["content"]) for s in final["saved"]}

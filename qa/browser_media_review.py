@@ -17,7 +17,7 @@ def finish(d, out, host, guest, fixture, target, position, before_guest):
     host.do('slot', dict(slot=8)); host.do('use_block', dict(x=10))
     host.wait(lambda v: v['screen'].endswith('DeviceScreen'), 'open the actual occupied source console')
     before_focus = host.see()
-    host.do('button', dict(text='P1 加入'))
+    host.do('button', dict(text='P1'))
     focused = host.wait(lambda v: v['screen'].endswith('GameScreen') and v['ready'] and v['workerRunning'], 'resume actual game input focus')
     check(out, focused['room'] == before_focus['room'] and focused['epoch'] == before_focus['epoch'] and focused['workers'] == before_focus['workers'], 'normal existing-seat reopen gives real input focus without restarting the source')
     previous = host.see()['crc']
@@ -123,9 +123,9 @@ def run(d):
         host.do('slot', dict(slot=1)); host.do('use_block', dict(x=10))
         host.do('slot', dict(slot=8)); host.do('use_block', dict(x=10))
         host.wait(lambda v: v['screen'].endswith('DeviceScreen'), 'actual NES source controls')
-        host.do('button', dict(text='启动 / 停止'))
-        host.do('button', dict(text='连接附近屏幕'))
-        host.do('button', dict(text='P1 加入'))
+        host.do('button', dict(text='开机'))
+        host.do('button', dict(text='连接屏幕'))
+        host.do('button', dict(text='P1'))
         source = host.wait(lambda v: v['ready'] and v['workerRunning'] and v['frames'] >= 60,
                            'real audible original NES source', 120)
         check(out, received(source, 'rom_chunk') == received(before_host, 'rom_chunk'),

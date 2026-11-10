@@ -154,8 +154,8 @@ def remote(d):
         reference(d,out,'latency-gba');out['fixture']=d.command('server','media_prepare');card=h.bare_burn('media_nes',d.build['latency']['nes'],7);out['card']=card
         for role in ('host','guest'):d.command('server','shared_position',dict(role=role,platform='nes'))
         block=dict(x=8,z=20);h.do('slot',dict(slot=7));h.do('use_block',block);h.do('slot',dict(slot=1));h.do('use_block',block);h.do('use_block',block)
-        h.do('slot',dict(slot=8));h.do('use_block',block);h.wait(lambda v:v['screen'].endswith('DeviceScreen'),'actual NES device menu');h.button('启动 / 停止');h.button('连接附近屏幕');h.button('P1 加入')
-        first=h.wait(lambda v:clock(v)and seat(v,True),'first real NES host clock');guest_before=g.see();g.do('slot',dict(slot=8));g.do('use_block',block);g.wait(lambda v:v['screen'].endswith('DeviceScreen'),'actual peer NES device menu');g.button('P2 加入')
+        h.do('slot',dict(slot=8));h.do('use_block',block);h.wait(lambda v:v['screen'].endswith('DeviceScreen'),'actual NES device menu');h.button('开机');h.button('连接屏幕');h.button('P1')
+        first=h.wait(lambda v:clock(v)and seat(v,True),'first real NES host clock');guest_before=g.see();g.do('slot',dict(slot=8));g.do('use_block',block);g.wait(lambda v:v['screen'].endswith('DeviceScreen'),'actual peer NES device menu');g.button('P2')
         peer=g.wait(lambda v:seat(v,False)and v['shared'].get('receivedVideo',0)>3,'P2 receives actual shared NES pixels')
         host=h.wait(lambda v:clock(v)and seat(v,True)and v['epoch']==peer['epoch']and v['epoch']>first['epoch'],'join resets authorization and dispatches a new epoch clock_start')
         check(out,not peer['workers']and not peer['workerRunning']and peer['downloadsGranted']==guest_before['downloadsGranted'],'real remote control seat uses neither ROM nor parallel core')
